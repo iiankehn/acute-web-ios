@@ -16,12 +16,14 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Privacy Protection") {
+                Section {
                     Toggle("Block known trackers", isOn: $preferences.blocksTrackers)
                         .onChange(of: preferences.blocksTrackers) { _, _ in applyPrivacyPreferences() }
                     LabeledContent("Fraudulent website warnings", value: "On")
                     LabeledContent("Acute telemetry", value: "None")
                     LabeledContent("Diagnostic uploads", value: "None")
+                } header: {
+                    Text("Privacy Protection")
                 } footer: {
                     Text("Tracker protection uses WebKit content rules on the device. Browsing activity is not sent to Acute.")
                 }
