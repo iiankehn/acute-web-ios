@@ -1,7 +1,7 @@
 import Foundation
 
 enum AddressResolver {
-    static func resolve(_ rawValue: String) -> URL? {
+    static func resolve(_ rawValue: String, searchEngine: SearchEngine = .duckDuckGo) -> URL? {
         let input = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else { return nil }
 
@@ -16,9 +16,8 @@ enum AddressResolver {
             return url
         }
 
-        var components = URLComponents(string: "https://duckduckgo.com/")
+        var components = URLComponents(string: searchEngine.searchURL)
         components?.queryItems = [URLQueryItem(name: "q", value: input)]
         return components?.url
     }
 }
-

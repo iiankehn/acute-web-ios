@@ -54,10 +54,15 @@ struct BrowserToolbar: View {
             Menu {
                 Button("New Tab", systemImage: "plus") { browser.newTab() }
                 Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
+                Button("Reopen Closed Tab", systemImage: "arrow.uturn.backward") {
+                    browser.reopenLastClosedTab()
+                }
+                .disabled(browser.recentlyClosed.isEmpty)
                 Divider()
                 if let url = browser.selectedTab?.url {
                     ShareLink(item: url)
                 }
+                Button("Settings", systemImage: "gearshape") { browser.showsSettings = true }
             } label: {
                 Image(systemName: "ellipsis")
                     .frame(width: 32, height: 32)

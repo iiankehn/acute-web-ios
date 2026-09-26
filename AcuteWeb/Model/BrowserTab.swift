@@ -1,4 +1,5 @@
 import Foundation
+import UIKit
 import WebKit
 
 @MainActor
@@ -13,6 +14,7 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
     @Published var isLoading = false
     @Published var canGoBack = false
     @Published var canGoForward = false
+    @Published var snapshot: UIImage?
 
     private var observations: [NSKeyValueObservation] = []
 
@@ -57,5 +59,11 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
             }
         ]
     }
-}
 
+    func captureSnapshot() {
+        guard url != nil else { return }
+        webView.takeSnapshot(with: nil) { [weak self] image, _ in
+            Task { @MainActor in self?.snapshot = image }
+        }
+    }
+}

@@ -17,6 +17,11 @@ struct BrowserRootView: View {
             NavigationStack { TabGrid() }
                 .presentationDetents([.medium, .large])
         }
+        .sheet(isPresented: $browser.showsSettings) {
+            SettingsView(preferences: browser.preferences) {
+                browser.applyPrivacyPreferences()
+            }
+        }
         .tint(.cyan)
     }
 
@@ -24,8 +29,12 @@ struct BrowserRootView: View {
         ZStack {
             Color.black.ignoresSafeArea()
             if let tab = browser.selectedTab {
-                WebView(tab: tab)
-                    .ignoresSafeArea(.container, edges: .bottom)
+                if tab.url == nil {
+                    StartPage()
+                } else {
+                    WebView(tab: tab)
+                        .ignoresSafeArea(.container, edges: .bottom)
+                }
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
@@ -38,7 +47,9 @@ struct BrowserRootView: View {
                 }
             }
         }
-        .onChange(of: browser.selectedTab?.url) { _, _ in browser.refreshAddress() }
+        .onChange(of: browser.selectedTab?.url) { _, _ in
+            browser.refreshAddress()
+            browser.recordCurrentVisit()
+        }
     }
 }
-

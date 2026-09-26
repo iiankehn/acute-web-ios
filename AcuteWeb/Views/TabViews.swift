@@ -4,24 +4,31 @@ struct TabSidebar: View {
     @EnvironmentObject private var browser: BrowserStore
 
     var body: some View {
-        List(browser.tabs) { tab in
-            Button { browser.select(tab) } label: {
-                HStack {
-                    Image(systemName: tab.isPrivate ? "hand.raised.fill" : "globe")
-                    VStack(alignment: .leading) {
-                        Text(tab.title).lineLimit(1)
-                        Text(tab.url?.host ?? (tab.isPrivate ? "Private" : "New Tab"))
-                            .font(.caption).foregroundStyle(.secondary).lineLimit(1)
-                    }
-                    Spacer()
-                    if browser.selectedTabID == tab.id {
-                        Circle().fill(.cyan).frame(width: 6, height: 6)
+        List {
+            ForEach(browser.tabs) { tab in
+                Button { browser.select(tab) } label: {
+                    HStack {
+                        Image(systemName: tab.isPrivate ? "hand.raised.fill" : "globe")
+                        VStack(alignment: .leading) {
+                            Text(tab.title).lineLimit(1)
+                            Text(tab.url?.host ?? (tab.isPrivate ? "Private" : "New Tab"))
+                                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        }
+                        Spacer()
+                        if browser.selectedTabID == tab.id {
+                            Circle().fill(.cyan).frame(width: 6, height: 6)
+                        }
                     }
                 }
+                .swipeActions {
+                    Button(role: .destructive) { browser.close(tab) } label: { Label("Close", systemImage: "xmark") }
+                }
+                .contextMenu {
+                    Button("Duplicate", systemImage: "plus.square.on.square") { browser.duplicate(tab) }
+                    Button("Close", systemImage: "xmark", role: .destructive) { browser.close(tab) }
+                }
             }
-            .swipeActions {
-                Button(role: .destructive) { browser.close(tab) } label: { Label("Close", systemImage: "xmark") }
-            }
+            .onMove(perform: browser.moveTabs)
         }
         .navigationTitle("Acute Web")
         .toolbar {
@@ -49,8 +56,21 @@ struct TabGrid: View {
                         dismiss()
                     } label: {
                         VStack(alignment: .leading, spacing: 8) {
-                            Image(systemName: tab.isPrivate ? "hand.raised.fill" : "globe")
-                                .font(.title2)
+                            ZStack {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .fill(.black.opacity(0.22))
+                                if let snapshot = tab.snapshot {
+                                    Image(uiImage: snapshot)
+                                        .resizable()
+                                        .scaledToFill()
+                                        .clipped()
+                                } else {
+                                    Image(systemName: tab.isPrivate ? "hand.raised.fill" : "globe")
+                                        .font(.title2)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                            .frame(height: 74)
                             Spacer()
                             Text(tab.title).font(.headline).lineLimit(2)
                             Text(tab.url?.host ?? "New Tab").font(.caption).foregroundStyle(.secondary)
@@ -60,6 +80,7 @@ struct TabGrid: View {
                         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
                     }
                     .contextMenu {
+                        Button("Duplicate") { browser.duplicate(tab) }
                         Button("Close", role: .destructive) { browser.close(tab) }
                     }
                 }
@@ -74,4 +95,3 @@ struct TabGrid: View {
         }
     }
 }
-

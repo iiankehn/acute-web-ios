@@ -13,3 +13,7 @@ they receive directly when a person visits or submits information.
 Network requests are made directly by WebKit and by the selected search engine.
 Acute Web does not proxy, copy, or upload browsing activity to Acute servers.
 
+When tracker protection is enabled, Acute installs a compiled WebKit content
+rule list locally. Matching resources are blocked by WebKit on the device;
+requested URLs are not sent to Acute for classification. Recent sites shown on
+the start page exist only for the current app session and exclude private tabs.

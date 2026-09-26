@@ -18,5 +18,11 @@ final class AddressResolverTests: XCTestCase {
         XCTAssertEqual(URLComponents(url: url!, resolvingAgainstBaseURL: false)?.queryItems?.first?.value,
                        "acute web browser")
     }
-}
 
+    func testUsesSelectedSearchEngine() {
+        let url = AddressResolver.resolve("privacy browser", searchEngine: .brave)
+        XCTAssertEqual(url?.host, "search.brave.com")
+        XCTAssertEqual(URLComponents(url: url!, resolvingAgainstBaseURL: false)?.queryItems?.first?.value,
+                       "privacy browser")
+    }
+}
