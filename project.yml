@@ -24,6 +24,7 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_NSCameraUsageDescription: Acute Web requests camera access only when a website asks and you approve it.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Acute Web requests microphone access only when a website asks and you approve it.
+        ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
         CODE_SIGN_STYLE: Automatic
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 0.1.0
