@@ -33,11 +33,17 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources: [AcuteWebTests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: AcuteWeb
   AcuteWebUITests:
     type: bundle.ui-testing
     platform: iOS
     sources: [AcuteWebUITests]
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: AcuteWeb
