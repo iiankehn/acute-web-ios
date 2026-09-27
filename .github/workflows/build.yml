@@ -15,7 +15,7 @@ concurrency:
 jobs:
   simulator:
     runs-on: macos-15
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - name: Install XcodeGen
@@ -39,6 +39,8 @@ jobs:
             -destination-timeout 120 \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
+            -only-testing:AcuteWebTests \
+            -only-testing:AcuteWebUITests/AcuteWebUITests/testLaunchShowsNativeStartPage \
             -test-timeouts-enabled YES \
             -default-test-execution-time-allowance 60 \
             -maximum-test-execution-time-allowance 90
