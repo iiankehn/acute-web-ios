@@ -19,6 +19,12 @@ into a `WKContentRuleList` and evaluated inside WebKit. Search queries go only
 to the search provider selected by the user. `PermissionBroker` defaults media
 capture requests to denial until an allow-once prompt is accepted.
 
+`BookmarkStore`, `HistoryStore`, and `SitePrivacyStore` keep their small Codable
+models in local application preferences. History persistence is opt-in and the
+recording path rejects private tabs before reaching `HistoryStore`. Per-site
+JavaScript decisions are applied through `WKWebpagePreferences`; media blocking
+is enforced before presenting the allow-once permission broker.
+
 ## Platform behavior
 
 The application uses a compact tab grid on iPhone and a native split-view tab

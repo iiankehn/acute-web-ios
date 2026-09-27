@@ -27,6 +27,8 @@ The `0.1.0` preview includes:
 - Native downloads saved locally and exposed through the system share sheet.
 - Find in page and per-tab desktop/mobile website switching.
 - Explicit allow-once prompts for website camera and microphone access.
+- Persistent user-created bookmarks and browsing history that is off by default.
+- Per-site controls for tracker blocking, JavaScript, media capture, and local website data.
 - A clear privacy settings surface documenting Acute's zero-telemetry behavior.
 
 ## Generate and build

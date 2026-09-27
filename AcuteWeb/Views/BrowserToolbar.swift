@@ -51,6 +51,12 @@ struct BrowserToolbar: View {
                 }
             }
 
+            if browser.selectedTab?.url != nil, browser.selectedTab?.isPrivate != true {
+                Button { browser.toggleBookmark() } label: {
+                    Image(systemName: browser.bookmarks.contains(browser.selectedTab?.url) ? "bookmark.fill" : "bookmark")
+                }
+            }
+
             Menu {
                 Button("New Tab", systemImage: "plus") { browser.newTab() }
                 Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
@@ -71,6 +77,9 @@ struct BrowserToolbar: View {
                 }
                 .disabled(browser.selectedTab?.url == nil)
                 Button("Downloads", systemImage: "arrow.down.circle") { browser.showsDownloads = true }
+                Button("Bookmarks and History", systemImage: "books.vertical") { browser.showsLibrary = true }
+                Button("Site Privacy", systemImage: "shield.lefthalf.filled") { browser.showsSitePrivacy = true }
+                    .disabled(browser.selectedTab?.url == nil)
                 if let url = browser.selectedTab?.url {
                     ShareLink(item: url)
                 }

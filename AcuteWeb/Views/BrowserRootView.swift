@@ -18,12 +18,18 @@ struct BrowserRootView: View {
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $browser.showsSettings) {
-            SettingsView(preferences: browser.preferences) {
+            SettingsView(preferences: browser.preferences, history: browser.history) {
                 browser.applyPrivacyPreferences()
             }
         }
         .sheet(isPresented: $browser.showsDownloads) {
             DownloadsView(downloadCenter: browser.downloadCenter)
+        }
+        .sheet(isPresented: $browser.showsLibrary) {
+            LibraryView(bookmarks: browser.bookmarks, history: browser.history).environmentObject(browser)
+        }
+        .sheet(isPresented: $browser.showsSitePrivacy) {
+            SitePrivacyView(sitePrivacy: browser.sitePrivacy).environmentObject(browser)
         }
         .background {
             PermissionPromptHost(broker: browser.permissionBroker)
@@ -41,7 +47,8 @@ struct BrowserRootView: View {
                     WebView(
                         tab: tab,
                         downloadCenter: browser.downloadCenter,
-                        permissionBroker: browser.permissionBroker
+                        permissionBroker: browser.permissionBroker,
+                        sitePrivacy: browser.sitePrivacy
                     )
                         .ignoresSafeArea(.container, edges: .bottom)
                 }

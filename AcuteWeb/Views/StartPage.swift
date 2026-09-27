@@ -47,6 +47,26 @@ struct StartPage: View {
                 }
 
                 if browser.selectedTab?.isPrivate != true {
+                    if !browser.bookmarks.items.isEmpty {
+                        sectionTitle("Bookmarks")
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 125), spacing: 12)], spacing: 12) {
+                            ForEach(browser.bookmarks.items.prefix(8)) { bookmark in
+                                Button {
+                                    if let url = bookmark.url { browser.open(url) }
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 18) {
+                                        Image(systemName: "bookmark.fill").font(.title2)
+                                        Text(bookmark.title).font(.headline).lineLimit(2)
+                                    }
+                                    .frame(maxWidth: .infinity, minHeight: 92, alignment: .leading)
+                                    .padding()
+                                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                    }
+
                     sectionTitle("Favorites")
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 125), spacing: 12)], spacing: 12) {
                         ForEach(favorites) { favorite in

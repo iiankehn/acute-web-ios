@@ -22,3 +22,10 @@ Websites cannot use the camera or microphone until the user accepts an explicit
 site prompt. The decision applies to that request only and is not uploaded or
 recorded by Acute. Downloads are stored locally in the app's Documents folder
 and can be opened or shared using system interfaces.
+
+Bookmarks are saved locally only when the user explicitly creates them. Saved
+browsing history is disabled by default, never includes private tabs, and can be
+cleared at any time. Per-site privacy preferences are stored locally and are not
+synced or transmitted to Acute. Users can block media capture, disable
+JavaScript, change tracker protection, and remove WebKit website data for the
+current site.

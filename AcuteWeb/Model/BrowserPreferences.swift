@@ -29,6 +29,7 @@ final class BrowserPreferences: ObservableObject {
     private enum Key {
         static let searchEngine = "searchEngine"
         static let blocksTrackers = "blocksTrackers"
+        static let savesHistory = "savesHistory"
     }
 
     @Published var searchEngine: SearchEngine {
@@ -39,9 +40,14 @@ final class BrowserPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(blocksTrackers, forKey: Key.blocksTrackers) }
     }
 
+    @Published var savesHistory: Bool {
+        didSet { UserDefaults.standard.set(savesHistory, forKey: Key.savesHistory) }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         searchEngine = SearchEngine(rawValue: defaults.string(forKey: Key.searchEngine) ?? "") ?? .duckDuckGo
         blocksTrackers = defaults.object(forKey: Key.blocksTrackers) as? Bool ?? true
+        savesHistory = defaults.object(forKey: Key.savesHistory) as? Bool ?? false
     }
 }

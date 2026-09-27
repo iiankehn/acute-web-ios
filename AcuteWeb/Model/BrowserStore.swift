@@ -16,6 +16,8 @@ final class BrowserStore: ObservableObject {
     @Published var showsSettings = false
     @Published var showsDownloads = false
     @Published var showsFindBar = false
+    @Published var showsLibrary = false
+    @Published var showsSitePrivacy = false
     @Published var addressDraft = ""
     @Published var findQuery = ""
     @Published private(set) var findStatus = ""
@@ -25,6 +27,9 @@ final class BrowserStore: ObservableObject {
     let preferences = BrowserPreferences()
     let downloadCenter = DownloadCenter()
     let permissionBroker = PermissionBroker()
+    let bookmarks = BookmarkStore()
+    let history = HistoryStore()
+    let sitePrivacy = SitePrivacyStore()
     private let contentBlocker = ContentBlocker()
 
     var selectedTab: BrowserTab? {
@@ -96,6 +101,10 @@ final class BrowserStore: ObservableObject {
         recentSites.removeAll { $0.url.host == url.host }
         recentSites.insert(RecentSite(title: tab.title, url: url), at: 0)
         recentSites = Array(recentSites.prefix(6))
+        if preferences.savesHistory {
+            history.record(title: tab.title, url: url)
+        }
+        applyPrivacyPreferences(to: tab)
     }
 
     func open(_ url: URL) {
@@ -105,7 +114,29 @@ final class BrowserStore: ObservableObject {
 
     func applyPrivacyPreferences() {
         for tab in tabs {
-            contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
+            applyPrivacyPreferences(to: tab)
+        }
+    }
+
+    func applyPrivacyPreferences(to tab: BrowserTab) {
+        let policy = sitePrivacy.policy(for: tab.url?.host)
+        contentBlocker.apply(enabled: preferences.blocksTrackers && policy.blocksTrackers, to: tab.webView)
+    }
+
+    func toggleBookmark() {
+        guard let tab = selectedTab, !tab.isPrivate, let url = tab.url else { return }
+        bookmarks.toggle(title: tab.title, url: url)
+        objectWillChange.send()
+    }
+
+    func clearSiteData(host: String, completion: @escaping () -> Void) {
+        guard let tab = selectedTab else { completion(); return }
+        let store = tab.webView.configuration.websiteDataStore
+        store.fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
+            let matching = records.filter { $0.displayName == host || $0.displayName.hasSuffix(".\(host)") }
+            store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), for: matching) {
+                Task { @MainActor in completion() }
+            }
         }
     }
 

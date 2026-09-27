@@ -5,9 +5,10 @@ struct WebView: UIViewRepresentable {
     let tab: BrowserTab
     let downloadCenter: DownloadCenter
     let permissionBroker: PermissionBroker
+    let sitePrivacy: SitePrivacyStore
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(downloadCenter: downloadCenter, permissionBroker: permissionBroker)
+        Coordinator(downloadCenter: downloadCenter, permissionBroker: permissionBroker, sitePrivacy: sitePrivacy)
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -21,26 +22,30 @@ struct WebView: UIViewRepresentable {
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
         let downloadCenter: DownloadCenter
         let permissionBroker: PermissionBroker
+        let sitePrivacy: SitePrivacyStore
 
-        init(downloadCenter: DownloadCenter, permissionBroker: PermissionBroker) {
+        init(downloadCenter: DownloadCenter, permissionBroker: PermissionBroker, sitePrivacy: SitePrivacyStore) {
             self.downloadCenter = downloadCenter
             self.permissionBroker = permissionBroker
+            self.sitePrivacy = sitePrivacy
         }
 
         func webView(
             _ webView: WKWebView,
             decidePolicyFor navigationAction: WKNavigationAction,
-            decisionHandler: @escaping (WKNavigationActionPolicy) -> Void
+            preferences: WKWebpagePreferences,
+            decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
         ) {
+            preferences.allowsContentJavaScript = sitePrivacy.policy(for: navigationAction.request.url?.host).allowsJavaScript
             if navigationAction.shouldPerformDownload {
-                decisionHandler(.download)
+                decisionHandler(.download, preferences)
                 return
             }
             guard let scheme = navigationAction.request.url?.scheme?.lowercased() else {
-                decisionHandler(.cancel)
+                decisionHandler(.cancel, preferences)
                 return
             }
-            decisionHandler(["http", "https", "about", "data", "blob"].contains(scheme) ? .allow : .cancel)
+            decisionHandler(["http", "https", "about", "data", "blob"].contains(scheme) ? .allow : .cancel, preferences)
         }
 
         func webView(
@@ -78,6 +83,10 @@ struct WebView: UIViewRepresentable {
             type: WKMediaCaptureType,
             decisionHandler: @escaping (WKPermissionDecision) -> Void
         ) {
+            if sitePrivacy.policy(for: origin.host).blocksMediaCapture {
+                decisionHandler(.deny)
+                return
+            }
             let kind: SitePermissionKind
             switch type {
             case .camera:

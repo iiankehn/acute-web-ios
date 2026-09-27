@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var preferences: BrowserPreferences
+    @ObservedObject var history: HistoryStore
     let applyPrivacyPreferences: () -> Void
     @Environment(\.dismiss) private var dismiss
 
@@ -22,6 +23,10 @@ struct SettingsView: View {
                     LabeledContent("Fraudulent website warnings", value: "On")
                     LabeledContent("Acute telemetry", value: "None")
                     LabeledContent("Diagnostic uploads", value: "None")
+                    Toggle("Save browsing history", isOn: $preferences.savesHistory)
+                    if !history.items.isEmpty {
+                        Button("Clear Saved History", role: .destructive) { history.clear() }
+                    }
                 } header: {
                     Text("Privacy Protection")
                 } footer: {
@@ -29,7 +34,7 @@ struct SettingsView: View {
                 }
 
                 Section("Private Browsing") {
-                    Label("Private tabs use a non-persistent website data store and are excluded from session history.", systemImage: "hand.raised.fill")
+                    Label("Private tabs use a non-persistent website data store and are excluded from recent sites and saved history.", systemImage: "hand.raised.fill")
                 }
 
                 Section("About") {
