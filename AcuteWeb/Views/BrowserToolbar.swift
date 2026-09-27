@@ -10,11 +10,13 @@ struct BrowserToolbar: View {
             Button { browser.selectedTab?.webView.goBack() } label: {
                 Image(systemName: "chevron.backward")
             }
+            .accessibilityLabel("Back")
             .disabled(browser.selectedTab?.canGoBack != true)
 
             Button { browser.selectedTab?.webView.goForward() } label: {
                 Image(systemName: "chevron.forward")
             }
+            .accessibilityLabel("Forward")
             .disabled(browser.selectedTab?.canGoForward != true)
 
             HStack(spacing: 8) {
@@ -22,6 +24,7 @@ struct BrowserToolbar: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 TextField("Search or enter address", text: $browser.addressDraft)
+                    .accessibilityIdentifier("addressField")
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.webSearch)
@@ -37,6 +40,7 @@ struct BrowserToolbar: View {
                 } label: {
                     Image(systemName: browser.selectedTab?.isLoading == true ? "xmark" : "arrow.clockwise")
                 }
+                .accessibilityLabel(browser.selectedTab?.isLoading == true ? "Stop" : "Reload")
             }
             .padding(.horizontal, 12)
             .frame(minHeight: 44)
@@ -49,12 +53,14 @@ struct BrowserToolbar: View {
                             Text("\(browser.tabs.count)").font(.system(size: 8, weight: .bold))
                         }
                 }
+                .accessibilityLabel("Tabs")
             }
 
             if browser.selectedTab?.url != nil, browser.selectedTab?.isPrivate != true {
                 Button { browser.toggleBookmark() } label: {
                     Image(systemName: browser.bookmarks.contains(browser.selectedTab?.url) ? "bookmark.fill" : "bookmark")
                 }
+                .accessibilityLabel(browser.bookmarks.contains(browser.selectedTab?.url) ? "Remove Bookmark" : "Add Bookmark")
             }
 
             Menu {
@@ -88,6 +94,7 @@ struct BrowserToolbar: View {
                 Image(systemName: "ellipsis")
                     .frame(width: 32, height: 32)
             }
+            .accessibilityLabel("More")
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 12)

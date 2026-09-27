@@ -28,10 +28,16 @@ targets:
         CURRENT_PROJECT_VERSION: 1
         MARKETING_VERSION: 0.1.0
     scheme:
-      testTargets: [AcuteWebTests]
+      testTargets: [AcuteWebTests, AcuteWebUITests]
   AcuteWebTests:
     type: bundle.unit-test
     platform: iOS
     sources: [AcuteWebTests]
+    dependencies:
+      - target: AcuteWeb
+  AcuteWebUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [AcuteWebUITests]
     dependencies:
       - target: AcuteWeb
