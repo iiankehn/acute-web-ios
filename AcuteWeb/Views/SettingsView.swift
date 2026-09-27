@@ -38,6 +38,7 @@ struct SettingsView: View {
                 }
 
                 Section("About") {
+                    LabeledContent("Brand", value: "Acute Web by CORE")
                     LabeledContent("Version", value: "0.1.0 Preview")
                     LabeledContent("Rendering engine", value: "WebKit")
                 }

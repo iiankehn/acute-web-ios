@@ -2,6 +2,7 @@ import SwiftUI
 
 struct StartPage: View {
     @EnvironmentObject private var browser: BrowserStore
+    @Environment(\.colorScheme) private var colorScheme
     @FocusState private var searchFocused: Bool
 
     private struct FavoriteSite: Identifiable {
@@ -20,12 +21,24 @@ struct StartPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Acute Web")
-                        .font(.system(size: 38, weight: .bold, design: .rounded))
-                    Text(browser.selectedTab?.isPrivate == true ? "Private browsing" : "The web, in focus.")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
+                HStack(spacing: 16) {
+                    Image("AcuteMark")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 82, height: 82)
+                        .accessibilityHidden(true)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Acute Web")
+                            .font(.system(size: 38, weight: .bold, design: .rounded))
+                        Text("BY CORE")
+                            .font(.caption.weight(.bold))
+                            .tracking(2.2)
+                            .foregroundStyle(Color.accentColor)
+                        Text(browser.selectedTab?.isPrivate == true ? "Private browsing" : "The web, in focus.")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
+                    }
                 }
 
                 HStack(spacing: 10) {
@@ -120,13 +133,19 @@ struct StartPage: View {
             .frame(maxWidth: .infinity)
         }
         .background {
-            LinearGradient(colors: [.black, Color(red: 0.02, green: 0.10, blue: 0.15)], startPoint: .top, endPoint: .bottom)
+            LinearGradient(colors: backgroundColors, startPoint: .top, endPoint: .bottom)
                 .ignoresSafeArea()
         }
-        .foregroundStyle(.white)
+        .foregroundStyle(.primary)
     }
 
     private func sectionTitle(_ title: String) -> some View {
         Text(title).font(.headline).foregroundStyle(.secondary)
+    }
+
+    private var backgroundColors: [Color] {
+        colorScheme == .dark
+            ? [.black, Color(red: 0.02, green: 0.10, blue: 0.15)]
+            : [Color(red: 0.95, green: 0.98, blue: 1.0), .white]
     }
 }

@@ -4,6 +4,11 @@ Native SwiftUI browser shell using WebKit. The product principles carry across
 from Acute Web for Android; the engine and interface remain native to Apple
 platforms.
 
+**Acute Web by CORE** — *The web, in focus.*
+
+The app icon includes coordinated light, dark, and clear/tinted Liquid Glass
+appearances for iOS and iPadOS. Preview builds use a matching beta-badged set.
+
 ## Principles
 
 - No telemetry, analytics, experiments, advertising identifiers, or automatic
