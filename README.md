@@ -46,5 +46,6 @@ GitHub Actions regenerates the project, compiles the app and full XCUITest targe
 runs the unit suite, installs and launches Acute on an iPhone simulator, and
 retains a start-page screenshot with the test result bundle. The XCUITest suite
 also covers privacy settings, private browsing, and history for local or release
-validation. Device and TestFlight builds require Apple Developer signing
+validation. CI uses Xcode 26.3 and an iOS 26.2 simulator so Liquid Glass code is
+compiled and exercised. Device and TestFlight builds require Apple Developer signing
 credentials.
