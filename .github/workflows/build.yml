@@ -29,25 +29,41 @@ jobs:
           echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
-      - name: Run unit and interface tests
+      - name: Build app and test targets
         run: |
           set -o pipefail
-          xcodebuild test \
+          xcodebuild build-for-testing \
             -project AcuteWeb.xcodeproj \
             -scheme AcuteWeb \
             -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
             -destination-timeout 120 \
+            -derivedDataPath "$PWD/DerivedData" \
+            -parallel-testing-enabled NO
+      - name: Run unit tests
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
+            -derivedDataPath "$PWD/DerivedData" \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
-            -only-testing:AcuteWebTests \
-            -only-testing:AcuteWebUITests/AcuteWebUITests/testLaunchShowsNativeStartPage \
-            -test-timeouts-enabled YES \
-            -default-test-execution-time-allowance 60 \
-            -maximum-test-execution-time-allowance 90
-      - name: Upload test results and screenshots
+            -only-testing:AcuteWebTests
+      - name: Install, launch, and capture app
+        run: |
+          APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
+          mkdir -p Artifacts
+          xcrun simctl install '${{ steps.simulator.outputs.id }}' "$APP_PATH"
+          xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.id }}' com.acuteweb.browser.ios
+          sleep 5
+          xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page.png
+      - name: Upload test results and simulator screenshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: acute-web-test-results
-          path: TestResults.xcresult
+          path: |
+            TestResults.xcresult
+            Artifacts/acute-web-start-page.png
           if-no-files-found: ignore

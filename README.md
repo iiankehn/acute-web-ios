@@ -42,8 +42,9 @@ xcodebuild -project AcuteWeb.xcodeproj -scheme AcuteWeb \
   -destination 'platform=iOS Simulator,name=iPhone 17 Pro' build
 ```
 
-GitHub Actions regenerates the project, boots an iPhone simulator, runs the unit
-suite and a launch-interface smoke test, and retains the result bundle with its
-screenshot. The full XCUITest suite also covers privacy settings, private
-browsing, and history for local or release validation. Device and TestFlight
-builds require Apple Developer signing credentials.
+GitHub Actions regenerates the project, compiles the app and full XCUITest target,
+runs the unit suite, installs and launches Acute on an iPhone simulator, and
+retains a start-page screenshot with the test result bundle. The XCUITest suite
+also covers privacy settings, private browsing, and history for local or release
+validation. Device and TestFlight builds require Apple Developer signing
+credentials.
