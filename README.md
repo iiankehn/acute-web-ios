@@ -1,5 +1,9 @@
 # Acute Web for iOS and iPadOS
 
+<p align="center">
+  <img src="AcuteWeb/Assets.xcassets/AppIcon.appiconset/AcuteWebIcon-Clear.png" alt="Acute Web clear-glass cat-fox mark" width="180">
+</p>
+
 Native SwiftUI browser shell using WebKit. The product principles carry across
 from Acute Web for Android; the engine and interface remain native to Apple
 platforms.
@@ -8,6 +12,8 @@ platforms.
 
 The app icon includes coordinated light, dark, and clear/tinted Liquid Glass
 appearances for iOS and iPadOS. Preview builds use a matching beta-badged set.
+The committed clear and clear-beta images are the cross-platform master artwork
+used by the Android project and the Acute Web website.
 
 ## Principles
 
