@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import WebKit
 
 struct RecentSite: Identifiable, Equatable {
     let id = UUID()
@@ -13,11 +14,17 @@ final class BrowserStore: ObservableObject {
     @Published var selectedTabID: BrowserTab.ID?
     @Published var showsTabs = false
     @Published var showsSettings = false
+    @Published var showsDownloads = false
+    @Published var showsFindBar = false
     @Published var addressDraft = ""
+    @Published var findQuery = ""
+    @Published private(set) var findStatus = ""
     @Published private(set) var recentlyClosed: [(url: URL?, isPrivate: Bool)] = []
     @Published private(set) var recentSites: [RecentSite] = []
 
     let preferences = BrowserPreferences()
+    let downloadCenter = DownloadCenter()
+    let permissionBroker = PermissionBroker()
     private let contentBlocker = ContentBlocker()
 
     var selectedTab: BrowserTab? {
@@ -100,5 +107,30 @@ final class BrowserStore: ObservableObject {
         for tab in tabs {
             contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
         }
+    }
+
+    func findInPage(backwards: Bool = false) {
+        guard let webView = selectedTab?.webView else { return }
+        let query = findQuery.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !query.isEmpty else {
+            findStatus = ""
+            return
+        }
+        let configuration = WKFindConfiguration()
+        configuration.backwards = backwards
+        configuration.wraps = true
+        webView.find(query, configuration: configuration) { [weak self] result in
+            self?.findStatus = result.matchFound ? "Match found" : "No matches"
+        }
+    }
+
+    func closeFindBar() {
+        showsFindBar = false
+        findQuery = ""
+        findStatus = ""
+    }
+
+    func toggleDesktopSite() {
+        selectedTab?.toggleDesktopSite()
     }
 }

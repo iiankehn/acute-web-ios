@@ -15,6 +15,7 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
     @Published var canGoBack = false
     @Published var canGoForward = false
     @Published var snapshot: UIImage?
+    @Published var usesDesktopSite = false
 
     private var observations: [NSKeyValueObservation] = []
 
@@ -65,5 +66,11 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
         webView.takeSnapshot(with: nil) { [weak self] image, _ in
             Task { @MainActor in self?.snapshot = image }
         }
+    }
+
+    func toggleDesktopSite() {
+        usesDesktopSite.toggle()
+        webView.configuration.defaultWebpagePreferences.preferredContentMode = usesDesktopSite ? .desktop : .mobile
+        webView.reload()
     }
 }

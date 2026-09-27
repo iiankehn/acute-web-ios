@@ -21,7 +21,7 @@ final class ContentBlocker {
         isCompiling = true
 
         WKContentRuleListStore.default().compileContentRuleList(
-            forIdentifier: "AcutePrivacyRules-v1",
+            forIdentifier: "AcutePrivacyRules-v2",
             encodedContentRuleList: Self.rules
         ) { [weak self] ruleList, _ in
             Task { @MainActor in
@@ -49,10 +49,26 @@ final class ContentBlocker {
             "*doubleclick.net",
             "*googlesyndication.com",
             "*google-analytics.com",
+            "*googletagmanager.com",
             "*connect.facebook.net",
+            "*ads-twitter.com",
             "*scorecardresearch.com",
             "*adnxs.com",
-            "*amazon-adsystem.com"
+            "*amazon-adsystem.com",
+            "*taboola.com",
+            "*outbrain.com",
+            "*hotjar.com",
+            "*segment.io",
+            "*segment.com",
+            "*mixpanel.com",
+            "*amplitude.com",
+            "*branch.io",
+            "*appsflyer.com",
+            "*criteo.com",
+            "*criteo.net",
+            "*quantserve.com",
+            "*rubiconproject.com",
+            "*pubmatic.com"
           ],
           "resource-type": ["script", "image", "style-sheet", "raw"]
         },

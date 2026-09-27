@@ -59,6 +59,18 @@ struct BrowserToolbar: View {
                 }
                 .disabled(browser.recentlyClosed.isEmpty)
                 Divider()
+                Button("Find on Page", systemImage: "text.magnifyingglass") {
+                    browser.showsFindBar = true
+                }
+                .disabled(browser.selectedTab?.url == nil)
+                Button(
+                    browser.selectedTab?.usesDesktopSite == true ? "Request Mobile Site" : "Request Desktop Site",
+                    systemImage: browser.selectedTab?.usesDesktopSite == true ? "iphone" : "desktopcomputer"
+                ) {
+                    browser.toggleDesktopSite()
+                }
+                .disabled(browser.selectedTab?.url == nil)
+                Button("Downloads", systemImage: "arrow.down.circle") { browser.showsDownloads = true }
                 if let url = browser.selectedTab?.url {
                     ShareLink(item: url)
                 }

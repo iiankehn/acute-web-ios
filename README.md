@@ -24,6 +24,9 @@ The `0.1.0` preview includes:
 - Tab snapshots, duplication, reopening, reordering, and adaptive iPad layouts.
 - Search-engine selection with DuckDuckGo as the default.
 - On-device WebKit content rules for known tracker resources.
+- Native downloads saved locally and exposed through the system share sheet.
+- Find in page and per-tab desktop/mobile website switching.
+- Explicit allow-once prompts for website camera and microphone access.
 - A clear privacy settings surface documenting Acute's zero-telemetry behavior.
 
 ## Generate and build

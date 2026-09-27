@@ -17,3 +17,8 @@ When tracker protection is enabled, Acute installs a compiled WebKit content
 rule list locally. Matching resources are blocked by WebKit on the device;
 requested URLs are not sent to Acute for classification. Recent sites shown on
 the start page exist only for the current app session and exclude private tabs.
+
+Websites cannot use the camera or microphone until the user accepts an explicit
+site prompt. The decision applies to that request only and is not uploaded or
+recorded by Acute. Downloads are stored locally in the app's Documents folder
+and can be opened or shared using system interfaces.
