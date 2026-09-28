@@ -24,13 +24,11 @@ jobs:
         run: brew install xcodegen
       - name: Generate project
         run: xcodegen generate
-      - name: Select simulators and boot iPhone
+      - name: Select and boot iPhone
         id: simulator
         run: |
           DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; data=json.load(sys.stdin); devices=[d for runtime, values in data["devices"].items() if "iOS-26-2" in runtime for d in values if d.get("isAvailable") and d["name"] == "iPhone 17 Pro"]; print(devices[0]["udid"])')
-          IPAD_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; data=json.load(sys.stdin); devices=[d for runtime, values in data["devices"].items() if "iOS-26-2" in runtime for d in values if d.get("isAvailable") and d["name"].startswith("iPad Pro")]; print(devices[0]["udid"])')
           echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
-          echo "ipad_id=$IPAD_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
       - name: Build app and test targets
@@ -59,7 +57,7 @@ jobs:
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
           test -f "$APP_PATH/PrivacyInfo.xcprivacy"
           plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
-      - name: Install, launch, and capture app on iPhone and iPad
+      - name: Install, launch, and capture app on iPhone
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
           mkdir -p Artifacts
@@ -67,13 +65,6 @@ jobs:
           xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.id }}' com.acuteweb.browser.ios
           sleep 5
           xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page.png
-          xcrun simctl shutdown '${{ steps.simulator.outputs.id }}'
-          xcrun simctl boot '${{ steps.simulator.outputs.ipad_id }}' || true
-          xcrun simctl bootstatus '${{ steps.simulator.outputs.ipad_id }}' -b
-          xcrun simctl install '${{ steps.simulator.outputs.ipad_id }}' "$APP_PATH"
-          xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.ipad_id }}' com.acuteweb.browser.ios
-          sleep 5
-          xcrun simctl io '${{ steps.simulator.outputs.ipad_id }}' screenshot Artifacts/acute-web-ipad-start-page.png
       - name: Upload test results and simulator screenshot
         if: always()
         uses: actions/upload-artifact@v4
@@ -82,5 +73,44 @@ jobs:
           path: |
             TestResults.xcresult
             Artifacts/acute-web-start-page.png
-            Artifacts/acute-web-ipad-start-page.png
+          if-no-files-found: ignore
+
+  ipad-smoke:
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.3
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Select and boot iPad
+        id: ipad
+        run: |
+          IPAD_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; data=json.load(sys.stdin); devices=[d for runtime, values in data["devices"].items() if "iOS-26-2" in runtime for d in values if d.get("isAvailable") and d["name"].startswith("iPad Pro")]; print(devices[0]["udid"])')
+          echo "id=$IPAD_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$IPAD_ID" || true
+          xcrun simctl bootstatus "$IPAD_ID" -b
+      - name: Build, install, launch, and capture app on iPad
+        run: |
+          xcodebuild build \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.ipad.outputs.id }}' \
+            -destination-timeout 120 \
+            -derivedDataPath "$PWD/iPadDerivedData"
+          APP_PATH="$PWD/iPadDerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
+          mkdir -p Artifacts
+          xcrun simctl install '${{ steps.ipad.outputs.id }}' "$APP_PATH"
+          xcrun simctl launch --terminate-running-process '${{ steps.ipad.outputs.id }}' com.acuteweb.browser.ios
+          sleep 5
+          xcrun simctl io '${{ steps.ipad.outputs.id }}' screenshot Artifacts/acute-web-ipad-start-page.png
+      - name: Upload iPad screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acute-web-ipad-smoke
+          path: Artifacts/acute-web-ipad-start-page.png
           if-no-files-found: ignore
