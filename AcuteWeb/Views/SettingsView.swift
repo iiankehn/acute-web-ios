@@ -4,6 +4,7 @@ struct SettingsView: View {
     @ObservedObject var preferences: BrowserPreferences
     @ObservedObject var history: HistoryStore
     let applyPrivacyPreferences: () -> Void
+    let applySessionPreferences: () -> Void
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -37,9 +38,18 @@ struct SettingsView: View {
                     Label("Private tabs use a non-persistent website data store and are excluded from recent sites and saved history.", systemImage: "hand.raised.fill")
                 }
 
+                Section {
+                    Toggle("Restore regular tabs", isOn: $preferences.restoresTabs)
+                        .onChange(of: preferences.restoresTabs) { _, _ in applySessionPreferences() }
+                } header: {
+                    Text("Startup")
+                } footer: {
+                    Text("Regular web addresses are stored only on this device for recovery. Private tabs are never saved or restored.")
+                }
+
                 Section("About") {
                     LabeledContent("Brand", value: "Acute Web by CORE")
-                    LabeledContent("Version", value: "0.1.0 Preview")
+                    LabeledContent("Version", value: "1.0.0")
                     LabeledContent("Rendering engine", value: "WebKit")
                 }
             }

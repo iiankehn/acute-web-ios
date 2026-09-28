@@ -11,12 +11,14 @@ struct BrowserToolbar: View {
                 Image(systemName: "chevron.backward")
             }
             .accessibilityLabel("Back")
+            .frame(minWidth: 44, minHeight: 44)
             .disabled(browser.selectedTab?.canGoBack != true)
 
             Button { browser.selectedTab?.webView.goForward() } label: {
                 Image(systemName: "chevron.forward")
             }
             .accessibilityLabel("Forward")
+            .frame(minWidth: 44, minHeight: 44)
             .disabled(browser.selectedTab?.canGoForward != true)
 
             HStack(spacing: 8) {
@@ -41,6 +43,7 @@ struct BrowserToolbar: View {
                     Image(systemName: browser.selectedTab?.isLoading == true ? "xmark" : "arrow.clockwise")
                 }
                 .accessibilityLabel(browser.selectedTab?.isLoading == true ? "Stop" : "Reload")
+                .frame(minWidth: 44, minHeight: 44)
             }
             .padding(.horizontal, 12)
             .frame(minHeight: 44)
@@ -54,6 +57,8 @@ struct BrowserToolbar: View {
                         }
                 }
                 .accessibilityLabel("Tabs")
+                .accessibilityValue("\(browser.tabs.count) open")
+                .frame(minWidth: 44, minHeight: 44)
             }
 
             if browser.selectedTab?.url != nil, browser.selectedTab?.isPrivate != true {
@@ -61,6 +66,7 @@ struct BrowserToolbar: View {
                     Image(systemName: browser.bookmarks.contains(browser.selectedTab?.url) ? "bookmark.fill" : "bookmark")
                 }
                 .accessibilityLabel(browser.bookmarks.contains(browser.selectedTab?.url) ? "Remove Bookmark" : "Add Bookmark")
+                .frame(minWidth: 44, minHeight: 44)
             }
 
             Menu {
@@ -95,6 +101,7 @@ struct BrowserToolbar: View {
                     .frame(width: 32, height: 32)
             }
             .accessibilityLabel("More")
+            .frame(minWidth: 44, minHeight: 44)
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 12)

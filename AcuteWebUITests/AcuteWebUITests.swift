@@ -50,6 +50,19 @@ final class AcuteWebUITests: XCTestCase {
         attachScreenshot("History Off")
     }
 
+    func testSessionRecoveryExplainsPrivateTabExclusion() {
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        let restoreSwitch = app.switches["Restore regular tabs"]
+        XCTAssertTrue(restoreSwitch.exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(
+            format: "label CONTAINS 'Private tabs are never saved or restored'"
+        )).firstMatch.exists)
+        attachScreenshot("Session Recovery")
+    }
+
     private func openMoreMenu() {
         let more = app.buttons["More"]
         XCTAssertTrue(more.waitForExistence(timeout: 10))

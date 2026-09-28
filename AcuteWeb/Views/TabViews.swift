@@ -16,10 +16,12 @@ struct TabSidebar: View {
                         }
                         Spacer()
                         if browser.selectedTabID == tab.id {
-                            Circle().fill(.cyan).frame(width: 6, height: 6)
+                            Circle().fill(Color.accentColor).frame(width: 6, height: 6)
                         }
                     }
                 }
+                .accessibilityLabel(tab.title)
+                .accessibilityValue(browser.selectedTabID == tab.id ? "Selected tab" : (tab.isPrivate ? "Private tab" : "Regular tab"))
                 .swipeActions {
                     Button(role: .destructive) { browser.close(tab) } label: { Label("Close", systemImage: "xmark") }
                 }
@@ -79,6 +81,8 @@ struct TabGrid: View {
                         .padding()
                         .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
                     }
+                    .accessibilityLabel(tab.title)
+                    .accessibilityValue(tab.isPrivate ? "Private tab" : "Regular tab")
                     .contextMenu {
                         Button("Duplicate") { browser.duplicate(tab) }
                         Button("Close", role: .destructive) { browser.close(tab) }

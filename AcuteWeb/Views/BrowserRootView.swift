@@ -5,13 +5,18 @@ struct BrowserRootView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
-        NavigationSplitView {
+        Group {
             if horizontalSizeClass == .regular {
-                TabSidebar()
-                    .navigationSplitViewColumnWidth(min: 220, ideal: 280, max: 340)
+                NavigationSplitView {
+                    TabSidebar()
+                        .navigationSplitViewColumnWidth(min: 220, ideal: 280, max: 340)
+                } detail: {
+                    browserContent
+                }
+                .navigationSplitViewStyle(.balanced)
+            } else {
+                browserContent
             }
-        } detail: {
-            browserContent
         }
         .sheet(isPresented: $browser.showsTabs) {
             NavigationStack { TabGrid() }
@@ -20,6 +25,8 @@ struct BrowserRootView: View {
         .sheet(isPresented: $browser.showsSettings) {
             SettingsView(preferences: browser.preferences, history: browser.history) {
                 browser.applyPrivacyPreferences()
+            } applySessionPreferences: {
+                browser.saveSession()
             }
         }
         .sheet(isPresented: $browser.showsDownloads) {
@@ -34,12 +41,12 @@ struct BrowserRootView: View {
         .background {
             PermissionPromptHost(broker: browser.permissionBroker)
         }
-        .tint(.cyan)
+        .tint(.accentColor)
     }
 
     private var browserContent: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            Color(uiColor: .systemBackground).ignoresSafeArea()
             if let tab = browser.selectedTab {
                 if tab.url == nil {
                     StartPage()
@@ -63,7 +70,7 @@ struct BrowserRootView: View {
                 if let tab = browser.selectedTab, tab.isLoading {
                     ProgressView(value: tab.estimatedProgress)
                         .progressViewStyle(.linear)
-                        .tint(.cyan)
+                        .tint(.accentColor)
                 }
             }
         }

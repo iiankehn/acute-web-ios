@@ -30,6 +30,7 @@ final class BrowserPreferences: ObservableObject {
         static let searchEngine = "searchEngine"
         static let blocksTrackers = "blocksTrackers"
         static let savesHistory = "savesHistory"
+        static let restoresTabs = "restoresTabs"
     }
 
     @Published var searchEngine: SearchEngine {
@@ -44,10 +45,15 @@ final class BrowserPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(savesHistory, forKey: Key.savesHistory) }
     }
 
+    @Published var restoresTabs: Bool {
+        didSet { UserDefaults.standard.set(restoresTabs, forKey: Key.restoresTabs) }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         searchEngine = SearchEngine(rawValue: defaults.string(forKey: Key.searchEngine) ?? "") ?? .duckDuckGo
         blocksTrackers = defaults.object(forKey: Key.blocksTrackers) as? Bool ?? true
         savesHistory = defaults.object(forKey: Key.savesHistory) as? Bool ?? false
+        restoresTabs = defaults.object(forKey: Key.restoresTabs) as? Bool ?? true
     }
 }

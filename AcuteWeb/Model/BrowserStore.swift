@@ -31,13 +31,17 @@ final class BrowserStore: ObservableObject {
     let history = HistoryStore()
     let sitePrivacy = SitePrivacyStore()
     private let contentBlocker = ContentBlocker()
+    private let sessionStore: BrowserSessionStore
 
     var selectedTab: BrowserTab? {
         tabs.first { $0.id == selectedTabID }
     }
 
-    init() {
-        newTab()
+    init(sessionStore: BrowserSessionStore = BrowserSessionStore()) {
+        self.sessionStore = sessionStore
+        if !preferences.restoresTabs || !restoreSession() {
+            newTab()
+        }
     }
 
     func newTab(isPrivate: Bool = false) {
@@ -53,6 +57,7 @@ final class BrowserStore: ObservableObject {
         selectedTabID = tab.id
         addressDraft = tab.url?.absoluteString ?? ""
         showsTabs = false
+        saveSession()
     }
 
     func close(_ tab: BrowserTab) {
@@ -65,6 +70,7 @@ final class BrowserStore: ObservableObject {
         if selectedTabID == tab.id {
             selectedTabID = tabs[min(index, tabs.count - 1)].id
         }
+        saveSession()
     }
 
     func navigate() {
@@ -72,6 +78,7 @@ final class BrowserStore: ObservableObject {
               let url = AddressResolver.resolve(addressDraft, searchEngine: preferences.searchEngine) else { return }
         tab.webView.load(URLRequest(url: url))
         addressDraft = url.absoluteString
+        saveSession(selectedURLOverride: url)
     }
 
     func refreshAddress() {
@@ -82,17 +89,22 @@ final class BrowserStore: ObservableObject {
         newTab(isPrivate: tab.isPrivate)
         guard let url = tab.url else { return }
         selectedTab?.webView.load(URLRequest(url: url))
+        saveSession(selectedURLOverride: url)
     }
 
     func reopenLastClosedTab() {
         guard let closed = recentlyClosed.first else { return }
         recentlyClosed.removeFirst()
         newTab(isPrivate: closed.isPrivate)
-        if let url = closed.url { selectedTab?.webView.load(URLRequest(url: url)) }
+        if let url = closed.url {
+            selectedTab?.webView.load(URLRequest(url: url))
+            saveSession(selectedURLOverride: url)
+        }
     }
 
     func moveTabs(from source: IndexSet, to destination: Int) {
         tabs.move(fromOffsets: source, toOffset: destination)
+        saveSession()
     }
 
     func recordCurrentVisit() {
@@ -105,6 +117,7 @@ final class BrowserStore: ObservableObject {
             history.record(title: tab.title, url: url)
         }
         applyPrivacyPreferences(to: tab)
+        saveSession()
     }
 
     func open(_ url: URL) {
@@ -163,5 +176,67 @@ final class BrowserStore: ObservableObject {
 
     func toggleDesktopSite() {
         selectedTab?.toggleDesktopSite()
+        saveSession()
+    }
+
+    func saveSession() {
+        saveSession(selectedURLOverride: nil)
+    }
+
+    @discardableResult
+    private func restoreSession() -> Bool {
+        guard let session = sessionStore.load() else { return false }
+
+        let validSavedTabs = session.tabs.filter { $0.url != nil }
+        let restoredTabs = validSavedTabs.compactMap { saved -> BrowserTab? in
+            guard let url = saved.url else { return nil }
+            let tab = BrowserTab()
+            tab.usesDesktopSite = saved.usesDesktopSite
+            tab.webView.configuration.defaultWebpagePreferences.preferredContentMode = saved.usesDesktopSite ? .desktop : .mobile
+            contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
+            tab.webView.load(URLRequest(url: url))
+            return tab
+        }
+
+        guard !restoredTabs.isEmpty else {
+            sessionStore.clear()
+            return false
+        }
+
+        tabs = restoredTabs
+        let selectedIndex = min(max(session.selectedIndex, 0), restoredTabs.count - 1)
+        selectedTabID = restoredTabs[selectedIndex].id
+        addressDraft = validSavedTabs[selectedIndex].address
+        return true
+    }
+
+    private func saveSession(selectedURLOverride: URL?) {
+        guard preferences.restoresTabs else {
+            sessionStore.clear()
+            return
+        }
+
+        var selectedRestorableIndex = 0
+        var savedTabs: [RestorableBrowserTab] = []
+
+        for tab in tabs where !tab.isPrivate {
+            let url = tab.id == selectedTabID ? (selectedURLOverride ?? tab.url) : tab.url
+            guard let url,
+                  let scheme = url.scheme?.lowercased(),
+                  ["http", "https"].contains(scheme) else { continue }
+
+            if tab.id == selectedTabID {
+                selectedRestorableIndex = savedTabs.count
+            }
+            savedTabs.append(RestorableBrowserTab(address: url.absoluteString,
+                                                   usesDesktopSite: tab.usesDesktopSite))
+        }
+
+        guard !savedTabs.isEmpty else {
+            sessionStore.clear()
+            return
+        }
+
+        sessionStore.save(BrowserSession(tabs: savedTabs, selectedIndex: selectedRestorableIndex))
     }
 }

@@ -10,10 +10,9 @@ platforms.
 
 **Acute Web by CORE** — *The web, in focus.*
 
-The app icon includes coordinated light, dark, and clear/tinted Liquid Glass
-appearances for iOS and iPadOS. Preview builds use a matching beta-badged set.
-The committed clear and clear-beta images are the cross-platform master artwork
-used by the Android project and the Acute Web website.
+Acute Web uses the clear-glass cat-fox exclusively. Stable builds use the
+unbadged clear icon, while beta builds use the matching clear `BETA` icon. The
+system derives its supported Home Screen appearances from this clear master.
 
 ## Principles
 
@@ -26,9 +25,9 @@ used by the Android project and the Acute Web website.
   Glass where available.
 - No third-party runtime dependencies.
 
-## Functional preview
+## Version 1.0
 
-The `0.1.0` preview includes:
+Version `1.0.0` includes:
 
 - A native start page for regular and private tabs.
 - Session-only recent sites that never include private browsing.
@@ -39,8 +38,11 @@ The `0.1.0` preview includes:
 - Find in page and per-tab desktop/mobile website switching.
 - Explicit allow-once prompts for website camera and microphone access.
 - Persistent user-created bookmarks and browsing history that is off by default.
+- Crash-safe restoration for regular tabs, with a user-controlled startup toggle.
+- Private tabs excluded from saved sessions, recent sites, and browsing history.
 - Per-site controls for tracker blocking, JavaScript, media capture, and local website data.
 - A clear privacy settings surface documenting Acute's zero-telemetry behavior.
+- An App Store privacy manifest declaring no tracking or collected data.
 
 ## Generate and build
 
@@ -54,8 +56,9 @@ xcodebuild -project AcuteWeb.xcodeproj -scheme AcuteWeb \
 ```
 
 GitHub Actions regenerates the project, compiles the app and full XCUITest target,
-runs the unit suite, installs and launches Acute on an iPhone simulator, and
-retains a start-page screenshot with the test result bundle. The XCUITest suite
+runs the unit suite, validates the bundled privacy manifest, installs and launches
+Acute on iPhone and iPad simulators, and retains both start-page screenshots with
+the test result bundle. The XCUITest suite
 also covers privacy settings, private browsing, and history for local or release
 validation. CI uses Xcode 26.3 and an iOS 26.2 simulator so Liquid Glass code is
 compiled and exercised. Device and TestFlight builds require Apple Developer signing
