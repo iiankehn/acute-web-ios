@@ -65,12 +65,14 @@ jobs:
           mkdir -p Artifacts
           xcrun simctl install '${{ steps.simulator.outputs.id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.id }}' com.acuteweb.browser.ios
+          sleep 5
+          xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page.png
+          xcrun simctl shutdown '${{ steps.simulator.outputs.id }}'
           xcrun simctl boot '${{ steps.simulator.outputs.ipad_id }}' || true
           xcrun simctl bootstatus '${{ steps.simulator.outputs.ipad_id }}' -b
           xcrun simctl install '${{ steps.simulator.outputs.ipad_id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.ipad_id }}' com.acuteweb.browser.ios
           sleep 5
-          xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page.png
           xcrun simctl io '${{ steps.simulator.outputs.ipad_id }}' screenshot Artifacts/acute-web-ipad-start-page.png
       - name: Upload test results and simulator screenshot
         if: always()
