@@ -17,6 +17,28 @@ final class AcuteWebUITests: XCTestCase {
         attachScreenshot("Start Page")
     }
 
+    func testRenderedPhonePageCondensesAndCanExpandControls() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestRenderedPage"]
+        app.launch()
+        let condensed = app.buttons["condensedAddress"]
+        XCTAssertTrue(condensed.waitForExistence(timeout: 15))
+        XCTAssertFalse(app.textFields["addressField"].exists)
+        XCTAssertTrue(app.buttons["Tabs"].isHittable)
+        XCTAssertTrue(app.buttons["More"].isHittable)
+        attachScreenshot("Condensed Navigation")
+        condensed.tap()
+        XCTAssertTrue(app.textFields["addressField"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Back"].exists)
+        app.buttons["Condense Controls"].tap()
+        XCTAssertTrue(condensed.waitForExistence(timeout: 5))
+        openMoreMenu()
+        XCTAssertTrue(app.buttons["Reload"].exists)
+        app.buttons["New Tab"].tap()
+        XCTAssertTrue(app.textFields["addressField"].waitForExistence(timeout: 5))
+        XCTAssertFalse(condensed.exists)
+    }
+
     func testUnsupportedTypedAddressShowsClearFeedback() {
         let address = app.textFields["addressField"]
         XCTAssertTrue(address.waitForExistence(timeout: 10))

@@ -7,7 +7,7 @@ struct BrowserRootView: View {
 
     var body: some View {
         Group {
-            if horizontalSizeClass == .regular {
+            if UIDevice.current.userInterfaceIdiom == .pad && horizontalSizeClass == .regular {
                 NavigationSplitView {
                     TabSidebar()
                         .navigationSplitViewColumnWidth(min: 220, ideal: 280, max: 340)

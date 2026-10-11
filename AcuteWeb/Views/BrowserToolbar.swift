@@ -5,30 +5,80 @@ struct BrowserToolbar: View {
     @ObservedObject var tab: BrowserTab
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var addressFocused: Bool
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var controlsExpanded = false
+
+    private var isPhone: Bool { UIDevice.current.userInterfaceIdiom == .phone }
+    private var isCondensed: Bool {
+        isPhone && tab.hasRenderedPage && !tab.isLoading && tab.navigationError == nil
+            && !controlsExpanded && !addressFocused && !browser.showsFindBar
+    }
 
     var body: some View {
-        Group {
-            if horizontalSizeClass == .compact {
-                VStack(spacing: 4) {
+        AcuteGlassContainer {
+            if isCondensed {
+                HStack(spacing: 8) {
+                    Button {
+                        controlsExpanded = true
+                        addressFocused = true
+                    } label: {
+                        HStack(spacing: 8) {
+                            Image(systemName: addressSymbol).font(.caption)
+                            Text(tab.url?.host ?? tab.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.down").font(.caption2.weight(.bold))
+                        }
+                        .padding(.horizontal, 16)
+                        .frame(maxWidth: .infinity, minHeight: 44)
+                        .contentShape(Capsule())
+                    }
+                    .accessibilityLabel("Edit Address")
+                    .accessibilityValue(tab.url?.absoluteString ?? tab.title)
+                    .accessibilityIdentifier("condensedAddress")
+                    .acuteGlass(cornerRadius: 22)
+                    HStack(spacing: 0) { tabsButton; moreMenu }
+                        .acuteGlass(cornerRadius: 22)
+                }
+            } else if isPhone || horizontalSizeClass == .compact {
+                VStack(spacing: 8) {
                     addressBar
                     HStack(spacing: 0) {
                         navigationButtons
                         Spacer(minLength: 8)
+                        if isPhone && tab.hasRenderedPage && !tab.isLoading && tab.navigationError == nil {
+                            Button {
+                                addressFocused = false
+                                controlsExpanded = false
+                            } label: { Image(systemName: "chevron.up") }
+                            .frame(minWidth: 44, minHeight: 44)
+                            .accessibilityLabel("Condense Controls")
+                        }
                         bookmarkButton
                         tabsButton
                         moreMenu
                     }
+                    .padding(.horizontal, 8)
+                    .acuteGlass(cornerRadius: 22)
                 }
             } else {
-                HStack(spacing: 8) {
-                    navigationButtons
-                    addressBar
-                    bookmarkButton
-                    moreMenu
+                VStack(spacing: 8) {
+                    HStack(spacing: 12) {
+                        HStack(spacing: 0) { navigationButtons }
+                            .acuteGlass(cornerRadius: 22)
+                        addressBar
+                        HStack(spacing: 0) { bookmarkButton; tabsButton; moreMenu }
+                            .acuteGlass(cornerRadius: 22)
+                    }
+                    DesktopTabStrip()
                 }
             }
         }
+        .animation(reduceMotion ? nil : .easeInOut(duration: 0.2), value: isCondensed)
+        .onChange(of: tab.hasRenderedPage) { _, rendered in
+            if rendered { controlsExpanded = false }
+        }
         .onChange(of: browser.addressFocusRequest) { _, _ in
+            controlsExpanded = true
             addressFocused = true
         }
         .alert("Unable to Open Address", isPresented: Binding(
@@ -42,7 +92,6 @@ struct BrowserToolbar: View {
         .font(.body.weight(.medium))
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .background(.ultraThinMaterial)
     }
 
     private var addressSymbol: String {
@@ -135,6 +184,18 @@ struct BrowserToolbar: View {
 
     private var moreMenu: some View {
         Menu {
+            if isCondensed {
+                Button("Back", systemImage: "chevron.backward") { tab.webView.goBack() }
+                    .disabled(!tab.canGoBack)
+                Button("Forward", systemImage: "chevron.forward") { tab.webView.goForward() }
+                    .disabled(!tab.canGoForward)
+                Button("Reload", systemImage: "arrow.clockwise") { tab.webView.reload() }
+                Button(browser.bookmarks.contains(tab.url) ? "Remove Bookmark" : "Add Bookmark", systemImage: "bookmark") {
+                    browser.toggleBookmark()
+                }
+                .disabled(tab.isPrivate || tab.url.flatMap { WebAddress.url($0.absoluteString, allowMissingScheme: false) } == nil)
+                Divider()
+            }
             Button("New Tab", systemImage: "plus") { browser.newTab() }
             Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
             Button("Reopen Closed Tab", systemImage: "arrow.uturn.backward") {

@@ -14,6 +14,7 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
     @Published var url: URL?
     @Published var estimatedProgress = 0.0
     @Published var isLoading = false
+    @Published var hasRenderedPage = false
     @Published var navigationError: String?
     @Published var canGoBack = false
     @Published var canGoForward = false

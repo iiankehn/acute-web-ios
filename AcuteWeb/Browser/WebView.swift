@@ -52,6 +52,11 @@ struct WebView: UIViewRepresentable {
                 permissionBroker.cancel(tabID: tab.id)
             }
             tab?.navigationError = nil
+            tab?.hasRenderedPage = false
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            tab?.hasRenderedPage = true
         }
 
         func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
