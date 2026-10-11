@@ -1,7 +1,9 @@
 import SwiftUI
+import QuickLook
 
 struct DownloadsView: View {
     @ObservedObject var downloadCenter: DownloadCenter
+    @State private var previewURL: URL?
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -25,15 +27,27 @@ struct DownloadsView: View {
                             }
                             Spacer()
                             if item.state == .finished, let destination = item.destination {
+                                Button {
+                                    previewURL = destination
+                                } label: {
+                                    Image(systemName: "doc.text.magnifyingglass")
+                                        .frame(minWidth: 44, minHeight: 44)
+                                }
+                                .buttonStyle(.borderless)
+                                .accessibilityLabel("Preview \(item.filename)")
                                 ShareLink(item: destination) {
                                     Image(systemName: "square.and.arrow.up")
+                                        .frame(minWidth: 44, minHeight: 44)
                                 }
+                                .buttonStyle(.borderless)
+                                .accessibilityLabel("Share \(item.filename)")
                             }
                         }
                     }
                 }
             }
             .navigationTitle("Downloads")
+            .quickLookPreview($previewURL)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

@@ -6,6 +6,7 @@ struct LibraryView: View {
     @ObservedObject var history: HistoryStore
     @Environment(\.dismiss) private var dismiss
     @State private var selection = 0
+    @State private var query = ""
 
     var body: some View {
         NavigationStack {
@@ -20,6 +21,7 @@ struct LibraryView: View {
                 if selection == 0 { bookmarksList } else { historyList }
             }
             .navigationTitle("Library")
+            .searchable(text: $query, prompt: "Search titles or addresses")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -35,9 +37,11 @@ struct LibraryView: View {
 
     @ViewBuilder private var bookmarksList: some View {
         if bookmarks.items.isEmpty {
-            ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Save a page from the browser menu."))
+            ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Save a page with the bookmark button in the toolbar."))
+        } else if filtered(bookmarks.items).isEmpty {
+            noSearchResults
         } else {
-            List(bookmarks.items) { item in siteRow(item) { bookmarks.remove(item) } }
+            List(filtered(bookmarks.items)) { item in siteRow(item) { bookmarks.remove(item) } }
         }
     }
 
@@ -48,9 +52,19 @@ struct LibraryView: View {
                 systemImage: "clock.arrow.circlepath",
                 description: Text(browser.preferences.savesHistory ? "Pages you visit will appear here." : "History is off by default. You can enable it in Settings.")
             )
+        } else if filtered(history.items).isEmpty {
+            noSearchResults
         } else {
-            List(history.items) { item in siteRow(item) { history.remove(item) } }
+            List(filtered(history.items)) { item in siteRow(item) { history.remove(item) } }
         }
+    }
+
+    private var noSearchResults: some View {
+        ContentUnavailableView.search(text: query)
+    }
+
+    private func filtered(_ items: [SavedSite]) -> [SavedSite] {
+        items.filter { $0.matchesSearch(query) }
     }
 
     private func siteRow(_ item: SavedSite, remove: @escaping () -> Void) -> some View {
@@ -67,5 +81,11 @@ struct LibraryView: View {
             }
         }
         .swipeActions { Button("Delete", role: .destructive, action: remove) }
+        .contextMenu {
+            if let url = item.url {
+                ShareLink(item: url)
+            }
+            Button("Delete", systemImage: "trash", role: .destructive, action: remove)
+        }
     }
 }

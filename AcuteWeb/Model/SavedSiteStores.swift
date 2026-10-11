@@ -7,6 +7,12 @@ struct SavedSite: Identifiable, Codable, Equatable {
     let savedAt: Date
 
     var url: URL? { URL(string: address) }
+
+    func matchesSearch(_ query: String) -> Bool {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return term.isEmpty || title.localizedCaseInsensitiveContains(term)
+            || address.localizedCaseInsensitiveContains(term)
+    }
 }
 
 @MainActor
