@@ -55,6 +55,7 @@ final class AcuteWebUITests: XCTestCase {
         let condensed = app.buttons["condensedAddress"]
         XCTAssertTrue(condensed.waitForExistence(timeout: 15))
         XCTAssertFalse(app.textFields["addressField"].exists)
+        XCTAssertTrue(app.buttons["pageLoadControl"].isHittable)
         XCTAssertTrue(app.buttons["Tabs"].isHittable)
         XCTAssertTrue(app.buttons["More"].isHittable)
         condensed.tap()
@@ -89,9 +90,11 @@ final class AcuteWebUITests: XCTestCase {
         condensed.tap()
         let clear = app.buttons["clearAddress"]
         XCTAssertTrue(clear.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["pageLoadControl"].isHittable)
         clear.tap()
         let address = app.textFields["addressField"]
         XCTAssertEqual(address.value as? String, "Search or enter address")
+        XCTAssertTrue(app.buttons["pageLoadControl"].isHittable)
         address.typeText("replacement query")
         XCTAssertEqual(address.value as? String, "replacement query")
         clear.tap()

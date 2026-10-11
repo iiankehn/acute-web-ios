@@ -19,6 +19,7 @@ struct BrowserToolbar: View {
         AcuteGlassContainer {
             if isCondensed {
                 HStack(spacing: 8) {
+                    HStack(spacing: 0) {
                     Button {
                         controlsExpanded = true
                         addressFocused = true
@@ -46,6 +47,8 @@ struct BrowserToolbar: View {
                     .accessibilityLabel("Edit Address")
                     .accessibilityValue("\(tab.title), \(tab.url?.absoluteString ?? "")")
                     .accessibilityIdentifier("condensedAddress")
+                    pageLoadButton.padding(.trailing, 4)
+                    }
                     .acuteGlass(cornerRadius: 22)
                     HStack(spacing: 0) { tabsButton; moreMenu }
                         .acuteGlass(cornerRadius: 22)
@@ -180,26 +183,33 @@ struct BrowserToolbar: View {
                 .accessibilityLabel("Clear Address")
                 .accessibilityIdentifier("clearAddress")
                 .disabled(browser.addressDraft.isEmpty)
-            } else {
-                Button {
-                    if browser.selectedTab?.isLoading == true {
-                        browser.selectedTab?.webView.stopLoading()
-                    } else {
-                        browser.selectedTab?.webView.reload()
-                    }
-                } label: {
-                    Image(systemName: browser.selectedTab?.isLoading == true ? "xmark" : "arrow.clockwise")
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel(browser.selectedTab?.isLoading == true ? "Stop" : "Reload")
             }
+            pageLoadButton
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 44)
         .acuteGlass(cornerRadius: 22)
         .layoutPriority(1)
 
+    }
+
+    private var pageLoadButton: some View {
+        Button {
+            if tab.isLoading {
+                tab.webView.stopLoading()
+            } else if tab.navigationError != nil {
+                browser.retryNavigation()
+            } else {
+                tab.webView.reload()
+            }
+        } label: {
+            Image(systemName: tab.isLoading ? "xmark" : "arrow.clockwise")
+                .frame(minWidth: 44, minHeight: 44)
+                .contentShape(Rectangle())
+        }
+        .accessibilityLabel(tab.isLoading ? "Stop" : "Reload")
+        .accessibilityIdentifier("pageLoadControl")
+        .disabled(!tab.isLoading && tab.url == nil && tab.lastRequestedURL == nil)
     }
 
     private var tabsButton: some View {

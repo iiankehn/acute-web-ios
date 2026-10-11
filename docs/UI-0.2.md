@@ -43,8 +43,10 @@ keep the page's initial position accessible and preserve scrolled positions
 when controls expand or condense. Start pages and load errors reserve readable
 space beneath navigation. Reduce Transparency still uses an opaque surface.
 The condensed phone address capsule identifies the selected page by title and
-host. Editing replaces Reload with a Clear Address control that keeps keyboard
-focus and clears only the draft, without unloading the current page.
+host. Editing adds a Clear Address control that keeps keyboard focus and clears
+only the draft, without unloading the current page. Reload/Stop remains inside
+both expanded and condensed address bars, including during editing. Failed loads
+use the existing retry path; empty start pages disable the page-load control.
 
 ## Device validation status
 
