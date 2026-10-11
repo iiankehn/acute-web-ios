@@ -9,7 +9,7 @@ enum AddressResolver {
         if lowercased.hasPrefix("http:") || lowercased.hasPrefix("https:") {
             return WebAddress.url(input, allowMissingScheme: false)
         }
-        let unsupported = ["file:", "javascript:", "data:", "blob:", "about:", "intent:", "mailto:", "tel:"]
+        let unsupported = ["file:", "javascript:", "data:", "blob:", "about:", "intent:", "mailto:", "tel:", "sms:"]
         guard !unsupported.contains(where: { lowercased.hasPrefix($0) }) else { return nil }
         if !input.contains(where: { $0.isWhitespace }),
            (input.contains(".") || lowercased == "localhost" || lowercased.hasPrefix("localhost:") || input.hasPrefix("[")),

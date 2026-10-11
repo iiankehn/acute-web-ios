@@ -1,5 +1,6 @@
 import SwiftUI
 import WebKit
+import UIKit
 
 struct WebView: UIViewRepresentable {
     let tab: BrowserTab
@@ -86,9 +87,6 @@ struct WebView: UIViewRepresentable {
             preferences: WKWebpagePreferences,
             decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
         ) {
-            if navigationAction.targetFrame?.isMainFrame == true {
-                tab?.lastRequestedURL = navigationAction.request.url
-            }
             preferences.allowsContentJavaScript = sitePrivacy.policy(for: navigationAction.request.url?.host).allowsJavaScript
             if navigationAction.shouldPerformDownload {
                 decisionHandler(.download, preferences)
@@ -100,15 +98,41 @@ struct WebView: UIViewRepresentable {
             }
             guard ["http", "https", "about", "data", "blob"].contains(scheme) else {
                 decisionHandler(.cancel, preferences)
+                if let url = navigationAction.request.url {
+                    requestExternalLink(url, navigationType: navigationAction.navigationType,
+                                        isMainFrame: navigationAction.targetFrame == nil || navigationAction.targetFrame?.isMainFrame == true)
+                }
                 return
             }
             if navigationAction.targetFrame?.isMainFrame == true {
+                tab?.lastRequestedURL = navigationAction.request.url
                 prepareNavigation(webView, navigationAction.request.url) {
                     decisionHandler(.allow, preferences)
                 }
             } else {
                 decisionHandler(.allow, preferences)
             }
+        }
+
+        @MainActor
+        @discardableResult
+        func requestExternalLink(_ url: URL, navigationType: WKNavigationType, isMainFrame: Bool,
+                                 open: ((URL) -> Void)? = nil) -> Bool {
+            guard ExternalLinkPolicy.allows(url, navigationType: navigationType, isMainFrame: isMainFrame),
+                  let tab, canPresentDialogs() else { return false }
+            let tabID = tab.id
+            let warning = tab.isPrivate ? "\n\nPrivate browsing protection does not extend to other apps." : ""
+            scriptDialogs.request(tabID: tabID, host: "Open Another App?",
+                                 message: "This link will open outside Acute Web:\n\(url.absoluteString)\(warning)", kind: .externalLink) { [weak self] answer in
+                guard let self, case .accept = answer, self.tab?.id == tabID, self.canPresentDialogs() else { return }
+                if let open { open(url); return }
+                UIApplication.shared.open(url, options: [:]) { [weak self] success in
+                    guard let self, !success, self.tab?.id == tabID, self.canPresentDialogs() else { return }
+                    self.scriptDialogs.request(tabID: tabID, host: "Unable to Open Link",
+                                               message: "No available app could open this link.", kind: .alert) { _ in }
+                }
+            }
+            return true
         }
 
         func webView(

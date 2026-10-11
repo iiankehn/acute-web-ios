@@ -17,6 +17,16 @@ final class AcuteWebUITests: XCTestCase {
         attachScreenshot("Start Page")
     }
 
+    func testUnsupportedTypedAddressShowsClearFeedback() {
+        let address = app.textFields["addressField"]
+        XCTAssertTrue(address.waitForExistence(timeout: 10))
+        address.tap()
+        address.typeText("javascript:alert(1)\n")
+        XCTAssertTrue(app.alerts["Unable to Open Address"].waitForExistence(timeout: 5))
+        app.alerts["Unable to Open Address"].buttons["OK"].tap()
+        XCTAssertTrue(app.staticTexts["The web, in focus."].exists)
+    }
+
     func testCompactToolbarKeepsAddressAndMenuUsableAfterRotation() {
         defer { XCUIDevice.shared.orientation = .portrait }
         let address = app.textFields["addressField"]

@@ -38,6 +38,7 @@ final class BrowserStore: ObservableObject {
     @Published var showsLibrary = false
     @Published var showsSitePrivacy = false
     @Published var addressDraft = ""
+    @Published var addressInputError: String?
     @Published private(set) var addressFocusRequest = UUID()
     @Published var findQuery = ""
     @Published private(set) var findStatus = ""
@@ -76,6 +77,7 @@ final class BrowserStore: ObservableObject {
         tabs.append(tab)
         selectedTabID = tab.id
         addressDraft = ""
+        addressInputError = nil
         contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
         saveSession()
     }
@@ -179,8 +181,12 @@ final class BrowserStore: ObservableObject {
 
     func navigate() {
         closeFindBar()
-        guard let tab = selectedTab,
-              let url = AddressResolver.resolve(addressDraft, searchEngine: preferences.searchEngine) else { return }
+        guard let tab = selectedTab, !addressDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        guard let url = AddressResolver.resolve(addressDraft, searchEngine: preferences.searchEngine) else {
+            addressInputError = "Enter a valid HTTP or HTTPS address, or search terms. Other address schemes cannot be entered here."
+            return
+        }
+        addressInputError = nil
         tab.navigationError = nil
         tab.lastRequestedURL = url
         tab.webView.load(URLRequest(url: url))

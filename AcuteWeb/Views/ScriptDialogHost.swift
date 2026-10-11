@@ -20,7 +20,7 @@ struct ScriptDialogHost: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                 }
-                Button("OK") { broker.resolve(.accept(input), requestID: request.id) }
+                Button(request.kind == .externalLink ? "Open" : "OK") { broker.resolve(.accept(input), requestID: request.id) }
                 if request.kind != .alert {
                     Button("Cancel", role: .cancel) { broker.resolve(.cancel, requestID: request.id) }
                 }

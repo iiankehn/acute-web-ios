@@ -39,6 +39,8 @@ Version `1.0.0` includes:
 - Native downloads with restart recovery, search, preview, cancellation, sharing, and confirmed file deletion.
 - Find in page with live results, accessible controls, and per-tab desktop/mobile website switching.
 - Link menus for new regular/private tabs; links opened from private pages retain private browsing.
+- User-activated email, phone, and message links require confirmation before opening another app; private tabs warn that their protection does not extend outside Acute.
+- Invalid or unsupported typed addresses show explicit feedback instead of silently doing nothing.
 - Editable bookmarks and searchable bookmarks/history.
 - Keyboard shortcuts for address focus, reopening tabs, navigation, page search, tab switching, zoom, and the start page.
 - Page-load errors and terminated website processes with explicit retry and cancellation of pending website prompts.

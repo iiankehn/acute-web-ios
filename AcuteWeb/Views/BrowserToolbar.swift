@@ -31,6 +31,13 @@ struct BrowserToolbar: View {
         .onChange(of: browser.addressFocusRequest) { _, _ in
             addressFocused = true
         }
+        .alert("Unable to Open Address", isPresented: Binding(
+            get: { browser.addressInputError != nil }, set: { if !$0 { browser.addressInputError = nil } }
+        )) {
+            Button("OK") { browser.addressInputError = nil }
+        } message: {
+            Text(browser.addressInputError ?? "")
+        }
         .buttonStyle(.plain)
         .font(.body.weight(.medium))
         .padding(.horizontal, 12)

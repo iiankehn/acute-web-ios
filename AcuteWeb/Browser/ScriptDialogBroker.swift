@@ -1,6 +1,6 @@
 import Foundation
 
-enum ScriptDialogKind { case alert, confirm, prompt }
+enum ScriptDialogKind { case alert, confirm, prompt, externalLink }
 enum ScriptDialogAnswer { case accept(String), cancel }
 
 final class ScriptDialogRequest: Identifiable {
