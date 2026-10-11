@@ -29,7 +29,9 @@ system derives its supported Home Screen appearances from this clear master.
 
 Version `1.0.0` includes:
 
-- A native start page for regular and private tabs.
+- A native start page for regular and private tabs, with controls to show bookmarks, favorites, and recent session sites.
+- A start-page action that preserves tab position and private mode.
+- Per-tab page zoom from 50% to 200%, with new tabs starting at 100%.
 - Session-only recent sites that never include private browsing.
 - Tab snapshots, duplication, reopening, reordering, and adaptive iPad layouts.
 - Search-engine selection with DuckDuckGo as the default.
@@ -62,10 +64,10 @@ xcodebuild -project AcuteWeb.xcodeproj -scheme AcuteWeb \
 ```
 
 GitHub Actions regenerates the project, compiles the app and full XCUITest target,
-runs the unit suite, validates the bundled privacy manifest, installs and launches
+runs the unit and full interface suites, validates the bundled privacy manifest, installs and launches
 Acute on iPhone and iPad simulators, and retains both start-page screenshots with
 the test result bundle. The XCUITest suite
-also covers privacy settings, private browsing, and history for local or release
-validation. CI uses Xcode 26.3 and an iOS 26.2 simulator so Liquid Glass code is
+also covers privacy settings, private browsing, history, rotation, tab management,
+and start-page customization. CI uses Xcode 26.3 and an iOS 26.2 simulator so Liquid Glass code is
 compiled and exercised. Device and TestFlight builds require Apple Developer signing
 credentials.

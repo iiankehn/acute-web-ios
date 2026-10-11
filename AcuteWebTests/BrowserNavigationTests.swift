@@ -11,6 +11,48 @@ final class BrowserNavigationTests: XCTestCase {
     }
 
     @MainActor
+    func testStartPageKeepsTabPositionAndPrivateModeAndDismissesRequests() {
+        let browser = makeBrowser()
+        browser.newTab(isPrivate: true)
+        let oldTab = browser.selectedTab!
+        let count = browser.tabs.count
+        browser.addressDraft = "https://private.example/"
+        browser.showsFindBar = true
+        var denied = false
+        browser.permissionBroker.request(tabID: oldTab.id, host: "private.example", kind: .camera) {
+            denied = $0 == .deny
+        }
+        browser.showStartPage()
+        let replacement = browser.selectedTab!
+        XCTAssertEqual(browser.tabs.count, count)
+        XCTAssertEqual(browser.tabs.last?.id, replacement.id)
+        XCTAssertNotEqual(replacement.id, oldTab.id)
+        XCTAssertTrue(replacement.isPrivate)
+        XCTAssertFalse(replacement.webView.configuration.websiteDataStore.isPersistent)
+        XCTAssertNil(replacement.url)
+        XCTAssertEqual(browser.addressDraft, "")
+        XCTAssertFalse(browser.showsFindBar)
+        XCTAssertTrue(denied)
+        XCTAssertTrue(browser.recentlyClosed.isEmpty)
+    }
+
+    @MainActor
+    func testPageZoomUsesWebKitAndStaysWithinReadableLimits() {
+        let tab = BrowserTab()
+        tab.setPageZoom(1.5)
+        XCTAssertEqual(tab.webView.pageZoom, 1.5)
+        tab.setPageZoom(10)
+        XCTAssertEqual(tab.pageZoom, 2)
+        XCTAssertEqual(tab.webView.pageZoom, 2)
+        tab.setPageZoom(-1)
+        XCTAssertEqual(tab.pageZoom, 0.5)
+        tab.setPageZoom(.nan)
+        XCTAssertEqual(tab.pageZoom, 0.5)
+        let otherTab = BrowserTab()
+        XCTAssertEqual(otherTab.pageZoom, 1)
+    }
+
+    @MainActor
     func testNewTabsHavePolicyDelegatesBeforeTheirFirstNavigation() {
         let browser = makeBrowser()
         for isPrivate in [false, true] {

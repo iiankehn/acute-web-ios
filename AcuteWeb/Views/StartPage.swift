@@ -2,6 +2,8 @@ import SwiftUI
 
 struct StartPage: View {
     @EnvironmentObject private var browser: BrowserStore
+    @ObservedObject var preferences: BrowserPreferences
+    @ObservedObject var bookmarks: BookmarkStore
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var searchFocused: Bool
@@ -49,7 +51,7 @@ struct StartPage: View {
                 HStack(spacing: 10) {
                     Image(systemName: browser.selectedTab?.isPrivate == true ? "hand.raised.fill" : "magnifyingglass")
                     .foregroundStyle(.secondary)
-                    TextField("Search with \(browser.preferences.searchEngine.title)", text: $browser.addressDraft)
+                    TextField("Search with \(preferences.searchEngine.title)", text: $browser.addressDraft)
                     .focused($searchFocused)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -66,11 +68,11 @@ struct StartPage: View {
                 .acuteGlass(cornerRadius: 22)
 
                 if browser.selectedTab?.isPrivate != true {
-                    if !browser.bookmarks.items.isEmpty {
+                    if preferences.showsStartBookmarks && !bookmarks.items.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionTitle("Bookmarks")
                             LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
-                                ForEach(browser.bookmarks.items.prefix(8)) { bookmark in
+                                ForEach(bookmarks.items.prefix(8)) { bookmark in
                                     Button {
                                         if let url = bookmark.url { browser.open(url) }
                                     } label: {
@@ -88,27 +90,29 @@ struct StartPage: View {
                         }
                     }
 
-                    VStack(alignment: .leading, spacing: 12) {
-                        sectionTitle("Favorites")
-                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
-                            ForEach(favorites) { favorite in
-                                Button {
-                                    if let url = URL(string: favorite.address) { browser.open(url) }
-                                } label: {
-                                    VStack(alignment: .leading, spacing: 12) {
-                                        Image(systemName: favorite.symbol).font(.title2)
-                                        Text(favorite.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                    if preferences.showsStartFavorites {
+                        VStack(alignment: .leading, spacing: 12) {
+                            sectionTitle("Favorites")
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                                ForEach(favorites) { favorite in
+                                    Button {
+                                        if let url = URL(string: favorite.address) { browser.open(url) }
+                                    } label: {
+                                        VStack(alignment: .leading, spacing: 12) {
+                                            Image(systemName: favorite.symbol).font(.title2)
+                                            Text(favorite.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                                        }
+                                        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+                                        .padding()
+                                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
                                     }
-                                    .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-                                    .padding()
-                                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
                         }
                     }
 
-                    if !browser.recentSites.isEmpty {
+                    if preferences.showsStartRecentSites && !browser.recentSites.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionTitle("This Session")
                             VStack(spacing: 8) {

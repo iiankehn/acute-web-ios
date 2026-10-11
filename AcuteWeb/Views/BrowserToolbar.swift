@@ -135,6 +135,23 @@ struct BrowserToolbar: View {
             }
             .disabled(browser.recentlyClosed.isEmpty)
             Divider()
+            Button("Start Page", systemImage: "house") { browser.showStartPage() }
+            Menu {
+                ForEach([50, 75, 100, 125, 150, 175, 200], id: \.self) { percent in
+                    Button {
+                        tab.setPageZoom(Double(percent) / 100)
+                    } label: {
+                        if Int((tab.pageZoom * 100).rounded()) == percent {
+                            Label("\(percent)%", systemImage: "checkmark")
+                        } else {
+                            Text("\(percent)%")
+                        }
+                    }
+                }
+            } label: {
+                Label("Page Zoom: \(Int((tab.pageZoom * 100).rounded()))%", systemImage: "textformat.size")
+            }
+            .disabled(tab.url == nil)
             Button("Find on Page", systemImage: "text.magnifyingglass") {
                 browser.showsFindBar = true
             }

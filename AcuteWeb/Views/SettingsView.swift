@@ -6,6 +6,13 @@ struct SettingsView: View {
     let applyPrivacyPreferences: () -> Void
     let applySessionPreferences: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @State private var confirmsHistoryDeletion = false
+
+    private var appVersion: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
+        let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
+        return "\(version) (\(build))"
+    }
 
     var body: some View {
         NavigationStack {
@@ -26,7 +33,7 @@ struct SettingsView: View {
                     LabeledContent("Diagnostic uploads", value: "None")
                     Toggle("Save browsing history", isOn: $preferences.savesHistory)
                     if !history.items.isEmpty {
-                        Button("Clear Saved History", role: .destructive) { history.clear() }
+                        Button("Clear Saved History", role: .destructive) { confirmsHistoryDeletion = true }
                     }
                 } header: {
                     Text("Privacy Protection")
@@ -47,13 +54,24 @@ struct SettingsView: View {
                     Text("Regular web addresses are stored only on this device for recovery. Private tabs are never saved or restored.")
                 }
 
+                Section("Start Page") {
+                    Toggle("Show bookmarks", isOn: $preferences.showsStartBookmarks)
+                    Toggle("Show favorites", isOn: $preferences.showsStartFavorites)
+                    Toggle("Show recent session sites", isOn: $preferences.showsStartRecentSites)
+                }
+
                 Section("About") {
                     LabeledContent("Brand", value: "Acute Web by CORE")
-                    LabeledContent("Version", value: "1.0.0")
+                    LabeledContent("Version", value: appVersion)
                     LabeledContent("Rendering engine", value: "WebKit")
                 }
             }
             .navigationTitle("Settings")
+            .confirmationDialog("Clear saved browsing history?", isPresented: $confirmsHistoryDeletion, titleVisibility: .visible) {
+                Button("Clear Saved History", role: .destructive) { history.clear() }
+            } message: {
+                Text("This removes all saved visits from this device.")
+            }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }

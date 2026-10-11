@@ -6,7 +6,7 @@ final class AcuteWebUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO"]
+        app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO", "-showsStartFavorites", "YES"]
         app.launch()
     }
 
@@ -108,6 +108,32 @@ final class AcuteWebUITests: XCTestCase {
             format: "label CONTAINS 'Private tabs are never saved or restored'"
         )).firstMatch.exists)
         attachScreenshot("Session Recovery")
+    }
+
+    func testStartPageCustomizationUpdatesImmediately() {
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        let favorites = app.switches["Show favorites"]
+        for _ in 0..<4 {
+            if favorites.isHittable { break }
+            app.swipeUp()
+        }
+        XCTAssertTrue(favorites.isHittable)
+        favorites.tap()
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.textFields["startSearchField"].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Favorites"].exists)
+
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        for _ in 0..<4 {
+            if favorites.isHittable { break }
+            app.swipeUp()
+        }
+        favorites.tap()
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.staticTexts["Favorites"].waitForExistence(timeout: 5))
     }
 
     private func openMoreMenu() {

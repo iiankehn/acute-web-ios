@@ -52,7 +52,7 @@ jobs:
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
             -only-testing:AcuteWebTests
-      - name: Check start page and compact toolbar
+      - name: Run browser interface tests
         run: |
           set -o pipefail
           xcodebuild test-without-building \
@@ -62,10 +62,7 @@ jobs:
             -derivedDataPath "$PWD/DerivedData" \
             -resultBundlePath InterfaceResults.xcresult \
             -parallel-testing-enabled NO \
-            -only-testing:AcuteWebUITests/AcuteWebUITests/testLaunchShowsNativeStartPage \
-            -only-testing:AcuteWebUITests/AcuteWebUITests/testCompactToolbarKeepsAddressAndMenuUsableAfterRotation \
-            -only-testing:AcuteWebUITests/AcuteWebUITests/testPrivateTabUsesPrivateStartPage \
-            -only-testing:AcuteWebUITests/AcuteWebUITests/testTabSwitcherCreatesPrivateTabsAndClosesLastTab
+            -only-testing:AcuteWebUITests
       - name: Validate bundled privacy manifest
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"

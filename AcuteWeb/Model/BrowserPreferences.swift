@@ -31,6 +31,9 @@ final class BrowserPreferences: ObservableObject {
         static let blocksTrackers = "blocksTrackers"
         static let savesHistory = "savesHistory"
         static let restoresTabs = "restoresTabs"
+        static let showsStartBookmarks = "showsStartBookmarks"
+        static let showsStartFavorites = "showsStartFavorites"
+        static let showsStartRecentSites = "showsStartRecentSites"
     }
 
     @Published var searchEngine: SearchEngine {
@@ -49,11 +52,26 @@ final class BrowserPreferences: ObservableObject {
         didSet { UserDefaults.standard.set(restoresTabs, forKey: Key.restoresTabs) }
     }
 
+    @Published var showsStartBookmarks: Bool {
+        didSet { UserDefaults.standard.set(showsStartBookmarks, forKey: Key.showsStartBookmarks) }
+    }
+
+    @Published var showsStartFavorites: Bool {
+        didSet { UserDefaults.standard.set(showsStartFavorites, forKey: Key.showsStartFavorites) }
+    }
+
+    @Published var showsStartRecentSites: Bool {
+        didSet { UserDefaults.standard.set(showsStartRecentSites, forKey: Key.showsStartRecentSites) }
+    }
+
     init() {
         let defaults = UserDefaults.standard
         searchEngine = SearchEngine(rawValue: defaults.string(forKey: Key.searchEngine) ?? "") ?? .duckDuckGo
         blocksTrackers = defaults.object(forKey: Key.blocksTrackers) as? Bool ?? true
         savesHistory = defaults.object(forKey: Key.savesHistory) as? Bool ?? false
         restoresTabs = defaults.object(forKey: Key.restoresTabs) as? Bool ?? true
+        showsStartBookmarks = defaults.object(forKey: Key.showsStartBookmarks) as? Bool ?? true
+        showsStartFavorites = defaults.object(forKey: Key.showsStartFavorites) as? Bool ?? true
+        showsStartRecentSites = defaults.object(forKey: Key.showsStartRecentSites) as? Bool ?? true
     }
 }

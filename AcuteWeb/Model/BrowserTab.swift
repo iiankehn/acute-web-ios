@@ -19,6 +19,7 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
     @Published var canGoForward = false
     @Published var snapshot: UIImage?
     @Published var usesDesktopSite = false
+    @Published private(set) var pageZoom = 1.0
 
     private var observations: [NSKeyValueObservation] = []
 
@@ -69,6 +70,12 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
         webView.takeSnapshot(with: nil) { [weak self] image, _ in
             Task { @MainActor in self?.snapshot = image }
         }
+    }
+
+    func setPageZoom(_ value: Double) {
+        guard value.isFinite else { return }
+        pageZoom = min(max(value, 0.5), 2.0)
+        webView.pageZoom = pageZoom
     }
 
     func toggleDesktopSite() {

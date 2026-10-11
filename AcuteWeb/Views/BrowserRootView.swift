@@ -84,7 +84,7 @@ private struct BrowserPage: View {
             )
             .ignoresSafeArea(.container, edges: .bottom)
             if tab.url == nil && tab.navigationError == nil {
-                StartPage()
+                StartPage(preferences: browser.preferences, bookmarks: browser.bookmarks)
             }
             if let error = tab.navigationError {
                 ContentUnavailableView {

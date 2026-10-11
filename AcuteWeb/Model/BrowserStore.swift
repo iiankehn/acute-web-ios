@@ -136,6 +136,20 @@ final class BrowserStore: ObservableObject {
         saveSession(selectedURLOverride: url)
     }
 
+    func showStartPage() {
+        guard let oldTab = selectedTab, let index = tabs.firstIndex(where: { $0.id == oldTab.id }) else { return }
+        dismissRequestsForSelectedTab()
+        closeFindBar()
+        oldTab.webView.stopLoading()
+        let tab = BrowserTab(isPrivate: oldTab.isPrivate)
+        configureNavigation(for: tab)
+        tabs[index] = tab
+        selectedTabID = tab.id
+        addressDraft = ""
+        contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
+        saveSession()
+    }
+
     func retryNavigation() {
         guard let tab = selectedTab, let url = tab.lastRequestedURL else { return }
         tab.navigationError = nil
