@@ -52,6 +52,19 @@ jobs:
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
             -only-testing:AcuteWebTests
+      - name: Check start page and compact toolbar
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
+            -derivedDataPath "$PWD/DerivedData" \
+            -resultBundlePath InterfaceResults.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:AcuteWebUITests/AcuteWebUITests/testLaunchShowsNativeStartPage \
+            -only-testing:AcuteWebUITests/AcuteWebUITests/testCompactToolbarKeepsAddressAndMenuUsableAfterRotation \
+            -only-testing:AcuteWebUITests/AcuteWebUITests/testPrivateTabUsesPrivateStartPage
       - name: Validate bundled privacy manifest
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
@@ -64,7 +77,12 @@ jobs:
           xcrun simctl install '${{ steps.simulator.outputs.id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.id }}' com.acuteweb.browser.ios
           sleep 5
+          xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance light
+          sleep 2
           xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page.png
+          xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance dark
+          sleep 2
+          xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page-dark.png
       - name: Upload test results and simulator screenshot
         if: always()
         uses: actions/upload-artifact@v4
@@ -72,7 +90,8 @@ jobs:
           name: acute-web-test-results
           path: |
             TestResults.xcresult
-            Artifacts/acute-web-start-page.png
+            InterfaceResults.xcresult
+            Artifacts/acute-web-start-page*.png
           if-no-files-found: ignore
 
   ipad-smoke:
@@ -106,11 +125,16 @@ jobs:
           xcrun simctl install '${{ steps.ipad.outputs.id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.ipad.outputs.id }}' com.acuteweb.browser.ios
           sleep 5
+          xcrun simctl ui '${{ steps.ipad.outputs.id }}' appearance light
+          sleep 2
           xcrun simctl io '${{ steps.ipad.outputs.id }}' screenshot Artifacts/acute-web-ipad-start-page.png
+          xcrun simctl ui '${{ steps.ipad.outputs.id }}' appearance dark
+          sleep 2
+          xcrun simctl io '${{ steps.ipad.outputs.id }}' screenshot Artifacts/acute-web-ipad-start-page-dark.png
       - name: Upload iPad screenshot
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: acute-web-ipad-smoke
-          path: Artifacts/acute-web-ipad-start-page.png
+          path: Artifacts/acute-web-ipad-start-page*.png
           if-no-files-found: ignore

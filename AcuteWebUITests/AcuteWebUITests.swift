@@ -6,7 +6,7 @@ final class AcuteWebUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["-savesHistory", "NO"]
+        app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO"]
         app.launch()
     }
 
@@ -15,6 +15,25 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["The web, in focus."].exists)
         XCTAssertTrue(app.textFields["addressField"].exists)
         attachScreenshot("Start Page")
+    }
+
+    func testCompactToolbarKeepsAddressAndMenuUsableAfterRotation() {
+        defer { XCUIDevice.shared.orientation = .portrait }
+        let address = app.textFields["addressField"]
+        XCTAssertTrue(address.waitForExistence(timeout: 10))
+        XCTAssertGreaterThan(address.frame.width, 180)
+        XCTAssertTrue(app.buttons["More"].isHittable)
+        XCTAssertTrue(app.buttons["Tabs"].isHittable)
+        attachScreenshot("iPhone Portrait")
+
+        XCUIDevice.shared.orientation = .landscapeLeft
+        XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
+        XCTAssertTrue(address.isHittable)
+        XCTAssertGreaterThan(address.frame.width, 180)
+        XCTAssertTrue(app.buttons["More"].isHittable)
+        attachScreenshot("iPhone Landscape")
+        openMoreMenu()
+        XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5))
     }
 
     func testPrivacySettingsDefaultToNoHistory() {
@@ -36,6 +55,8 @@ final class AcuteWebUITests: XCTestCase {
 
         XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'non-persistent WebKit data store'")).firstMatch.exists)
+        XCTAssertFalse(app.staticTexts["Favorites"].exists)
+        XCTAssertFalse(app.staticTexts["Bookmarks"].exists)
         attachScreenshot("Private Browsing")
     }
 
