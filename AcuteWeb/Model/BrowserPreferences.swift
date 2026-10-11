@@ -68,12 +68,15 @@ final class BrowserPreferences: ObservableObject {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
+        func bool(_ key: String, fallback: Bool) -> Bool {
+            defaults.object(forKey: key) == nil ? fallback : defaults.bool(forKey: key)
+        }
         searchEngine = SearchEngine(rawValue: defaults.string(forKey: Key.searchEngine) ?? "") ?? .duckDuckGo
-        blocksTrackers = defaults.object(forKey: Key.blocksTrackers) as? Bool ?? true
-        savesHistory = defaults.object(forKey: Key.savesHistory) as? Bool ?? false
-        restoresTabs = defaults.object(forKey: Key.restoresTabs) as? Bool ?? true
-        showsStartBookmarks = defaults.object(forKey: Key.showsStartBookmarks) as? Bool ?? true
-        showsStartFavorites = defaults.object(forKey: Key.showsStartFavorites) as? Bool ?? true
-        showsStartRecentSites = defaults.object(forKey: Key.showsStartRecentSites) as? Bool ?? true
+        blocksTrackers = bool(Key.blocksTrackers, fallback: true)
+        savesHistory = bool(Key.savesHistory, fallback: false)
+        restoresTabs = bool(Key.restoresTabs, fallback: true)
+        showsStartBookmarks = bool(Key.showsStartBookmarks, fallback: true)
+        showsStartFavorites = bool(Key.showsStartFavorites, fallback: true)
+        showsStartRecentSites = bool(Key.showsStartRecentSites, fallback: true)
     }
 }

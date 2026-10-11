@@ -106,6 +106,12 @@ final class BrowserStore: ObservableObject {
         saveSession()
     }
 
+    func selectAdjacentTab(backwards: Bool = false) {
+        guard tabs.count > 1, let index = tabs.firstIndex(where: { $0.id == selectedTabID }) else { return }
+        let offset = backwards ? -1 : 1
+        select(tabs[(index + offset + tabs.count) % tabs.count])
+    }
+
     func close(_ tab: BrowserTab) {
         guard let index = tabs.firstIndex(where: { $0.id == tab.id }) else { return }
         scriptDialogs.cancel(tabID: tab.id)

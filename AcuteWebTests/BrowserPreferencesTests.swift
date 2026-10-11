@@ -4,6 +4,33 @@ import Combine
 
 final class BrowserPreferencesTests: XCTestCase {
     @MainActor
+    func testStringLaunchOverridesUseBooleanSemantics() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("NO", forKey: "restoresTabs")
+        defaults.set("NO", forKey: "blocksTrackers")
+        defaults.set("NO", forKey: "showsStartFavorites")
+        defaults.set("YES", forKey: "savesHistory")
+        let preferences = BrowserPreferences(defaults: defaults)
+        XCTAssertFalse(preferences.restoresTabs)
+        XCTAssertFalse(preferences.blocksTrackers)
+        XCTAssertFalse(preferences.showsStartFavorites)
+        XCTAssertTrue(preferences.savesHistory)
+    }
+
+    @MainActor
+    func testUnsetPreferencesRetainPrivacyDefaults() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        let preferences = BrowserPreferences(defaults: defaults)
+        XCTAssertTrue(preferences.restoresTabs)
+        XCTAssertTrue(preferences.blocksTrackers)
+        XCTAssertFalse(preferences.savesHistory)
+    }
+
+    @MainActor
     func testStartPageChangesPublishAndPersistAcrossRelaunch() {
         let suite = UUID().uuidString
         let defaults = UserDefaults(suiteName: suite)!

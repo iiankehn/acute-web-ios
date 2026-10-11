@@ -19,21 +19,53 @@ struct BrowserCommands: Commands {
             Button("Reopen Closed Tab") { browser.reopenLastClosedTab() }
                 .keyboardShortcut("t", modifiers: [.command, .shift])
                 .disabled(browser.recentlyClosed.isEmpty)
-            Button("Back") { browser.selectedTab?.webView.goBack() }
+            Button("Next Tab") { browser.selectAdjacentTab() }
+                .keyboardShortcut(.tab, modifiers: .control)
+                .disabled(browser.tabs.count < 2)
+            Button("Previous Tab") { browser.selectAdjacentTab(backwards: true) }
+                .keyboardShortcut(.tab, modifiers: [.control, .shift])
+                .disabled(browser.tabs.count < 2)
+            if let tab = browser.selectedTab {
+                SelectedTabCommands(browser: browser, tab: tab)
+            }
+        }
+    }
+}
+
+private struct SelectedTabCommands: View {
+    @ObservedObject var browser: BrowserStore
+    @ObservedObject var tab: BrowserTab
+
+    var body: some View {
+        Group {
+            Button("Back") { tab.webView.goBack() }
                 .keyboardShortcut("[", modifiers: .command)
-                .disabled(browser.selectedTab?.canGoBack != true)
-            Button("Forward") { browser.selectedTab?.webView.goForward() }
+                .disabled(!tab.canGoBack)
+            Button("Forward") { tab.webView.goForward() }
                 .keyboardShortcut("]", modifiers: .command)
-                .disabled(browser.selectedTab?.canGoForward != true)
-            Button("Reload") { browser.selectedTab?.webView.reload() }
+                .disabled(!tab.canGoForward)
+            Button("Reload") { tab.webView.reload() }
                 .keyboardShortcut("r", modifiers: .command)
+                .disabled(tab.url == nil)
             Button("Find on Page") { browser.showsFindBar = true }
                 .keyboardShortcut("f", modifiers: .command)
-                .disabled(browser.selectedTab?.url == nil)
-            Button(browser.selectedTab?.usesDesktopSite == true ? "Request Mobile Site" : "Request Desktop Site") {
+                .disabled(tab.url == nil)
+            Button(tab.usesDesktopSite ? "Request Mobile Site" : "Request Desktop Site") {
                 browser.toggleDesktopSite()
             }
-            .disabled(browser.selectedTab?.url == nil)
+            .disabled(tab.url == nil)
+            Divider()
+            Button("Zoom In") { tab.setPageZoom(tab.pageZoom + 0.25) }
+                .keyboardShortcut("=", modifiers: .command)
+                .disabled(tab.url == nil || tab.pageZoom >= 2)
+            Button("Zoom Out") { tab.setPageZoom(tab.pageZoom - 0.25) }
+                .keyboardShortcut("-", modifiers: .command)
+                .disabled(tab.url == nil || tab.pageZoom <= 0.5)
+            Button("Actual Size") { tab.setPageZoom(1) }
+                .keyboardShortcut("0", modifiers: .command)
+                .disabled(tab.url == nil || tab.pageZoom == 1)
+            Button("Start Page") { browser.showStartPage() }
+                .keyboardShortcut("h", modifiers: [.command, .shift])
         }
     }
 }

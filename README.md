@@ -40,7 +40,7 @@ Version `1.0.0` includes:
 - Find in page with live results, accessible controls, and per-tab desktop/mobile website switching.
 - Link menus for new regular/private tabs; links opened from private pages retain private browsing.
 - Editable bookmarks and searchable bookmarks/history.
-- Keyboard shortcuts for address focus, reopening tabs, navigation, and page search.
+- Keyboard shortcuts for address focus, reopening tabs, navigation, page search, tab switching, zoom, and the start page.
 - Page-load errors with explicit retry.
 - Native website alert, confirmation, and text-input dialogs with per-tab cancellation.
 - Explicit allow-once prompts for website camera and microphone access, cancelled when their tab closes, navigates, or loses selection.
@@ -51,6 +51,17 @@ Version `1.0.0` includes:
 - Per-site controls for tracker blocking, JavaScript, media capture, and local website data.
 - A clear privacy settings surface documenting Acute's zero-telemetry behavior.
 - An App Store privacy manifest declaring no tracking or collected data.
+
+## Keyboard controls
+
+| Action | Shortcut |
+| --- | --- |
+| Next / previous tab | Control-Tab / Control-Shift-Tab |
+| Zoom in / out | Command-= / Command-- |
+| Reset zoom | Command-0 |
+| Start page | Command-Shift-H |
+
+Page commands follow the selected tab's current navigation and zoom state.
 
 ## Generate and build
 

@@ -5,6 +5,29 @@ import WebKit
 
 final class BrowserNavigationTests: XCTestCase {
     @MainActor
+    func testKeyboardTabSelectionWrapsAndClearsFindAndPermissionRequests() {
+        let browser = makeBrowser()
+        let first = browser.selectedTab!
+        browser.newTab(isPrivate: true)
+        let second = browser.selectedTab!
+        browser.showsFindBar = true
+        var denied = false
+        browser.permissionBroker.request(tabID: second.id, host: "private.example", kind: .camera) {
+            denied = $0 == .deny
+        }
+        browser.selectAdjacentTab()
+        XCTAssertEqual(browser.selectedTabID, first.id)
+        XCTAssertTrue(denied)
+        XCTAssertFalse(browser.showsFindBar)
+        browser.selectAdjacentTab(backwards: true)
+        XCTAssertEqual(browser.selectedTabID, second.id)
+        XCTAssertTrue(browser.selectedTab!.isPrivate)
+        browser.close(second)
+        browser.selectAdjacentTab(backwards: true)
+        XCTAssertEqual(browser.selectedTabID, first.id)
+    }
+
+    @MainActor
     private func makeBrowser() -> BrowserStore {
         let defaults = UserDefaults(suiteName: UUID().uuidString)!
         return BrowserStore(sessionStore: BrowserSessionStore(defaults: defaults))
