@@ -37,6 +37,11 @@ Custom glass controls use opaque system surfaces with Reduce Transparency.
 Toolbar labels define their full 44-point hit areas. Find-in-page uses the
 same navigation surface, with a local-page test covering find/close behavior
 from condensed phone controls.
+The address/navigation layer floats over WebKit content, letting Liquid Glass
+sample the actual page as it scrolls beneath the bar. Measured scroll insets
+keep the page's initial position accessible and preserve scrolled positions
+when controls expand or condense. Start pages and load errors reserve readable
+space beneath navigation. Reduce Transparency still uses an opaque surface.
 No public release is made by committing this first UI batch.
 
 ## Apple references

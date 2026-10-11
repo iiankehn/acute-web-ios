@@ -64,6 +64,7 @@ struct BrowserRootView: View {
 private struct BrowserPage: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
+    @State private var navigationHeight: CGFloat = 0
 
     var body: some View {
         ZStack {
@@ -84,6 +85,9 @@ private struct BrowserPage: View {
             .ignoresSafeArea(.container, edges: .bottom)
             if tab.url == nil && tab.navigationError == nil {
                 StartPage(preferences: browser.preferences, bookmarks: browser.bookmarks)
+                    .safeAreaInset(edge: .top, spacing: 0) {
+                        Color.clear.frame(height: navigationHeight)
+                    }
             }
             if let error = tab.navigationError {
                 ContentUnavailableView {
@@ -95,10 +99,11 @@ private struct BrowserPage: View {
                         .buttonStyle(.borderedProminent)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.top, navigationHeight)
                 .background(Color(uiColor: .systemBackground))
             }
         }
-        .safeAreaInset(edge: .top, spacing: 0) {
+        .overlay(alignment: .top) {
             VStack(spacing: 0) {
                 BrowserToolbar(tab: tab)
                 if browser.showsFindBar {
@@ -110,6 +115,14 @@ private struct BrowserPage: View {
                         .tint(.accentColor)
                 }
             }
+            .onGeometryChange(for: CGFloat.self) { proxy in
+                proxy.size.height
+            } action: { height in
+                navigationHeight = height
+            }
+        }
+        .onChange(of: navigationHeight, initial: true) { _, height in
+            BrowserChromeLayout.apply(topInset: height, to: tab.webView.scrollView)
         }
         .onChange(of: tab.url) { _, _ in
             browser.closeFindBar()
