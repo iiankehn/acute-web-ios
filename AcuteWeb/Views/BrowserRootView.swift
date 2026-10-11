@@ -66,7 +66,8 @@ private struct BrowserPage: View {
                 tab: tab,
                 downloadCenter: browser.downloadCenter,
                 permissionBroker: browser.permissionBroker,
-                sitePrivacy: browser.sitePrivacy
+                sitePrivacy: browser.sitePrivacy,
+                openLink: { request, isPrivate in browser.openInNewTab(request, isPrivate: isPrivate) }
             )
             .ignoresSafeArea(.container, edges: .bottom)
             if tab.url == nil && tab.navigationError == nil {
@@ -99,6 +100,7 @@ private struct BrowserPage: View {
             }
         }
         .onChange(of: tab.url) { _, _ in
+            browser.closeFindBar()
             browser.refreshAddress()
             browser.recordCurrentVisit()
         }

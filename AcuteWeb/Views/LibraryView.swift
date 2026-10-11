@@ -7,6 +7,7 @@ struct LibraryView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var selection = 0
     @State private var query = ""
+    @State private var editingBookmark: SavedSite?
 
     var body: some View {
         NavigationStack {
@@ -20,6 +21,10 @@ struct LibraryView: View {
 
                 if selection == 0 { bookmarksList } else { historyList }
             }
+            .sheet(item: $editingBookmark) { item in
+                BookmarkEditor(bookmarks: bookmarks, item: item)
+            }
+            .onReceive(bookmarks.objectWillChange) { _ in browser.objectWillChange.send() }
             .navigationTitle("Library")
             .searchable(text: $query, prompt: "Search titles or addresses")
             .toolbar {
@@ -41,7 +46,7 @@ struct LibraryView: View {
         } else if filtered(bookmarks.items).isEmpty {
             noSearchResults
         } else {
-            List(filtered(bookmarks.items)) { item in siteRow(item) { bookmarks.remove(item) } }
+            List(filtered(bookmarks.items)) { item in siteRow(item, isBookmark: true) { bookmarks.remove(item) } }
         }
     }
 
@@ -55,7 +60,7 @@ struct LibraryView: View {
         } else if filtered(history.items).isEmpty {
             noSearchResults
         } else {
-            List(filtered(history.items)) { item in siteRow(item) { history.remove(item) } }
+            List(filtered(history.items)) { item in siteRow(item, isBookmark: false) { history.remove(item) } }
         }
     }
 
@@ -67,12 +72,12 @@ struct LibraryView: View {
         items.filter { $0.matchesSearch(query) }
     }
 
-    private func siteRow(_ item: SavedSite, remove: @escaping () -> Void) -> some View {
+    private func siteRow(_ item: SavedSite, isBookmark: Bool, remove: @escaping () -> Void) -> some View {
         Button {
             if let url = item.url { browser.open(url); dismiss() }
         } label: {
             HStack {
-                Image(systemName: "globe")
+                Image(systemName: isBookmark ? "bookmark.fill" : "clock")
                 VStack(alignment: .leading) {
                     Text(item.title).lineLimit(1)
                     Text(item.url?.host ?? item.address).font(.caption).foregroundStyle(.secondary).lineLimit(1)
@@ -83,7 +88,18 @@ struct LibraryView: View {
         .swipeActions { Button("Delete", role: .destructive, action: remove) }
         .contextMenu {
             if let url = item.url {
+                Button("Open in New Tab", systemImage: "plus.square.on.square") {
+                    browser.openInNewTab(url, isPrivate: browser.selectedTab?.isPrivate == true)
+                    dismiss()
+                }
+                Button("Open in New Private Tab", systemImage: "hand.raised.fill") {
+                    browser.openInNewTab(url, isPrivate: true)
+                    dismiss()
+                }
                 ShareLink(item: url)
+            }
+            if isBookmark {
+                Button("Edit Bookmark", systemImage: "pencil") { editingBookmark = item }
             }
             Button("Delete", systemImage: "trash", role: .destructive, action: remove)
         }

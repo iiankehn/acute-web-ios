@@ -34,8 +34,12 @@ Version `1.0.0` includes:
 - Tab snapshots, duplication, reopening, reordering, and adaptive iPad layouts.
 - Search-engine selection with DuckDuckGo as the default.
 - On-device WebKit content rules for known tracker resources.
-- Native downloads saved locally and exposed through the system share sheet.
-- Find in page and per-tab desktop/mobile website switching.
+- Native downloads with restart recovery, search, preview, cancellation, sharing, and confirmed file deletion.
+- Find in page with live results, accessible controls, and per-tab desktop/mobile website switching.
+- Link menus for new regular/private tabs; links opened from private pages retain private browsing.
+- Editable bookmarks and searchable bookmarks/history.
+- Keyboard shortcuts for address focus, reopening tabs, navigation, and page search.
+- Page-load errors with explicit retry.
 - Explicit allow-once prompts for website camera and microphone access.
 - Persistent user-created bookmarks and browsing history that is off by default.
 - Crash-safe restoration for regular tabs, with a user-controlled startup toggle.

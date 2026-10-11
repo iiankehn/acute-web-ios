@@ -39,6 +39,31 @@ final class DownloadCenterTests: XCTestCase {
     }
 
     @MainActor
+    func testDeletingCompletedDownloadRemovesFileAndRecoveredEntry() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: directory) }
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let file = directory.appendingPathComponent("delete.txt")
+        try Data("delete me".utf8).write(to: file)
+        let center = DownloadCenter(directory: directory)
+        try center.remove(center.items[0])
+        XCTAssertFalse(FileManager.default.fileExists(atPath: file.path))
+        XCTAssertTrue(center.items.isEmpty)
+        XCTAssertTrue(DownloadCenter(directory: directory).items.isEmpty)
+    }
+
+    @MainActor
+    func testDeletionCannotRemoveFileOutsideDownloadDirectory() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let outside = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        defer { try? FileManager.default.removeItem(at: outside) }
+        try Data("keep me".utf8).write(to: outside)
+        let item = DownloadItem(id: UUID(), filename: outside.lastPathComponent, destination: outside, state: .finished)
+        XCTAssertThrowsError(try DownloadCenter(directory: directory).remove(item))
+        XCTAssertEqual(try Data(contentsOf: outside), Data("keep me".utf8))
+    }
+
+    @MainActor
     func testUnsafeAndEmptyNamesStayInsideDownloadsDirectory() {
         let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
         let center = DownloadCenter(directory: directory)

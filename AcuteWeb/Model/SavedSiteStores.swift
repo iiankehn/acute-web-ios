@@ -19,8 +19,12 @@ struct SavedSite: Identifiable, Codable, Equatable {
 final class BookmarkStore: ObservableObject {
     @Published private(set) var items: [SavedSite] = []
     private let defaultsKey = "bookmarks"
+    private let defaults: UserDefaults
 
-    init() { items = load(defaultsKey) }
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        items = load(defaultsKey, defaults: defaults)
+    }
 
     func contains(_ url: URL?) -> Bool {
         guard let url else { return false }
@@ -33,12 +37,33 @@ final class BookmarkStore: ObservableObject {
         } else {
             items.insert(SavedSite(id: UUID(), title: title, address: url.absoluteString, savedAt: Date()), at: 0)
         }
-        save(items, defaultsKey)
+        save(items, defaultsKey, defaults: defaults)
+    }
+
+    @discardableResult
+    func update(_ item: SavedSite, title: String, address: String) -> Bool {
+        guard let url = Self.validatedURL(address), let index = items.firstIndex(where: { $0.id == item.id }) else { return false }
+        let trimmedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        items[index] = SavedSite(id: item.id, title: trimmedTitle.isEmpty ? (url.host ?? url.absoluteString) : trimmedTitle,
+                                address: url.absoluteString, savedAt: item.savedAt)
+        items.removeAll { $0.id != item.id && $0.address == url.absoluteString }
+        save(items, defaultsKey, defaults: defaults)
+        return true
+    }
+
+    static func validatedURL(_ address: String) -> URL? {
+        let value = address.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !value.isEmpty, !value.contains(where: { $0.isWhitespace }) else { return nil }
+        let candidate = URLComponents(string: value)?.scheme == nil ? "https://\(value)" : value
+        guard let parts = URLComponents(string: candidate),
+              let scheme = parts.scheme?.lowercased(), ["http", "https"].contains(scheme),
+              let host = parts.host, !host.isEmpty, let url = parts.url else { return nil }
+        return url
     }
 
     func remove(_ item: SavedSite) {
         items.removeAll { $0.id == item.id }
-        save(items, defaultsKey)
+        save(items, defaultsKey, defaults: defaults)
     }
 }
 
@@ -67,12 +92,12 @@ final class HistoryStore: ObservableObject {
     }
 }
 
-private func load(_ key: String) -> [SavedSite] {
-    guard let data = UserDefaults.standard.data(forKey: key) else { return [] }
+private func load(_ key: String, defaults: UserDefaults = .standard) -> [SavedSite] {
+    guard let data = defaults.data(forKey: key) else { return [] }
     return (try? JSONDecoder().decode([SavedSite].self, from: data)) ?? []
 }
 
-private func save(_ sites: [SavedSite], _ key: String) {
+private func save(_ sites: [SavedSite], _ key: String, defaults: UserDefaults = .standard) {
     guard let data = try? JSONEncoder().encode(sites) else { return }
-    UserDefaults.standard.set(data, forKey: key)
+    defaults.set(data, forKey: key)
 }

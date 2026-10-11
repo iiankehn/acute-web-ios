@@ -19,6 +19,7 @@ final class BrowserStore: ObservableObject {
     @Published var showsLibrary = false
     @Published var showsSitePrivacy = false
     @Published var addressDraft = ""
+    @Published private(set) var addressFocusRequest = UUID()
     @Published var findQuery = ""
     @Published private(set) var findStatus = ""
     @Published private(set) var recentlyClosed: [(url: URL?, isPrivate: Bool)] = []
@@ -32,6 +33,7 @@ final class BrowserStore: ObservableObject {
     let sitePrivacy = SitePrivacyStore()
     private let contentBlocker = ContentBlocker()
     private let sessionStore: BrowserSessionStore
+    private var findRequestID = UUID()
 
     var selectedTab: BrowserTab? {
         tabs.first { $0.id == selectedTabID }
@@ -45,6 +47,7 @@ final class BrowserStore: ObservableObject {
     }
 
     func newTab(isPrivate: Bool = false) {
+        closeFindBar()
         let tab = BrowserTab(isPrivate: isPrivate)
         configureNavigation(for: tab)
         tabs.append(tab)
@@ -56,7 +59,8 @@ final class BrowserStore: ObservableObject {
     private func configureNavigation(for tab: BrowserTab) {
         let coordinator = WebView.Coordinator(
             tab: tab, downloadCenter: downloadCenter,
-            permissionBroker: permissionBroker, sitePrivacy: sitePrivacy
+            permissionBroker: permissionBroker, sitePrivacy: sitePrivacy,
+            openLink: { [weak self] request, isPrivate in self?.openInNewTab(request, isPrivate: isPrivate) }
         )
         tab.navigationCoordinator = coordinator
         tab.webView.navigationDelegate = coordinator
@@ -64,6 +68,7 @@ final class BrowserStore: ObservableObject {
     }
 
     func select(_ tab: BrowserTab) {
+        closeFindBar()
         selectedTab?.captureSnapshot()
         selectedTabID = tab.id
         addressDraft = tab.url?.absoluteString ?? ""
@@ -79,6 +84,7 @@ final class BrowserStore: ObservableObject {
         tabs.remove(at: index)
         if tabs.isEmpty { newTab() }
         if selectedTabID == tab.id {
+            closeFindBar()
             selectedTabID = tabs[min(index, tabs.count - 1)].id
             refreshAddress()
         }
@@ -86,6 +92,7 @@ final class BrowserStore: ObservableObject {
     }
 
     func navigate() {
+        closeFindBar()
         guard let tab = selectedTab,
               let url = AddressResolver.resolve(addressDraft, searchEngine: preferences.searchEngine) else { return }
         tab.navigationError = nil
@@ -100,6 +107,11 @@ final class BrowserStore: ObservableObject {
         tab.navigationError = nil
         addressDraft = url.absoluteString
         tab.webView.load(URLRequest(url: url))
+    }
+
+    func focusAddress() {
+        closeFindBar()
+        addressFocusRequest = UUID()
     }
 
     func refreshAddress() {
@@ -141,6 +153,19 @@ final class BrowserStore: ObservableObject {
         saveSession()
     }
 
+    func openInNewTab(_ url: URL, isPrivate: Bool = false) {
+        openInNewTab(URLRequest(url: url), isPrivate: isPrivate)
+    }
+
+    func openInNewTab(_ request: URLRequest, isPrivate: Bool = false) {
+        guard let url = request.url, let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme) else { return }
+        newTab(isPrivate: isPrivate)
+        selectedTab?.lastRequestedURL = url
+        addressDraft = url.absoluteString
+        selectedTab?.webView.load(request)
+        saveSession(selectedURLOverride: url)
+    }
+
     func open(_ url: URL) {
         addressDraft = url.absoluteString
         navigate()
@@ -175,7 +200,11 @@ final class BrowserStore: ObservableObject {
     }
 
     func findInPage(backwards: Bool = false) {
-        guard let webView = selectedTab?.webView else { return }
+        findRequestID = UUID()
+        let requestID = findRequestID
+        guard let tab = selectedTab else { return }
+        let tabID = tab.id
+        let webView = tab.webView
         let query = findQuery.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !query.isEmpty else {
             findStatus = ""
@@ -185,11 +214,14 @@ final class BrowserStore: ObservableObject {
         configuration.backwards = backwards
         configuration.wraps = true
         webView.find(query, configuration: configuration) { [weak self] result in
-            self?.findStatus = result.matchFound ? "Match found" : "No matches"
+            guard let self, self.findRequestID == requestID, self.selectedTabID == tabID,
+                  self.showsFindBar else { return }
+            self.findStatus = result.matchFound ? "Match found" : "No matches"
         }
     }
 
     func closeFindBar() {
+        findRequestID = UUID()
         showsFindBar = false
         findQuery = ""
         findStatus = ""

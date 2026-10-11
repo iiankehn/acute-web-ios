@@ -18,6 +18,7 @@ struct DownloadItem: Identifiable {
 @MainActor
 final class DownloadCenter: NSObject, ObservableObject, WKDownloadDelegate {
     @Published private(set) var items: [DownloadItem] = []
+    private var downloads: [ObjectIdentifier: WKDownload] = [:]
     private var temporaryDestinations: [ObjectIdentifier: URL] = [:]
     private var itemIDs: [ObjectIdentifier: UUID] = [:]
     private let directory: URL
@@ -46,6 +47,7 @@ final class DownloadCenter: NSObject, ObservableObject, WKDownloadDelegate {
     }
 
     func register(_ download: WKDownload) {
+        downloads[ObjectIdentifier(download)] = download
         download.delegate = self
     }
 
@@ -70,6 +72,10 @@ final class DownloadCenter: NSObject, ObservableObject, WKDownloadDelegate {
             )
             completionHandler(temporaryURL)
         } catch {
+            downloads.removeValue(forKey: ObjectIdentifier(download))
+            let filename = uniqueDestination(for: suggestedFilename, in: directory).lastPathComponent
+            items.insert(DownloadItem(id: UUID(), filename: filename, destination: nil,
+                                      state: .failed, failureReason: error.localizedDescription), at: 0)
             completionHandler(nil)
         }
     }
@@ -77,6 +83,7 @@ final class DownloadCenter: NSObject, ObservableObject, WKDownloadDelegate {
     func downloadDidFinish(_ download: WKDownload) {
         let key = ObjectIdentifier(download)
         defer {
+            downloads.removeValue(forKey: key)
             itemIDs.removeValue(forKey: key)
             temporaryDestinations.removeValue(forKey: key)
         }
@@ -104,6 +111,37 @@ final class DownloadCenter: NSObject, ObservableObject, WKDownloadDelegate {
             $0.failureReason = error.localizedDescription
         }
         itemIDs.removeValue(forKey: key)
+        downloads.removeValue(forKey: key)
+    }
+
+    func cancel(_ item: DownloadItem) {
+        guard item.state == .downloading,
+              let key = itemIDs.first(where: { $0.value == item.id })?.key,
+              let download = downloads[key] else { return }
+        // Remove delegate bookkeeping before cancellation can call back.
+        itemIDs.removeValue(forKey: key)
+        downloads.removeValue(forKey: key)
+        let temporaryURL = temporaryDestinations.removeValue(forKey: key)
+        if let index = items.firstIndex(where: { $0.id == item.id }) {
+            items[index].state = .failed
+            items[index].failureReason = "Cancelled"
+        }
+        download.cancel { _ in
+            if let temporaryURL { try? FileManager.default.removeItem(at: temporaryURL) }
+        }
+    }
+
+    func remove(_ item: DownloadItem) throws {
+        guard item.state != .downloading else { return }
+        if item.state == .finished, let destination = item.destination {
+            guard destination.deletingLastPathComponent().standardizedFileURL.path == directory.standardizedFileURL.path else {
+                throw CocoaError(.fileWriteNoPermission)
+            }
+            if FileManager.default.fileExists(atPath: destination.path) {
+                try FileManager.default.removeItem(at: destination)
+            }
+        }
+        items.removeAll { $0.id == item.id }
     }
 
     private func update(_ download: WKDownload, change: (inout DownloadItem) -> Void) {

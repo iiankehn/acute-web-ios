@@ -6,9 +6,10 @@ struct WebView: UIViewRepresentable {
     let downloadCenter: DownloadCenter
     let permissionBroker: PermissionBroker
     let sitePrivacy: SitePrivacyStore
+    let openLink: (URLRequest, Bool) -> Void
 
     func makeCoordinator() -> Coordinator {
-        tab.navigationCoordinator ?? Coordinator(tab: tab, downloadCenter: downloadCenter, permissionBroker: permissionBroker, sitePrivacy: sitePrivacy)
+        tab.navigationCoordinator ?? Coordinator(tab: tab, downloadCenter: downloadCenter, permissionBroker: permissionBroker, sitePrivacy: sitePrivacy, openLink: openLink)
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -25,12 +26,14 @@ struct WebView: UIViewRepresentable {
         let downloadCenter: DownloadCenter
         let permissionBroker: PermissionBroker
         let sitePrivacy: SitePrivacyStore
+        let openLink: (URLRequest, Bool) -> Void
 
-        init(tab: BrowserTab, downloadCenter: DownloadCenter, permissionBroker: PermissionBroker, sitePrivacy: SitePrivacyStore) {
+        init(tab: BrowserTab, downloadCenter: DownloadCenter, permissionBroker: PermissionBroker, sitePrivacy: SitePrivacyStore, openLink: @escaping (URLRequest, Bool) -> Void) {
             self.tab = tab
             self.downloadCenter = downloadCenter
             self.permissionBroker = permissionBroker
             self.sitePrivacy = sitePrivacy
+            self.openLink = openLink
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
@@ -57,7 +60,7 @@ struct WebView: UIViewRepresentable {
             preferences: WKWebpagePreferences,
             decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
         ) {
-            if navigationAction.targetFrame?.isMainFrame != false {
+            if navigationAction.targetFrame?.isMainFrame == true {
                 tab?.lastRequestedURL = navigationAction.request.url
             }
             preferences.allowsContentJavaScript = sitePrivacy.policy(for: navigationAction.request.url?.host).allowsJavaScript
@@ -78,10 +81,33 @@ struct WebView: UIViewRepresentable {
             for navigationAction: WKNavigationAction,
             windowFeatures: WKWindowFeatures
         ) -> WKWebView? {
-            if navigationAction.targetFrame == nil, let request = navigationAction.request.url {
-                webView.load(URLRequest(url: request))
+            if navigationAction.targetFrame == nil {
+                openLink(navigationAction.request, tab?.isPrivate == true)
             }
             return nil
+        }
+
+        func webView(
+            _ webView: WKWebView,
+            contextMenuConfigurationForElement elementInfo: WKContextMenuElementInfo,
+            completionHandler: @escaping (UIContextMenuConfiguration?) -> Void
+        ) {
+            guard let url = elementInfo.linkURL, let scheme = url.scheme?.lowercased(), ["http", "https"].contains(scheme) else {
+                completionHandler(UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { suggestedActions in
+                    UIMenu(children: suggestedActions)
+                })
+                return
+            }
+            completionHandler(UIContextMenuConfiguration(identifier: nil, previewProvider: nil) { suggestedActions in
+                let open = UIAction(title: "Open in New Tab", image: UIImage(systemName: "plus.square.on.square")) { [weak self] _ in
+                    guard let self else { return }
+                    self.openLink(URLRequest(url: url), self.tab?.isPrivate == true)
+                }
+                let openPrivate = UIAction(title: "Open in New Private Tab", image: UIImage(systemName: "hand.raised.fill")) { [weak self] _ in
+                    self?.openLink(URLRequest(url: url), true)
+                }
+                return UIMenu(children: [open, openPrivate] + suggestedActions)
+            })
         }
 
         func webView(

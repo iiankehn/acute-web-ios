@@ -28,6 +28,9 @@ struct BrowserToolbar: View {
                 }
             }
         }
+        .onChange(of: browser.addressFocusRequest) { _, _ in
+            addressFocused = true
+        }
         .buttonStyle(.plain)
         .font(.body.weight(.medium))
         .padding(.horizontal, 12)

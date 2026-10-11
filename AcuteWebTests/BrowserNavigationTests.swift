@@ -41,6 +41,35 @@ final class BrowserNavigationTests: XCTestCase {
     }
 
     @MainActor
+    func testWindowOpenedFromPrivatePageCreatesANewPrivateTab() {
+        let browser = makeBrowser()
+        browser.newTab(isPrivate: true)
+        let source = browser.selectedTab!
+        source.webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
+        source.webView.loadHTMLString("<title>Private source</title>", baseURL: URL(string: "about:blank"))
+        let loaded = expectation(for: NSPredicate { _, _ in source.webView.title == "Private source" }, evaluatedWith: nil)
+        wait(for: [loaded], timeout: 15)
+        let originalCount = browser.tabs.count
+        source.webView.evaluateJavaScript("window.open('https://acute-link-test.invalid/');")
+        let created = expectation(for: NSPredicate { _, _ in browser.tabs.count == originalCount + 1 }, evaluatedWith: nil)
+        wait(for: [created], timeout: 10)
+        XCTAssertTrue(browser.selectedTab!.isPrivate)
+        XCTAssertFalse(browser.selectedTab!.webView.configuration.websiteDataStore.isPersistent)
+        XCTAssertEqual(browser.selectedTab!.lastRequestedURL?.host, "acute-link-test.invalid")
+        source.webView.stopLoading()
+        browser.selectedTab?.webView.stopLoading()
+    }
+
+    @MainActor
+    func testUnsupportedLinksDoNotCreateTabs() {
+        let browser = makeBrowser()
+        let originalCount = browser.tabs.count
+        browser.openInNewTab(URL(string: "file:///private/file")!)
+        browser.openInNewTab(URL(string: "javascript:alert(1)")!)
+        XCTAssertEqual(browser.tabs.count, originalCount)
+    }
+
+    @MainActor
     func testCancelledNavigationDoesNotShowAnErrorButConnectionFailureDoes() {
         let browser = makeBrowser()
         let tab = browser.selectedTab!
