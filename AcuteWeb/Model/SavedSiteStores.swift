@@ -52,13 +52,7 @@ final class BookmarkStore: ObservableObject {
     }
 
     static func validatedURL(_ address: String) -> URL? {
-        let value = address.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !value.isEmpty, !value.contains(where: { $0.isWhitespace }) else { return nil }
-        let candidate = URLComponents(string: value)?.scheme == nil ? "https://\(value)" : value
-        guard let parts = URLComponents(string: candidate),
-              let scheme = parts.scheme?.lowercased(), ["http", "https"].contains(scheme),
-              let host = parts.host, !host.isEmpty, let url = parts.url else { return nil }
-        return url
+        WebAddress.url(address)
     }
 
     func remove(_ item: SavedSite) {

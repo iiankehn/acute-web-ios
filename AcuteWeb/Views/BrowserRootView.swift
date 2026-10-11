@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BrowserRootView: View {
     @EnvironmentObject private var browser: BrowserStore
+    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     var body: some View {
@@ -42,8 +43,12 @@ struct BrowserRootView: View {
             ZStack {
                 PermissionPromptHost(broker: browser.permissionBroker)
                 ScriptDialogHost(broker: browser.scriptDialogs)
+                PrivateBrowsingShield(isEnabled: scenePhase != .active && browser.selectedTab?.isPrivate == true)
+                    .frame(width: 0, height: 0)
             }
         }
+        .onAppear { browser.updateSceneActivity(isActive: scenePhase == .active) }
+        .onChange(of: scenePhase) { _, phase in browser.updateSceneActivity(isActive: phase == .active) }
         .tint(.accentColor)
     }
 
@@ -72,6 +77,7 @@ private struct BrowserPage: View {
                 sitePrivacy: browser.sitePrivacy,
                 openLink: { request, isPrivate in browser.openInNewTab(request, isPrivate: isPrivate) },
                 scriptDialogs: browser.scriptDialogs,
+                canPresentDialogs: { browser.allowsWebsitePrompts && browser.selectedTabID == tab.id },
                 prepareNavigation: { webView, url, completion in
                     browser.prepareNavigation(webView, url: url, completion: completion)
                 }
@@ -123,12 +129,12 @@ private struct PermissionPromptHost: View {
     var body: some View {
         Color.clear
             .frame(width: 0, height: 0)
-            .alert(item: $broker.pendingRequest) { request in
+            .alert(item: Binding(get: { broker.pendingRequest }, set: { _ in })) { request in
             Alert(
                 title: Text("Allow \(request.kind.title)?"),
                 message: Text("\(request.host) is requesting access. Acute Web will deny access unless you explicitly allow it."),
-                primaryButton: .default(Text("Allow Once")) { broker.resolve(.grant) },
-                secondaryButton: .cancel(Text("Don’t Allow")) { broker.resolve(.deny) }
+                primaryButton: .default(Text("Allow Once")) { broker.resolve(.grant, requestID: request.id) },
+                secondaryButton: .cancel(Text("Don’t Allow")) { broker.resolve(.deny, requestID: request.id) }
             )
         }
     }

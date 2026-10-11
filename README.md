@@ -41,10 +41,11 @@ Version `1.0.0` includes:
 - Keyboard shortcuts for address focus, reopening tabs, navigation, and page search.
 - Page-load errors with explicit retry.
 - Native website alert, confirmation, and text-input dialogs with per-tab cancellation.
-- Explicit allow-once prompts for website camera and microphone access.
+- Explicit allow-once prompts for website camera and microphone access, cancelled when their tab closes, navigates, or loses selection.
 - Persistent user-created bookmarks and browsing history that is off by default.
 - Crash-safe restoration for regular tabs, with a user-controlled startup toggle.
-- Private tabs excluded from saved sessions, recent sites, and browsing history.
+- Private tabs excluded from saved sessions, recent sites, browsing history, and closed-tab recovery.
+- Private browsing is covered while the app is inactive for app-switcher snapshots.
 - Per-site controls for tracker blocking, JavaScript, media capture, and local website data.
 - A clear privacy settings surface documenting Acute's zero-telemetry behavior.
 - An App Store privacy manifest declaring no tracking or collected data.

@@ -102,6 +102,41 @@ final class BrowserNavigationTests: XCTestCase {
     }
 
     @MainActor
+    func testClosedPrivateTabsAreNotRetainedForReopeningAndTheirPermissionsAreDenied() {
+        let browser = makeBrowser()
+        browser.newTab(isPrivate: true)
+        let privateTab = browser.selectedTab!
+        privateTab.url = URL(string: "https://private.example/secret")
+        var denied = false
+        browser.permissionBroker.request(tabID: privateTab.id, host: "private.example", kind: .camera) {
+            denied = $0 == .deny
+        }
+        browser.close(privateTab)
+        XCTAssertTrue(denied)
+        XCTAssertNil(browser.permissionBroker.pendingRequest)
+        XCTAssertFalse(browser.recentlyClosed.contains { $0.url?.host == "private.example" })
+        browser.newTab()
+        let regular = browser.selectedTab!
+        regular.url = URL(string: "https://regular.example")
+        browser.close(regular)
+        XCTAssertEqual(browser.recentlyClosed.first?.url?.host, "regular.example")
+    }
+
+    @MainActor
+    func testBackgroundingTheAppDeniesPendingPermissionsAndDisallowsWebsitePrompts() {
+        let browser = makeBrowser()
+        let tab = browser.selectedTab!
+        var denied = false
+        browser.permissionBroker.request(tabID: tab.id, host: "example.com", kind: .microphone) { denied = $0 == .deny }
+        browser.updateSceneActivity(isActive: false)
+        XCTAssertTrue(denied)
+        XCTAssertFalse(browser.allowsWebsitePrompts)
+        browser.updateSceneActivity(isActive: true)
+        XCTAssertTrue(browser.allowsWebsitePrompts)
+        XCTAssertNil(browser.permissionBroker.pendingRequest)
+    }
+
+    @MainActor
     func testCancelledNavigationDoesNotShowAnErrorButConnectionFailureDoes() {
         let browser = makeBrowser()
         let tab = browser.selectedTab!

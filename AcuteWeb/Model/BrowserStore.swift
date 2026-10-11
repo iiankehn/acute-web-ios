@@ -35,6 +35,7 @@ final class BrowserStore: ObservableObject {
     private let contentBlocker = ContentBlocker()
     private let sessionStore: BrowserSessionStore
     private var findRequestID = UUID()
+    private(set) var allowsWebsitePrompts = true
 
     var selectedTab: BrowserTab? {
         tabs.first { $0.id == selectedTabID }
@@ -48,6 +49,7 @@ final class BrowserStore: ObservableObject {
     }
 
     func newTab(isPrivate: Bool = false) {
+        dismissRequestsForSelectedTab()
         closeFindBar()
         let tab = BrowserTab(isPrivate: isPrivate)
         configureNavigation(for: tab)
@@ -57,12 +59,32 @@ final class BrowserStore: ObservableObject {
         contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
     }
 
+    func updateSceneActivity(isActive: Bool) {
+        allowsWebsitePrompts = isActive
+        if !isActive {
+            for tab in tabs {
+                scriptDialogs.cancel(tabID: tab.id)
+                permissionBroker.cancel(tabID: tab.id)
+            }
+        }
+    }
+
+    private func dismissRequestsForSelectedTab() {
+        guard let id = selectedTabID else { return }
+        scriptDialogs.cancel(tabID: id)
+        permissionBroker.cancel(tabID: id)
+    }
+
     private func configureNavigation(for tab: BrowserTab) {
         let coordinator = WebView.Coordinator(
             tab: tab, downloadCenter: downloadCenter,
             permissionBroker: permissionBroker, sitePrivacy: sitePrivacy,
             openLink: { [weak self] request, isPrivate in self?.openInNewTab(request, isPrivate: isPrivate) },
             scriptDialogs: scriptDialogs,
+            canPresentDialogs: { [weak self, weak tab] in
+                guard let self, let tab else { return false }
+                return self.allowsWebsitePrompts && self.selectedTabID == tab.id
+            },
             prepareNavigation: { [weak self] webView, url, completion in
                 guard let self else { completion(); return }
                 let enabled = self.preferences.blocksTrackers && self.sitePrivacy.policy(for: url?.host).blocksTrackers
@@ -75,6 +97,7 @@ final class BrowserStore: ObservableObject {
     }
 
     func select(_ tab: BrowserTab) {
+        if selectedTabID != tab.id { dismissRequestsForSelectedTab() }
         closeFindBar()
         selectedTab?.captureSnapshot()
         selectedTabID = tab.id
@@ -86,9 +109,12 @@ final class BrowserStore: ObservableObject {
     func close(_ tab: BrowserTab) {
         guard let index = tabs.firstIndex(where: { $0.id == tab.id }) else { return }
         scriptDialogs.cancel(tabID: tab.id)
+        permissionBroker.cancel(tabID: tab.id)
         tab.captureSnapshot()
-        recentlyClosed.insert((tab.url, tab.isPrivate), at: 0)
-        recentlyClosed = Array(recentlyClosed.prefix(10))
+        if !tab.isPrivate {
+            recentlyClosed.insert((tab.url, false), at: 0)
+            recentlyClosed = Array(recentlyClosed.prefix(10))
+        }
         tabs.remove(at: index)
         if tabs.isEmpty { newTab() }
         if selectedTabID == tab.id {

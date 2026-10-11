@@ -5,10 +5,7 @@ struct RestorableBrowserTab: Codable, Equatable {
     let usesDesktopSite: Bool
 
     var url: URL? {
-        guard let url = URL(string: address),
-              let scheme = url.scheme?.lowercased(),
-              ["http", "https"].contains(scheme) else { return nil }
-        return url
+        WebAddress.url(address, allowMissingScheme: false)
     }
 }
 

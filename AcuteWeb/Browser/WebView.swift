@@ -8,10 +8,11 @@ struct WebView: UIViewRepresentable {
     let sitePrivacy: SitePrivacyStore
     let openLink: (URLRequest, Bool) -> Void
     let scriptDialogs: ScriptDialogBroker
+    let canPresentDialogs: () -> Bool
     let prepareNavigation: (WKWebView, URL?, @escaping () -> Void) -> Void
 
     func makeCoordinator() -> Coordinator {
-        tab.navigationCoordinator ?? Coordinator(tab: tab, downloadCenter: downloadCenter, permissionBroker: permissionBroker, sitePrivacy: sitePrivacy, openLink: openLink, scriptDialogs: scriptDialogs, prepareNavigation: prepareNavigation)
+        tab.navigationCoordinator ?? Coordinator(tab: tab, downloadCenter: downloadCenter, permissionBroker: permissionBroker, sitePrivacy: sitePrivacy, openLink: openLink, scriptDialogs: scriptDialogs, canPresentDialogs: canPresentDialogs, prepareNavigation: prepareNavigation)
     }
 
     func makeUIView(context: Context) -> WKWebView {
@@ -30,20 +31,25 @@ struct WebView: UIViewRepresentable {
         let sitePrivacy: SitePrivacyStore
         let openLink: (URLRequest, Bool) -> Void
         let scriptDialogs: ScriptDialogBroker
+        let canPresentDialogs: () -> Bool
         let prepareNavigation: (WKWebView, URL?, @escaping () -> Void) -> Void
 
-        init(tab: BrowserTab, downloadCenter: DownloadCenter, permissionBroker: PermissionBroker, sitePrivacy: SitePrivacyStore, openLink: @escaping (URLRequest, Bool) -> Void, scriptDialogs: ScriptDialogBroker, prepareNavigation: @escaping (WKWebView, URL?, @escaping () -> Void) -> Void) {
+        init(tab: BrowserTab, downloadCenter: DownloadCenter, permissionBroker: PermissionBroker, sitePrivacy: SitePrivacyStore, openLink: @escaping (URLRequest, Bool) -> Void, scriptDialogs: ScriptDialogBroker, canPresentDialogs: @escaping () -> Bool, prepareNavigation: @escaping (WKWebView, URL?, @escaping () -> Void) -> Void) {
             self.tab = tab
             self.downloadCenter = downloadCenter
             self.permissionBroker = permissionBroker
             self.sitePrivacy = sitePrivacy
             self.openLink = openLink
             self.scriptDialogs = scriptDialogs
+            self.canPresentDialogs = canPresentDialogs
             self.prepareNavigation = prepareNavigation
         }
 
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
-            if let tab { scriptDialogs.cancel(tabID: tab.id) }
+            if let tab {
+                scriptDialogs.cancel(tabID: tab.id)
+                permissionBroker.cancel(tabID: tab.id)
+            }
             tab?.navigationError = nil
         }
 
@@ -145,7 +151,7 @@ struct WebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
                      initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping () -> Void) {
-            guard let tab else { completionHandler(); return }
+            guard let tab, canPresentDialogs() else { completionHandler(); return }
             scriptDialogs.request(tabID: tab.id, host: frame.request.url?.host ?? "Website", message: message, kind: .alert) { _ in
                 completionHandler()
             }
@@ -153,7 +159,7 @@ struct WebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, runJavaScriptConfirmPanelWithMessage message: String,
                      initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (Bool) -> Void) {
-            guard let tab else { completionHandler(false); return }
+            guard let tab, canPresentDialogs() else { completionHandler(false); return }
             scriptDialogs.request(tabID: tab.id, host: frame.request.url?.host ?? "Website", message: message, kind: .confirm) { answer in
                 if case .accept = answer { completionHandler(true) } else { completionHandler(false) }
             }
@@ -161,7 +167,7 @@ struct WebView: UIViewRepresentable {
 
         func webView(_ webView: WKWebView, runJavaScriptTextInputPanelWithPrompt prompt: String, defaultText: String?,
                      initiatedByFrame frame: WKFrameInfo, completionHandler: @escaping (String?) -> Void) {
-            guard let tab else { completionHandler(nil); return }
+            guard let tab, canPresentDialogs() else { completionHandler(nil); return }
             scriptDialogs.request(tabID: tab.id, host: frame.request.url?.host ?? "Website", message: prompt,
                                   kind: .prompt, defaultText: defaultText ?? "") { answer in
                 if case .accept(let text) = answer { completionHandler(text) } else { completionHandler(nil) }
@@ -191,7 +197,8 @@ struct WebView: UIViewRepresentable {
                 decisionHandler(.deny)
                 return
             }
-            permissionBroker.request(host: origin.host, kind: kind, completion: decisionHandler)
+            guard let tab, canPresentDialogs() else { decisionHandler(.deny); return }
+            permissionBroker.request(tabID: tab.id, host: origin.host, kind: kind, completion: decisionHandler)
         }
     }
 }

@@ -5,14 +5,15 @@ enum AddressResolver {
         let input = rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !input.isEmpty else { return nil }
 
-        if let explicit = URL(string: input), let scheme = explicit.scheme,
-           ["http", "https"].contains(scheme.lowercased()) {
-            return explicit
+        let lowercased = input.lowercased()
+        if lowercased.hasPrefix("http:") || lowercased.hasPrefix("https:") {
+            return WebAddress.url(input, allowMissingScheme: false)
         }
-
+        let unsupported = ["file:", "javascript:", "data:", "blob:", "about:", "intent:", "mailto:", "tel:"]
+        guard !unsupported.contains(where: { lowercased.hasPrefix($0) }) else { return nil }
         if !input.contains(where: { $0.isWhitespace }),
-           (input.contains(".") || input == "localhost"),
-           let url = URL(string: "https://\(input)") {
+           (input.contains(".") || lowercased == "localhost" || lowercased.hasPrefix("localhost:") || input.hasPrefix("[")),
+           let url = WebAddress.url(input) {
             return url
         }
 
