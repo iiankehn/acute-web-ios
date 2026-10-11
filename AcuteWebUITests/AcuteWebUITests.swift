@@ -47,6 +47,27 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["The web, in focus."].exists)
     }
 
+    func testClearAddressKeepsCurrentPageAndAllowsReplacementInput() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestRenderedPage"]
+        app.launch()
+        let condensed = app.buttons["condensedAddress"]
+        XCTAssertTrue(condensed.waitForExistence(timeout: 15))
+        XCTAssertTrue((condensed.value as? String)?.contains("Acute navigation fixture") == true)
+        condensed.tap()
+        let clear = app.buttons["clearAddress"]
+        XCTAssertTrue(clear.waitForExistence(timeout: 5))
+        clear.tap()
+        let address = app.textFields["addressField"]
+        XCTAssertEqual(address.value as? String, "Search or enter address")
+        address.typeText("replacement query")
+        XCTAssertEqual(address.value as? String, "replacement query")
+        clear.tap()
+        app.buttons["Condense Controls"].tap()
+        XCTAssertTrue(condensed.waitForExistence(timeout: 5))
+        XCTAssertTrue((condensed.value as? String)?.contains("acute-fixture.invalid") == true)
+    }
+
     func testFindFromCondensedControlsReturnsToCondensedPage() {
         app.terminate()
         app.launchArguments += ["-acuteUITestRenderedPage"]

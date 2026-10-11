@@ -42,6 +42,15 @@ sample the actual page as it scrolls beneath the bar. Measured scroll insets
 keep the page's initial position accessible and preserve scrolled positions
 when controls expand or condense. Start pages and load errors reserve readable
 space beneath navigation. Reduce Transparency still uses an opaque surface.
+The condensed phone address capsule identifies the selected page by title and
+host. Editing replaces Reload with a Clear Address control that keeps keyboard
+focus and clears only the draft, without unloading the current page.
+
+## Device validation status
+
+iPhone testing is available. iPad has only been built and launched in CI;
+physical iPad testing has not yet been performed. Keyboard/pointer use, Split
+View, resizing and visual appearance on a real iPad remain unverified.
 No public release is made by committing this first UI batch.
 
 ## Apple references

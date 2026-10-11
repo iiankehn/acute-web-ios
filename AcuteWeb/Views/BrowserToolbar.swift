@@ -24,7 +24,13 @@ struct BrowserToolbar: View {
                     } label: {
                         HStack(spacing: 8) {
                             Image(systemName: addressSymbol).font(.caption)
-                            Text(tab.url?.host ?? tab.title).font(.subheadline.weight(.semibold)).lineLimit(1)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tab.title == "New Tab" ? (tab.url?.host ?? tab.title) : tab.title)
+                                    .font(.subheadline.weight(.semibold)).lineLimit(1)
+                                if let host = tab.url?.host {
+                                    Text(host).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                                }
+                            }
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.down").font(.caption2.weight(.bold))
                         }
@@ -33,7 +39,7 @@ struct BrowserToolbar: View {
                         .contentShape(Capsule())
                     }
                     .accessibilityLabel("Edit Address")
-                    .accessibilityValue(tab.url?.absoluteString ?? tab.title)
+                    .accessibilityValue("\(tab.title), \(tab.url?.absoluteString ?? "")")
                     .accessibilityIdentifier("condensedAddress")
                     .acuteGlass(cornerRadius: 22)
                     HStack(spacing: 0) { tabsButton; moreMenu }
@@ -155,18 +161,34 @@ struct BrowserToolbar: View {
                 addressFocused = false
                 browser.navigate()
             }
-            Button {
-                if browser.selectedTab?.isLoading == true {
-                    browser.selectedTab?.webView.stopLoading()
-                } else {
-                    browser.selectedTab?.webView.reload()
+            if addressFocused {
+                Button {
+                    browser.addressDraft = ""
+                    browser.addressInputError = nil
+                    addressFocused = true
+                } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
-            } label: {
-                Image(systemName: browser.selectedTab?.isLoading == true ? "xmark" : "arrow.clockwise")
-                    .frame(minWidth: 44, minHeight: 44)
-                    .contentShape(Rectangle())
+                .accessibilityLabel("Clear Address")
+                .accessibilityIdentifier("clearAddress")
+                .disabled(browser.addressDraft.isEmpty)
+            } else {
+                Button {
+                    if browser.selectedTab?.isLoading == true {
+                        browser.selectedTab?.webView.stopLoading()
+                    } else {
+                        browser.selectedTab?.webView.reload()
+                    }
+                } label: {
+                    Image(systemName: browser.selectedTab?.isLoading == true ? "xmark" : "arrow.clockwise")
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityLabel(browser.selectedTab?.isLoading == true ? "Stop" : "Reload")
             }
-            .accessibilityLabel(browser.selectedTab?.isLoading == true ? "Stop" : "Reload")
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 44)
