@@ -292,13 +292,15 @@ struct BrowserToolbar: View {
                 browser.toggleDesktopSite()
             }
             .disabled(browser.selectedTab?.url == nil)
-            Button("Downloads", systemImage: "arrow.down.circle") { browser.showsDownloads = true }
-            Button("Bookmarks and History", systemImage: "books.vertical") { browser.showsLibrary = true }
             Button("Site Privacy", systemImage: "shield.lefthalf.filled") { browser.showsSitePrivacy = true }
             .disabled(browser.selectedTab?.url == nil)
             if let url = browser.selectedTab?.url {
                 ShareLink(item: url)
             }
+            Divider()
+            Button("Downloads", systemImage: "arrow.down.circle") { browser.showsDownloads = true }
+            Button("Bookmarks and History", systemImage: "books.vertical") { browser.showsLibrary = true }
+            Divider()
             Button("Settings", systemImage: "gearshape") { browser.showsSettings = true }
         } label: {
             Image(systemName: "ellipsis")

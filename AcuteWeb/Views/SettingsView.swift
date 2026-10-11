@@ -106,7 +106,7 @@ struct SettingsView: View {
                 }
 
                 Section("Private Browsing") {
-                    Label("Private tabs use a non-persistent website data store and are excluded from recent sites and saved history.", systemImage: "hand.raised.fill")
+                    Label("Private tabs stay out of history and session recovery. Downloaded files remain on this device until you delete them.", systemImage: "hand.raised.fill")
                 }
 
                 Section {

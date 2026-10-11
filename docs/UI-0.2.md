@@ -60,6 +60,11 @@ Acute's settings offer Top or Bottom phone controls with small position previews
 optional automatic condensation, and page-title or address-only compact labels.
 Preferences persist locally and update immediately. iPad retains its persistent
 top navigation; phone-position preferences do not change its layout.
+
+Download rows stack filenames and labeled actions at accessibility text sizes;
+active transfers show an indeterminate activity indicator. More separates page
+tools, saved content and Settings. Private-browsing guidance describes history,
+recovery and retained downloads in plain language.
 No public release is made by committing this first UI batch.
 
 ## Apple references

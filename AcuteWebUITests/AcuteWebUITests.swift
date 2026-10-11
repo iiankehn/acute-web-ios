@@ -184,7 +184,7 @@ final class AcuteWebUITests: XCTestCase {
         app.buttons["New Private Tab"].tap()
 
         XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'non-persistent WebKit data store'")).firstMatch.exists)
+        XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Downloaded files remain on this device'")).firstMatch.exists)
         XCTAssertFalse(app.staticTexts["Favorites"].exists)
         XCTAssertFalse(app.staticTexts["Bookmarks"].exists)
     }

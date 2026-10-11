@@ -159,7 +159,7 @@ struct StartPage: View {
                         }
                     }
                 } else {
-                    Label("Private tabs do not appear in session history and use a non-persistent WebKit data store.", systemImage: "hand.raised.fill")
+                    Label("Private tabs stay out of history and are not restored when you reopen Acute. Downloaded files remain on this device until you delete them.", systemImage: "hand.raised.fill")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding()

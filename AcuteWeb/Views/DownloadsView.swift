@@ -7,6 +7,13 @@ struct DownloadsView: View {
     @State private var query = ""
     @State private var pendingDelete: DownloadItem?
     @State private var deletionError: String?
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var rowLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+            ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+            : AnyLayout(HStackLayout(spacing: 12))
+    }
 
     private var filteredItems: [DownloadItem] {
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -27,41 +34,52 @@ struct DownloadsView: View {
                     ContentUnavailableView.search(text: query)
                 } else {
                     List(filteredItems) { item in
-                        HStack(spacing: 12) {
-                            Image(systemName: symbol(for: item.state))
-                                .foregroundStyle(color(for: item.state))
-                                .font(.title3)
+                        rowLayout {
+                            HStack(spacing: 12) {
+                                ZStack {
+                                    if item.state == .downloading {
+                                        ProgressView().tint(.accentColor)
+                                    } else {
+                                        Image(systemName: symbol(for: item.state))
+                                            .foregroundStyle(color(for: item.state))
+                                            .font(.title3)
+                                    }
+                                }
                                 .frame(width: 36, height: 36)
                                 .background(color(for: item.state).opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text(item.filename).font(.body.weight(.medium)).lineLimit(2)
-                                    .truncationMode(.middle)
-                                Text(item.failureReason ?? item.state.rawValue)
-                                    .font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                                .accessibilityHidden(true)
+                                VStack(alignment: .leading, spacing: 4) {
+                                    Text(item.filename).font(.body.weight(.medium)).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                                        .truncationMode(.middle)
+                                    Text(item.failureReason ?? item.state.rawValue)
+                                        .font(.caption).foregroundStyle(.secondary)
+                                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                                }
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            Spacer()
-                            if item.state == .downloading {
-                                Button { downloadCenter.cancel(item) } label: {
-                                    Image(systemName: "xmark.circle").frame(width: 44, height: 44)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            rowLayout {
+                                if item.state == .downloading {
+                                    Button { downloadCenter.cancel(item) } label: {
+                                        actionLabel("Cancel", symbol: "xmark.circle")
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel("Cancel \(item.filename)")
                                 }
-                                .buttonStyle(.borderless)
-                                .accessibilityLabel("Cancel \(item.filename)")
-                            }
-                            if item.state == .finished, let destination = item.destination {
-                                Button {
-                                    previewURL = destination
-                                } label: {
-                                    Image(systemName: "doc.text.magnifyingglass")
-                                        .frame(minWidth: 44, minHeight: 44)
+                                if item.state == .finished, let destination = item.destination {
+                                    Button {
+                                        previewURL = destination
+                                    } label: {
+                                        actionLabel("Preview", symbol: "doc.text.magnifyingglass")
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel("Preview \(item.filename)")
+                                    ShareLink(item: destination) {
+                                        actionLabel("Share", symbol: "square.and.arrow.up")
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel("Share \(item.filename)")
                                 }
-                                .buttonStyle(.borderless)
-                                .accessibilityLabel("Preview \(item.filename)")
-                                ShareLink(item: destination) {
-                                    Image(systemName: "square.and.arrow.up")
-                                        .frame(minWidth: 44, minHeight: 44)
-                                }
-                                .buttonStyle(.borderless)
-                                .accessibilityLabel("Share \(item.filename)")
                             }
                         }
                         .padding(.vertical, 6)
@@ -110,6 +128,19 @@ struct DownloadsView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func actionLabel(_ title: String, symbol: String) -> some View {
+        Group {
+            if dynamicTypeSize.isAccessibilitySize {
+                Label(title, systemImage: symbol)
+            } else {
+                Image(systemName: symbol)
+            }
+        }
+        .frame(minWidth: 44, minHeight: 44, alignment: dynamicTypeSize.isAccessibilitySize ? .leading : .center)
+        .contentShape(Rectangle())
     }
 
     private func remove(_ item: DownloadItem) {
