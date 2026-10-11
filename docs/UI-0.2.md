@@ -51,6 +51,13 @@ focus and clears only the draft, without unloading the current page.
 iPhone testing is available. iPad has only been built and launched in CI;
 physical iPad testing has not yet been performed. Keyboard/pointer use, Split
 View, resizing and visual appearance on a real iPad remain unverified.
+
+## Browsing Layout preferences
+
+Acute's settings offer Top or Bottom phone controls with small position previews,
+optional automatic condensation, and page-title or address-only compact labels.
+Preferences persist locally and update immediately. iPad retains its persistent
+top navigation; phone-position preferences do not change its layout.
 No public release is made by committing this first UI batch.
 
 ## Apple references

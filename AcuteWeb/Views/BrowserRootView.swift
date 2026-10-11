@@ -54,7 +54,7 @@ struct BrowserRootView: View {
     private var browserContent: some View {
         Group {
             if let tab = browser.selectedTab {
-                BrowserPage(tab: tab)
+                BrowserPage(tab: tab, preferences: browser.preferences)
                     .id(tab.id)
             }
         }
@@ -64,7 +64,12 @@ struct BrowserRootView: View {
 private struct BrowserPage: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
+    @ObservedObject var preferences: BrowserPreferences
     @State private var navigationHeight: CGFloat = 0
+
+    private var controlsAtBottom: Bool {
+        UIDevice.current.userInterfaceIdiom == .phone && preferences.phoneControlsPosition == .bottom
+    }
 
     var body: some View {
         ZStack {
@@ -85,7 +90,7 @@ private struct BrowserPage: View {
             .ignoresSafeArea(.container, edges: .bottom)
             if tab.url == nil && tab.navigationError == nil {
                 StartPage(preferences: browser.preferences, bookmarks: browser.bookmarks)
-                    .safeAreaInset(edge: .top, spacing: 0) {
+                    .safeAreaInset(edge: controlsAtBottom ? .bottom : .top, spacing: 0) {
                         Color.clear.frame(height: navigationHeight)
                     }
             }
@@ -99,13 +104,13 @@ private struct BrowserPage: View {
                         .buttonStyle(.borderedProminent)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(.top, navigationHeight)
+                .padding(controlsAtBottom ? .bottom : .top, navigationHeight)
                 .background(Color(uiColor: .systemBackground))
             }
         }
-        .overlay(alignment: .top) {
+        .overlay(alignment: controlsAtBottom ? .bottom : .top) {
             VStack(spacing: 0) {
-                BrowserToolbar(tab: tab)
+                BrowserToolbar(tab: tab, preferences: preferences)
                 if browser.showsFindBar {
                     FindBar()
                 }
@@ -122,7 +127,10 @@ private struct BrowserPage: View {
             }
         }
         .onChange(of: navigationHeight, initial: true) { _, height in
-            BrowserChromeLayout.apply(topInset: height, to: tab.webView.scrollView)
+            updateNavigationInsets(height)
+        }
+        .onChange(of: controlsAtBottom) { _, _ in
+            updateNavigationInsets(navigationHeight)
         }
         .onChange(of: tab.url) { _, _ in
             browser.closeFindBar()
@@ -132,6 +140,12 @@ private struct BrowserPage: View {
         .onChange(of: tab.title) { _, _ in
             browser.recordCurrentVisit()
         }
+    }
+
+    private func updateNavigationInsets(_ height: CGFloat) {
+        BrowserChromeLayout.apply(topInset: controlsAtBottom ? 0 : height,
+                                  bottomInset: controlsAtBottom ? height : 0,
+                                  to: tab.webView.scrollView)
     }
 }
 

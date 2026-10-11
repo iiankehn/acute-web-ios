@@ -44,6 +44,48 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    HStack(spacing: 12) {
+                        ForEach(PhoneControlsPosition.allCases) { position in
+                            Button { preferences.phoneControlsPosition = position } label: {
+                                VStack(spacing: 8) {
+                                    RoundedRectangle(cornerRadius: 6)
+                                        .stroke(.secondary, lineWidth: 1.5)
+                                        .frame(width: 24, height: 40)
+                                        .overlay(alignment: position == .top ? .top : .bottom) {
+                                            Capsule().fill(Color.accentColor).frame(width: 16, height: 4).padding(4)
+                                        }
+                                        .accessibilityHidden(true)
+                                    Text(position.title).font(.subheadline.weight(.semibold))
+                                    Text(position == .top ? "Above the page" : "Within thumb reach")
+                                        .font(.caption).foregroundStyle(.secondary)
+                                }
+                                .frame(maxWidth: .infinity, minHeight: 96)
+                                .padding(8)
+                                .background(preferences.phoneControlsPosition == position ? Color.accentColor.opacity(0.1) : Color.clear,
+                                            in: RoundedRectangle(cornerRadius: 16))
+                                .overlay {
+                                    RoundedRectangle(cornerRadius: 16)
+                                        .stroke(preferences.phoneControlsPosition == position ? Color.accentColor : Color.secondary.opacity(0.2), lineWidth: 1)
+                                        .allowsHitTesting(false)
+                                }
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("\(position.title) Controls")
+                            .accessibilityValue(preferences.phoneControlsPosition == position ? "Selected" : "Not selected")
+                            .accessibilityIdentifier("phoneLayout_\(position.rawValue)")
+                        }
+                    }
+                    Toggle("Condense controls after loading", isOn: $preferences.condensesPhoneControls)
+                    Toggle("Show page title in compact bar", isOn: $preferences.showsCompactPageTitle)
+                        .disabled(!preferences.condensesPhoneControls)
+                } header: {
+                    Text("Browsing Layout")
+                } footer: {
+                    Text("Phone controls can sit above the page or within thumb reach. iPad keeps persistent navigation. Editing, loading and Find keep controls expanded.")
+                }
+
+                Section {
                     Toggle("Block known trackers", isOn: $preferences.blocksTrackers)
                         .onChange(of: preferences.blocksTrackers) { _, _ in applyPrivacyPreferences() }
                     LabeledContent("Fraudulent website warnings", value: "On")

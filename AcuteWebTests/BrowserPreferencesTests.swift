@@ -4,6 +4,25 @@ import Combine
 
 final class BrowserPreferencesTests: XCTestCase {
     @MainActor
+    func testBrowsingLayoutDefaultsAndChangesPersist() {
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        defer { defaults.removePersistentDomain(forName: suite) }
+        defaults.set("unknown", forKey: "phoneControlsPosition")
+        let preferences = BrowserPreferences(defaults: defaults)
+        XCTAssertEqual(preferences.phoneControlsPosition, .top)
+        XCTAssertTrue(preferences.condensesPhoneControls)
+        XCTAssertTrue(preferences.showsCompactPageTitle)
+        preferences.phoneControlsPosition = .bottom
+        preferences.condensesPhoneControls = false
+        preferences.showsCompactPageTitle = false
+        let restored = BrowserPreferences(defaults: defaults)
+        XCTAssertEqual(restored.phoneControlsPosition, .bottom)
+        XCTAssertFalse(restored.condensesPhoneControls)
+        XCTAssertFalse(restored.showsCompactPageTitle)
+    }
+
+    @MainActor
     func testStringLaunchOverridesUseBooleanSemantics() {
         let suite = UUID().uuidString
         let defaults = UserDefaults(suiteName: suite)!

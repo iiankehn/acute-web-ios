@@ -6,7 +6,8 @@ final class AcuteWebUITests: XCTestCase {
     override func setUpWithError() throws {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO", "-showsStartFavorites", "YES"]
+        app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO", "-showsStartFavorites", "YES",
+                               "-phoneControlsPosition", "top", "-condensesPhoneControls", "YES", "-showsCompactPageTitle", "YES"]
         app.launch()
     }
 
@@ -14,6 +15,37 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Acute Web"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["The web, in focus."].exists)
         XCTAssertTrue(app.textFields["addressField"].exists)
+    }
+
+    func testPhoneLayoutOptionsMoveControlsAndDisableCondensation() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestRenderedPage"]
+        app.launch()
+        XCTAssertTrue(app.buttons["condensedAddress"].waitForExistence(timeout: 15))
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        let bottom = app.buttons["phoneLayout_bottom"]
+        scrollTo(bottom)
+        bottom.tap()
+        let condensation = app.switches["Condense controls after loading"]
+        scrollTo(condensation)
+        setSwitch(condensation, enabled: false)
+        app.buttons["Done"].tap()
+        let address = app.textFields["addressField"]
+        XCTAssertTrue(address.waitForExistence(timeout: 5))
+        XCTAssertGreaterThan(address.frame.midY, app.frame.height / 2)
+        XCTAssertFalse(app.buttons["condensedAddress"].exists)
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        let top = app.buttons["phoneLayout_top"]
+        scrollTo(top)
+        top.tap()
+        scrollTo(condensation)
+        setSwitch(condensation, enabled: true)
+        app.buttons["Done"].tap()
+        let condensed = app.buttons["condensedAddress"]
+        XCTAssertTrue(condensed.waitForExistence(timeout: 5))
+        XCTAssertLessThan(condensed.frame.midY, app.frame.height / 2)
     }
 
     func testRenderedPhonePageCondensesAndCanExpandControls() {

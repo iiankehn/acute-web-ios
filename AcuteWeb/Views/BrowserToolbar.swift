@@ -3,6 +3,7 @@ import SwiftUI
 struct BrowserToolbar: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
+    @ObservedObject var preferences: BrowserPreferences
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var addressFocused: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -10,7 +11,7 @@ struct BrowserToolbar: View {
 
     private var isPhone: Bool { UIDevice.current.userInterfaceIdiom == .phone }
     private var isCondensed: Bool {
-        isPhone && tab.hasRenderedPage && !tab.isLoading && tab.navigationError == nil
+        isPhone && preferences.condensesPhoneControls && tab.hasRenderedPage && !tab.isLoading && tab.navigationError == nil
             && !controlsExpanded && !addressFocused && !browser.showsFindBar
     }
 
@@ -25,10 +26,14 @@ struct BrowserToolbar: View {
                         HStack(spacing: 8) {
                             Image(systemName: addressSymbol).font(.caption)
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(tab.title == "New Tab" ? (tab.url?.host ?? tab.title) : tab.title)
-                                    .font(.subheadline.weight(.semibold)).lineLimit(1)
-                                if let host = tab.url?.host {
-                                    Text(host).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                                if preferences.showsCompactPageTitle {
+                                    Text(tab.title == "New Tab" ? (tab.url?.host ?? tab.title) : tab.title)
+                                        .font(.subheadline.weight(.semibold)).lineLimit(1)
+                                    if let host = tab.url?.host {
+                                        Text(host).font(.caption2).foregroundStyle(.secondary).lineLimit(1)
+                                    }
+                                } else {
+                                    Text(tab.url?.host ?? tab.title).font(.subheadline.weight(.semibold)).lineLimit(1)
                                 }
                             }
                             Spacer(minLength: 0)
@@ -51,7 +56,7 @@ struct BrowserToolbar: View {
                     HStack(spacing: 0) {
                         navigationButtons
                         Spacer(minLength: 8)
-                        if isPhone && tab.hasRenderedPage && !tab.isLoading && tab.navigationError == nil {
+                        if isPhone && preferences.condensesPhoneControls && tab.hasRenderedPage && !tab.isLoading && tab.navigationError == nil {
                             Button {
                                 addressFocused = false
                                 controlsExpanded = false

@@ -4,6 +4,22 @@ import UIKit
 
 final class BrowserChromeLayoutTests: XCTestCase {
     @MainActor
+    func testMovingControlsToBottomRemovesTopInsetAndReservesBottomSpace() {
+        let scroll = UIScrollView(frame: CGRect(x: 0, y: 0, width: 390, height: 700))
+        scroll.contentSize = CGSize(width: 390, height: 2000)
+        scroll.contentInset.top = 60
+        scroll.contentOffset.y = -60
+        BrowserChromeLayout.apply(topInset: 0, bottomInset: 110, to: scroll)
+        XCTAssertEqual(scroll.contentInset.top, 0)
+        XCTAssertEqual(scroll.contentInset.bottom, 110)
+        XCTAssertEqual(scroll.verticalScrollIndicatorInsets.bottom, 110)
+        XCTAssertEqual(scroll.contentOffset.y, 0)
+        BrowserChromeLayout.apply(topInset: 60, bottomInset: 0, to: scroll)
+        XCTAssertEqual(scroll.contentInset.bottom, 0)
+        XCTAssertEqual(scroll.contentOffset.y, -60)
+    }
+
+    @MainActor
     func testChangingChromeHeightKeepsPageTopAccessibleAndPreservesOtherInsets() {
         let scroll = UIScrollView(frame: CGRect(x: 0, y: 0, width: 390, height: 700))
         scroll.contentSize = CGSize(width: 800, height: 2000)
