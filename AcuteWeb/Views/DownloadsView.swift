@@ -30,8 +30,12 @@ struct DownloadsView: View {
                         HStack(spacing: 12) {
                             Image(systemName: symbol(for: item.state))
                                 .foregroundStyle(color(for: item.state))
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(item.filename).lineLimit(1)
+                                .font(.title3)
+                                .frame(width: 36, height: 36)
+                                .background(color(for: item.state).opacity(0.1), in: RoundedRectangle(cornerRadius: 10))
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(item.filename).font(.body.weight(.medium)).lineLimit(2)
+                                    .truncationMode(.middle)
                                 Text(item.failureReason ?? item.state.rawValue)
                                     .font(.caption).foregroundStyle(.secondary).lineLimit(2)
                             }
@@ -60,6 +64,7 @@ struct DownloadsView: View {
                                 .accessibilityLabel("Share \(item.filename)")
                             }
                         }
+                        .padding(.vertical, 6)
                         .swipeActions {
                             if item.state == .finished {
                                 Button("Delete", role: .destructive) { pendingDelete = item }
@@ -77,9 +82,11 @@ struct DownloadsView: View {
                             }
                         }
                     }
+                    .listStyle(.insetGrouped)
                 }
             }
             .navigationTitle("Downloads")
+            .navigationBarTitleDisplayMode(.inline)
             .searchable(text: $query, prompt: "Search downloads")
             .confirmationDialog("Delete Download?", isPresented: Binding(
                 get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }
@@ -122,7 +129,7 @@ struct DownloadsView: View {
 
     private func color(for state: DownloadState) -> Color {
         switch state {
-        case .downloading: return .cyan
+        case .downloading: return .accentColor
         case .finished: return .green
         case .failed: return .orange
         }

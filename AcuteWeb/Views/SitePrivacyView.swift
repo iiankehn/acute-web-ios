@@ -15,7 +15,18 @@ struct SitePrivacyView: View {
         NavigationStack {
             Form {
                 Section("Connection") {
-                    LabeledContent("Address", value: host)
+                    HStack(spacing: 12) {
+                        Image(systemName: browser.selectedTab?.url?.scheme == "https" ? "lock" : "globe")
+                            .foregroundStyle(Color.accentColor)
+                            .frame(width: 40, height: 40)
+                            .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(host).font(.headline).textSelection(.enabled)
+                            Text(browser.selectedTab?.isPrivate == true ? "Private tab" : "Regular tab")
+                                .font(.caption).foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 4)
                     LabeledContent("Protocol", value: browser.selectedTab?.url?.scheme?.uppercased() ?? "Unknown")
                 }
                 Section {
@@ -23,7 +34,7 @@ struct SitePrivacyView: View {
                     Toggle("Allow JavaScript", isOn: binding(\.allowsJavaScript))
                     Toggle("Always block camera and microphone", isOn: binding(\.blocksMediaCapture))
                 } header: {
-                    Text(host)
+                    Text("Site Controls")
                 } footer: {
                     Text("Changes are stored only on this device. Reload the page to apply JavaScript changes.")
                     if !browser.preferences.blocksTrackers {
@@ -51,6 +62,7 @@ struct SitePrivacyView: View {
                 }
             }
             .navigationTitle("Site Privacy")
+            .navigationBarTitleDisplayMode(.inline)
             .confirmationDialog("Clear Website Data?", isPresented: $confirmsClearing, titleVisibility: .visible) {
                 Button("Clear Website Data", role: .destructive) {
                     isClearingData = true

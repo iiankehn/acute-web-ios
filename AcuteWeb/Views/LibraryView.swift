@@ -22,11 +22,13 @@ struct LibraryView: View {
 
                 if selection == 0 { bookmarksList } else { historyList }
             }
+            .background(Color(uiColor: .systemGroupedBackground))
             .sheet(item: $editingBookmark) { item in
                 BookmarkEditor(bookmarks: bookmarks, item: item)
             }
             .onReceive(bookmarks.objectWillChange) { _ in browser.objectWillChange.send() }
             .navigationTitle("Library")
+            .navigationBarTitleDisplayMode(.inline)
             .alert("Clear Saved History?", isPresented: $confirmsHistoryDeletion) {
                 Button("Clear Saved History", role: .destructive) { history.clear() }
                 Button("Cancel", role: .cancel) {}
@@ -53,7 +55,14 @@ struct LibraryView: View {
         } else if filtered(bookmarks.items).isEmpty {
             noSearchResults
         } else {
-            List(filtered(bookmarks.items)) { item in siteRow(item, isBookmark: true) { bookmarks.remove(item) } }
+            List {
+                Section {
+                    ForEach(filtered(bookmarks.items)) { item in
+                        siteRow(item, isBookmark: true) { bookmarks.remove(item) }
+                    }
+                } header: { Text("\(filtered(bookmarks.items).count) saved") }
+            }
+            .listStyle(.insetGrouped)
         }
     }
 
@@ -67,7 +76,14 @@ struct LibraryView: View {
         } else if filtered(history.items).isEmpty {
             noSearchResults
         } else {
-            List(filtered(history.items)) { item in siteRow(item, isBookmark: false) { history.remove(item) } }
+            List {
+                Section {
+                    ForEach(filtered(history.items)) { item in
+                        siteRow(item, isBookmark: false) { history.remove(item) }
+                    }
+                } header: { Text("\(filtered(history.items).count) visits") }
+            }
+            .listStyle(.insetGrouped)
         }
     }
 
@@ -83,14 +99,22 @@ struct LibraryView: View {
         Button {
             if let url = item.url { browser.open(url); dismiss() }
         } label: {
-            HStack {
+            HStack(spacing: 12) {
                 Image(systemName: isBookmark ? "bookmark.fill" : "clock")
-                VStack(alignment: .leading) {
-                    Text(item.title).lineLimit(1)
-                    Text(item.url?.host ?? item.address).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 36, height: 36)
+                    .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(item.title).font(.body.weight(.medium)).foregroundStyle(.primary).lineLimit(2)
+                    Text(item.address).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                        .truncationMode(.middle)
                 }
-                Spacer()
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.tertiary)
             }
+            .frame(minHeight: 44)
+            .padding(.vertical, 4)
+            .contentShape(Rectangle())
         }
         .swipeActions { Button("Delete", role: .destructive, action: remove) }
         .contextMenu {
