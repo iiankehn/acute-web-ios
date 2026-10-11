@@ -18,21 +18,24 @@ struct BookmarkEditor: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section("Bookmark") {
+                Section("Title") {
                     TextField("Title", text: $title)
                         .accessibilityIdentifier("bookmarkTitle")
+                }
+                Section {
                     TextField("Website address", text: $address)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
                         .accessibilityIdentifier("bookmarkAddress")
-                }
-                if BookmarkStore.validatedURL(address) == nil {
-                    Text("Enter an HTTP or HTTPS website address.")
-                        .font(.callout).foregroundStyle(.secondary)
+                } header: { Text("Address") } footer: {
+                    if BookmarkStore.validatedURL(address) == nil {
+                        Text("Enter an HTTP or HTTPS website address.")
+                    }
                 }
             }
             .navigationTitle("Edit Bookmark")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {

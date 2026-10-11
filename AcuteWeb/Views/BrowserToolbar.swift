@@ -62,12 +62,26 @@ struct BrowserToolbar: View {
                 }
             } else {
                 VStack(spacing: 8) {
-                    HStack(spacing: 12) {
-                        HStack(spacing: 0) { navigationButtons }
+                    ViewThatFits(in: .horizontal) {
+                        HStack(spacing: 12) {
+                            HStack(spacing: 0) { navigationButtons }
+                                .acuteGlass(cornerRadius: 22)
+                            addressBar.frame(minWidth: 240)
+                            HStack(spacing: 0) { bookmarkButton; tabsButton; moreMenu }
+                                .acuteGlass(cornerRadius: 22)
+                        }
+                        VStack(spacing: 8) {
+                            addressBar
+                            HStack(spacing: 0) {
+                                navigationButtons
+                                Spacer(minLength: 8)
+                                bookmarkButton
+                                tabsButton
+                                moreMenu
+                            }
+                            .padding(.horizontal, 8)
                             .acuteGlass(cornerRadius: 22)
-                        addressBar
-                        HStack(spacing: 0) { bookmarkButton; tabsButton; moreMenu }
-                            .acuteGlass(cornerRadius: 22)
+                        }
                     }
                     DesktopTabStrip()
                 }

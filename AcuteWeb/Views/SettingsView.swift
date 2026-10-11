@@ -24,6 +24,17 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section {
+                    HStack(spacing: 14) {
+                        Image("AcuteMark").resizable().scaledToFit()
+                            .frame(width: 48, height: 48).accessibilityHidden(true)
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Acute Web").font(.title3.weight(.semibold))
+                            Text("by CORE").font(.subheadline).foregroundStyle(.secondary)
+                        }
+                    }
+                    .padding(.vertical, 6)
+                }
                 Section("Search") {
                     Picker("Search engine", selection: $preferences.searchEngine) {
                         ForEach(SearchEngine.allCases) { engine in
@@ -87,12 +98,12 @@ struct SettingsView: View {
                 }
 
                 Section("About") {
-                    LabeledContent("Brand", value: "Acute Web by CORE")
                     LabeledContent("Version", value: appVersion)
                     LabeledContent("Rendering engine", value: "WebKit")
                 }
             }
             .navigationTitle("Settings")
+            .navigationBarTitleDisplayMode(.inline)
             .alert(deletion?.title ?? "Confirm Deletion", isPresented: Binding(
                 get: { deletion != nil }, set: { if !$0 { deletion = nil } }
             ), presenting: deletion) { target in

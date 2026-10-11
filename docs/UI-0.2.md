@@ -29,6 +29,10 @@ Library and Downloads now use consistent inset lists, readable multiline titles
 and addresses/filenames, accent icon tiles and compact native navigation titles.
 Site Privacy identifies the current host and regular/private mode above its
 controls. Physical-device visual review remains in scope for 0.2.
+Settings and the bookmark editor use compact native titles and clearer form
+sections. The iPad tab strip follows keyboard selection, honors Reduce Motion,
+and widens for accessibility text sizes. When an iPad detail pane cannot fit
+the single-row toolbar, its controls wrap above the persistent tab strip.
 No public release is made by committing this first UI batch.
 
 ## Apple references

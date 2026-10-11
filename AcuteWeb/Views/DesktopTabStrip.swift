@@ -2,18 +2,30 @@ import SwiftUI
 
 struct DesktopTabStrip: View {
     @EnvironmentObject private var browser: BrowserStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         HStack(spacing: 4) {
-            ScrollView(.horizontal) {
-                HStack(spacing: 4) {
-                    ForEach(browser.tabs) { tab in
-                        DesktopTab(tab: tab)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal) {
+                    HStack(spacing: 4) {
+                        ForEach(browser.tabs) { tab in
+                            DesktopTab(tab: tab).id(tab.id)
+                        }
+                    }
+                    .padding(4)
+                }
+                .scrollIndicators(.hidden)
+                .onAppear {
+                    if let id = browser.selectedTabID { proxy.scrollTo(id, anchor: .center) }
+                }
+                .onChange(of: browser.selectedTabID) { _, id in
+                    guard let id else { return }
+                    withAnimation(reduceMotion ? nil : .easeInOut(duration: 0.2)) {
+                        proxy.scrollTo(id, anchor: .center)
                     }
                 }
-                .padding(4)
             }
-            .scrollIndicators(.hidden)
             Button { browser.newTab() } label: {
                 Image(systemName: "plus").frame(width: 44, height: 44)
             }
@@ -28,6 +40,7 @@ struct DesktopTabStrip: View {
 private struct DesktopTab: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     private var selected: Bool { browser.selectedTabID == tab.id }
 
@@ -37,14 +50,18 @@ private struct DesktopTab: View {
                 HStack(spacing: 8) {
                     Image(systemName: tab.isPrivate ? "hand.raised.fill" : "globe")
                         .foregroundStyle(selected ? Color.accentColor : .secondary)
-                    Text(tab.title).font(.subheadline.weight(selected ? .semibold : .regular)).lineLimit(1)
+                    Text(tab.title).font(.subheadline.weight(selected ? .semibold : .regular))
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? 2 : 1)
                 }
-                .frame(width: 148, height: 44, alignment: .leading)
+                .frame(width: dynamicTypeSize.isAccessibilitySize ? 220 : 148, alignment: .leading)
+                .frame(minHeight: 44)
                 .padding(.leading, 12)
                 .contentShape(Rectangle())
             }
             .accessibilityLabel(tab.title)
             .accessibilityValue(selected ? "Selected tab" : (tab.isPrivate ? "Private tab" : "Regular tab"))
+            .accessibilityIdentifier("desktopSelect_\(tab.id)")
+            .hoverEffect(.highlight)
             .help(tab.isPrivate ? "Private Tab" : (tab.url?.absoluteString ?? "New Tab"))
             Button { browser.close(tab) } label: {
                 Image(systemName: "xmark").font(.caption.weight(.semibold))
@@ -52,6 +69,7 @@ private struct DesktopTab: View {
                     .contentShape(Rectangle())
             }
             .accessibilityLabel("Close \(tab.title)")
+            .hoverEffect(.highlight)
         }
         .background(selected ? Color.accentColor.opacity(0.14) : Color.clear, in: RoundedRectangle(cornerRadius: 14))
         .overlay(alignment: .bottom) {
