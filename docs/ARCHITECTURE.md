@@ -36,5 +36,10 @@ downloads remain in the app's local Documents container.
 ## Build model
 
 `project.yml` is the source of truth for the Xcode project. GitHub Actions uses
-XcodeGen and a generic iOS Simulator destination so compilation does not depend
-on a specific simulator model being installed on the hosted runner.
+XcodeGen and available iPhone/iPad simulators. The iPhone job runs unit and
+interface tests; both simulator jobs launch the app and capture light/dark
+screenshots. Only after those jobs pass does CI package an unsigned arm64 IPA
+from a Release device build. Device signing and installation are separate.
+
+The [0.1 foundation gate](FOUNDATION-0.1.md) distinguishes automated coverage
+from the real-device checks required before calling the product complete.

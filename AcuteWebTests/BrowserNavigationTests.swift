@@ -5,6 +5,66 @@ import WebKit
 
 final class BrowserNavigationTests: XCTestCase {
     @MainActor
+    func testFailedAddressSurvivesTabSwitchAndClosedTabRecovery() {
+        let browser = makeBrowser()
+        let tab = browser.selectedTab!
+        let url = URL(string: "https://acute-failed-address.invalid/path")!
+        tab.lastRequestedURL = url
+        tab.navigationError = "Offline"
+        browser.newTab()
+        browser.select(tab)
+        XCTAssertEqual(browser.addressDraft, url.absoluteString)
+        browser.close(tab)
+        XCTAssertEqual(browser.recentlyClosed.first?.url, url)
+        browser.reopenLastClosedTab()
+        XCTAssertEqual(browser.selectedTab?.lastRequestedURL, url)
+        XCTAssertEqual(browser.addressDraft, url.absoluteString)
+        browser.selectedTab?.webView.stopLoading()
+        let selected = browser.selectedTabID
+        browser.select(tab)
+        XCTAssertEqual(browser.selectedTabID, selected)
+    }
+
+    @MainActor
+    func testWebKitDownloadCompletesAndIsRecoveredFromDisk() throws {
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)
+        let center = DownloadCenter(directory: directory)
+        let suite = UUID().uuidString
+        let defaults = UserDefaults(suiteName: suite)!
+        let browser = BrowserStore(sessionStore: BrowserSessionStore(defaults: defaults),
+                                   preferences: BrowserPreferences(defaults: defaults), downloadCenter: center)
+        let tab = browser.selectedTab!
+        let window = UIWindow(frame: CGRect(x: 0, y: 0, width: 390, height: 844))
+        let controller = UIViewController()
+        controller.view = tab.webView
+        window.rootViewController = controller
+        window.makeKeyAndVisible()
+        defer {
+            defaults.removePersistentDomain(forName: suite)
+            center.items.filter { $0.state == .downloading }.forEach { center.cancel($0) }
+            tab.webView.stopLoading()
+            window.isHidden = true
+            window.rootViewController = nil
+            try? FileManager.default.removeItem(at: directory)
+        }
+        tab.webView.loadHTMLString("<title>Download fixture</title><body>Local download</body>", baseURL: URL(string: "about:blank"))
+        let loaded = expectation(for: NSPredicate { _, _ in tab.webView.title == "Download fixture" && !tab.webView.isLoading }, evaluatedWith: nil)
+        wait(for: [loaded], timeout: 20)
+        tab.webView.evaluateJavaScript("const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob(['Acute download fixture'],{type:'text/plain'})); link.download='acute-fixture.txt'; document.body.appendChild(link); link.click();")
+        let completed = expectation(for: NSPredicate { _, _ in
+            center.items.first.map { $0.state != .downloading } == true
+        }, evaluatedWith: nil)
+        wait(for: [completed], timeout: 25)
+        let item = try XCTUnwrap(center.items.first)
+        XCTAssertEqual(item.state, .finished, item.failureReason ?? "Download did not finish")
+        let destination = try XCTUnwrap(item.destination)
+        XCTAssertEqual(try String(contentsOf: destination, encoding: .utf8), "Acute download fixture")
+        let stagingFiles = try FileManager.default.contentsOfDirectory(atPath: directory.appendingPathComponent(".in-progress").path)
+        XCTAssertTrue(stagingFiles.isEmpty, "Completed downloads must not leave partial files")
+        XCTAssertEqual(DownloadCenter(directory: directory).items.first?.filename, "acute-fixture.txt")
+    }
+
+    @MainActor
     func testBulkClosingPreservesUntargetedTabAndNeverRetainsPrivateAddresses() {
         let browser = makeBrowser()
         browser.newTab()

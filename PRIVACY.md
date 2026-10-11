@@ -21,7 +21,10 @@ the start page exist only for the current app session and exclude private tabs.
 Websites cannot use the camera or microphone until the user accepts an explicit
 site prompt. The decision applies to that request only and is not uploaded or
 recorded by Acute. Downloads are stored locally in the app's Documents folder
-and can be opened or shared using system interfaces.
+and can be opened or shared using system interfaces. Explicit downloads from
+private tabs also remain on disk until deleted; closing a private tab does not
+delete saved files. Opening a confirmed external link transfers it to another
+app, whose data storage is outside Acute's private-browsing boundary.
 
 Bookmarks are saved locally only when the user explicitly creates them. Saved
 browsing history is disabled by default, never includes private tabs, and can be

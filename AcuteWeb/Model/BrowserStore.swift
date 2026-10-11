@@ -46,7 +46,7 @@ final class BrowserStore: ObservableObject {
     @Published private(set) var recentSites: [RecentSite] = []
 
     let preferences: BrowserPreferences
-    let downloadCenter = DownloadCenter()
+    let downloadCenter: DownloadCenter
     let permissionBroker = PermissionBroker()
     let scriptDialogs = ScriptDialogBroker()
     let bookmarks = BookmarkStore()
@@ -61,9 +61,11 @@ final class BrowserStore: ObservableObject {
         tabs.first { $0.id == selectedTabID }
     }
 
-    init(sessionStore: BrowserSessionStore = BrowserSessionStore(), preferences: BrowserPreferences? = nil) {
+    init(sessionStore: BrowserSessionStore = BrowserSessionStore(), preferences: BrowserPreferences? = nil,
+         downloadCenter: DownloadCenter? = nil) {
         self.sessionStore = sessionStore
         self.preferences = preferences ?? BrowserPreferences()
+        self.downloadCenter = downloadCenter ?? DownloadCenter()
         if !self.preferences.restoresTabs || !restoreSession() {
             newTab()
         }
@@ -120,11 +122,13 @@ final class BrowserStore: ObservableObject {
     }
 
     func select(_ tab: BrowserTab) {
+        guard tabs.contains(where: { $0.id == tab.id }) else { return }
         if selectedTabID != tab.id { dismissRequestsForSelectedTab() }
         closeFindBar()
         selectedTab?.captureSnapshot()
         selectedTabID = tab.id
-        addressDraft = tab.url?.absoluteString ?? ""
+        addressInputError = nil
+        refreshAddress()
         showsTabs = false
         saveSession()
     }
@@ -142,7 +146,7 @@ final class BrowserStore: ObservableObject {
         tab.webView.stopLoading()
         tab.captureSnapshot()
         if !tab.isPrivate {
-            recentlyClosed.insert((tab.url, false), at: 0)
+            recentlyClosed.insert((tab.url ?? tab.lastRequestedURL, false), at: 0)
             recentlyClosed = Array(recentlyClosed.prefix(10))
         }
         tabs.remove(at: index)
@@ -204,6 +208,7 @@ final class BrowserStore: ObservableObject {
         tabs[index] = tab
         selectedTabID = tab.id
         addressDraft = ""
+        addressInputError = nil
         contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
         saveSession()
     }
@@ -211,6 +216,7 @@ final class BrowserStore: ObservableObject {
     func retryNavigation() {
         guard let tab = selectedTab, let url = tab.lastRequestedURL else { return }
         tab.navigationError = nil
+        addressInputError = nil
         addressDraft = url.absoluteString
         tab.webView.load(URLRequest(url: url))
     }
@@ -221,7 +227,7 @@ final class BrowserStore: ObservableObject {
     }
 
     func refreshAddress() {
-        addressDraft = selectedTab?.url?.absoluteString ?? ""
+        addressDraft = (selectedTab?.url ?? selectedTab?.lastRequestedURL)?.absoluteString ?? ""
     }
 
     func duplicate(_ tab: BrowserTab) {
@@ -240,6 +246,8 @@ final class BrowserStore: ObservableObject {
         recentlyClosed.removeFirst()
         newTab(isPrivate: closed.isPrivate)
         if let url = closed.url {
+            selectedTab?.lastRequestedURL = url
+            addressDraft = url.absoluteString
             selectedTab?.webView.load(URLRequest(url: url))
             saveSession(selectedURLOverride: url)
         }
@@ -298,7 +306,8 @@ final class BrowserStore: ObservableObject {
     }
 
     func toggleBookmark() {
-        guard let tab = selectedTab, !tab.isPrivate, let url = tab.url else { return }
+        guard let tab = selectedTab, !tab.isPrivate, let url = tab.url,
+              WebAddress.url(url.absoluteString, allowMissingScheme: false) != nil else { return }
         bookmarks.toggle(title: tab.title, url: url)
         objectWillChange.send()
     }

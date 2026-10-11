@@ -6,7 +6,7 @@ struct SavedSite: Identifiable, Codable, Equatable {
     let address: String
     let savedAt: Date
 
-    var url: URL? { URL(string: address) }
+    var url: URL? { WebAddress.url(address, allowMissingScheme: false) }
 
     func matchesSearch(_ query: String) -> Bool {
         let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -32,10 +32,12 @@ final class BookmarkStore: ObservableObject {
     }
 
     func toggle(title: String, url: URL) {
+        guard WebAddress.url(url.absoluteString, allowMissingScheme: false) != nil else { return }
         if let index = items.firstIndex(where: { $0.address == url.absoluteString }) {
             items.remove(at: index)
         } else {
-            items.insert(SavedSite(id: UUID(), title: title, address: url.absoluteString, savedAt: Date()), at: 0)
+            let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+            items.insert(SavedSite(id: UUID(), title: name.isEmpty ? (url.host ?? url.absoluteString) : name, address: url.absoluteString, savedAt: Date()), at: 0)
         }
         save(items, defaultsKey, defaults: defaults)
     }
@@ -65,30 +67,36 @@ final class BookmarkStore: ObservableObject {
 final class HistoryStore: ObservableObject {
     @Published private(set) var items: [SavedSite] = []
     private let defaultsKey = "history"
+    private let defaults: UserDefaults
 
-    init() { items = load(defaultsKey) }
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+        items = load(defaultsKey, defaults: defaults)
+    }
 
     func record(title: String, url: URL) {
+        guard WebAddress.url(url.absoluteString, allowMissingScheme: false) != nil else { return }
         items.removeAll { $0.address == url.absoluteString }
-        items.insert(SavedSite(id: UUID(), title: title, address: url.absoluteString, savedAt: Date()), at: 0)
+        let name = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        items.insert(SavedSite(id: UUID(), title: name.isEmpty ? (url.host ?? url.absoluteString) : name, address: url.absoluteString, savedAt: Date()), at: 0)
         items = Array(items.prefix(500))
-        save(items, defaultsKey)
+        save(items, defaultsKey, defaults: defaults)
     }
 
     func remove(_ item: SavedSite) {
         items.removeAll { $0.id == item.id }
-        save(items, defaultsKey)
+        save(items, defaultsKey, defaults: defaults)
     }
 
     func clear() {
         items.removeAll()
-        UserDefaults.standard.removeObject(forKey: defaultsKey)
+        defaults.removeObject(forKey: defaultsKey)
     }
 }
 
 private func load(_ key: String, defaults: UserDefaults = .standard) -> [SavedSite] {
     guard let data = defaults.data(forKey: key) else { return [] }
-    return (try? JSONDecoder().decode([SavedSite].self, from: data)) ?? []
+    return ((try? JSONDecoder().decode([SavedSite].self, from: data)) ?? []).filter { $0.url != nil }
 }
 
 private func save(_ sites: [SavedSite], _ key: String, defaults: UserDefaults = .standard) {

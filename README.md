@@ -25,9 +25,11 @@ system derives its supported Home Screen appearances from this clear master.
   Glass where available.
 - No third-party runtime dependencies.
 
-## Version 1.0
+## Version 0.1 foundation
 
-Version `1.0.0` includes:
+The `0.1.0` foundation implements the following. This is a development build,
+not a published release; see [the foundation checklist](docs/FOUNDATION-0.1.md)
+for verification coverage and the remaining device checks.
 
 - A native start page for regular and private tabs, with controls to show bookmarks, favorites, and recent session sites.
 - A start-page action that preserves tab position and private mode.

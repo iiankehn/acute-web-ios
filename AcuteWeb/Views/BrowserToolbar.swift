@@ -122,7 +122,7 @@ struct BrowserToolbar: View {
 
     private var bookmarkButton: some View {
         Group {
-            if browser.selectedTab?.url != nil, browser.selectedTab?.isPrivate != true {
+            if let url = tab.url, WebAddress.url(url.absoluteString, allowMissingScheme: false) != nil, !tab.isPrivate {
                 Button { browser.toggleBookmark() } label: {
                     Image(systemName: browser.bookmarks.contains(browser.selectedTab?.url) ? "bookmark.fill" : "bookmark")
                 }
