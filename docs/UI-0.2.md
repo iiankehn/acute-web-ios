@@ -51,7 +51,7 @@ use the existing retry path; empty start pages disable the page-load control.
 ## Device validation status
 
 The Home Screen icon now uses a layered Icon Composer bundle: transparent,
-neutral silver cat-fox art at 76% scale, a neutral system-rendered background,
+neutral silver cat-fox art with generous padding, a neutral system-rendered background,
 and restrained lighting. iOS applies the user's Home Screen appearance/tint.
 The icon must still be checked after installing the next IPA in default, dark,
 clear and tinted Home Screen modes; no device appearance result is claimed.
