@@ -47,6 +47,8 @@ Version `1.0.0` includes:
 - Persistent user-created bookmarks and browsing history that is off by default.
 - Crash-safe restoration for regular pages and start-page tabs, preserving selection and website viewing preferences, with a user-controlled startup toggle.
 - Private tabs excluded from saved sessions, recent sites, browsing history, and closed-tab recovery.
+- Confirmed bulk closing for regular, private, or all tabs, with a start-page fallback if no tabs remain.
+- Confirmed clearing of regular cookies, caches, and website storage without deleting private browsing or saved browser content.
 - Private browsing is covered while the app is inactive for app-switcher snapshots.
 - Per-site controls for tracker blocking, JavaScript, media capture, and local website data.
 - A clear privacy settings surface documenting Acute's zero-telemetry behavior.

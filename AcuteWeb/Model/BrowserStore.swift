@@ -8,6 +8,25 @@ struct RecentSite: Identifiable, Equatable {
     let url: URL
 }
 
+enum TabCloseScope: String, CaseIterable, Identifiable {
+    case regular, privateTabs, all
+    var id: String { rawValue }
+    var title: String {
+        switch self {
+        case .regular: return "Close Regular Tabs"
+        case .privateTabs: return "Close Private Tabs"
+        case .all: return "Close All Tabs"
+        }
+    }
+    @MainActor func includes(_ tab: BrowserTab) -> Bool {
+        switch self {
+        case .regular: return !tab.isPrivate
+        case .privateTabs: return tab.isPrivate
+        case .all: return true
+        }
+    }
+}
+
 @MainActor
 final class BrowserStore: ObservableObject {
     @Published private(set) var tabs: [BrowserTab] = []
@@ -118,6 +137,7 @@ final class BrowserStore: ObservableObject {
         guard let index = tabs.firstIndex(where: { $0.id == tab.id }) else { return }
         scriptDialogs.cancel(tabID: tab.id)
         permissionBroker.cancel(tabID: tab.id)
+        tab.webView.stopLoading()
         tab.captureSnapshot()
         if !tab.isPrivate {
             recentlyClosed.insert((tab.url, false), at: 0)
@@ -128,6 +148,30 @@ final class BrowserStore: ObservableObject {
         if selectedTabID == tab.id {
             closeFindBar()
             selectedTabID = tabs[min(index, tabs.count - 1)].id
+            refreshAddress()
+        }
+        saveSession()
+    }
+
+    func closeTabs(_ scope: TabCloseScope) {
+        let closing = tabs.filter { scope.includes($0) }
+        guard !closing.isEmpty else { return }
+        let closedIDs = Set(closing.map(\.id))
+        for tab in closing {
+            scriptDialogs.cancel(tabID: tab.id)
+            permissionBroker.cancel(tabID: tab.id)
+            tab.webView.stopLoading()
+            if !tab.isPrivate {
+                recentlyClosed.insert((tab.url ?? tab.lastRequestedURL, false), at: 0)
+            }
+        }
+        recentlyClosed = Array(recentlyClosed.prefix(10))
+        tabs.removeAll { closedIDs.contains($0.id) }
+        if tabs.isEmpty {
+            newTab()
+        } else if selectedTabID.map({ closedIDs.contains($0) }) == true {
+            closeFindBar()
+            selectedTabID = tabs[0].id
             refreshAddress()
         }
         saveSession()
@@ -261,6 +305,12 @@ final class BrowserStore: ObservableObject {
             store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), for: matching) {
                 Task { @MainActor in completion() }
             }
+        }
+    }
+
+    func clearRegularWebsiteData(completion: @escaping () -> Void) {
+        WKWebsiteDataStore.default().removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), modifiedSince: .distantPast) {
+            Task { @MainActor in completion() }
         }
     }
 

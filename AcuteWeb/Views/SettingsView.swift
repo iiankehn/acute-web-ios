@@ -3,10 +3,14 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var preferences: BrowserPreferences
     @ObservedObject var history: HistoryStore
+    let clearRegularWebsiteData: (@escaping () -> Void) -> Void
     let applyPrivacyPreferences: () -> Void
     let applySessionPreferences: () -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var confirmsHistoryDeletion = false
+    @State private var confirmsWebsiteDataDeletion = false
+    @State private var isClearingWebsiteData = false
+    @State private var websiteDataCleared = false
 
     private var appVersion: String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0.0"
@@ -50,6 +54,20 @@ struct SettingsView: View {
                 }
 
                 Section {
+                    Button(isClearingWebsiteData ? "Clearing Website Data…" : "Clear Regular Website Data", role: .destructive) {
+                        confirmsWebsiteDataDeletion = true
+                    }
+                    .disabled(isClearingWebsiteData)
+                    if websiteDataCleared {
+                        Label("Regular website data cleared", systemImage: "checkmark.circle.fill")
+                    }
+                } header: {
+                    Text("Website Data")
+                } footer: {
+                    Text("Removes regular-tab cookies, caches, and website storage. This can sign you out. Bookmarks, history, downloads, and private tabs are not removed. Open pages may store new data.")
+                }
+
+                Section {
                     Toggle("Restore regular tabs", isOn: $preferences.restoresTabs)
                         .onChange(of: preferences.restoresTabs) { _, _ in applySessionPreferences() }
                 } header: {
@@ -76,6 +94,19 @@ struct SettingsView: View {
                 Button("Clear Saved History", role: .destructive) { history.clear() }
             } message: {
                 Text("This removes all saved visits from this device.")
+            }
+            .confirmationDialog("Clear Regular Website Data?", isPresented: $confirmsWebsiteDataDeletion, titleVisibility: .visible) {
+                Button("Clear Website Data", role: .destructive) {
+                    isClearingWebsiteData = true
+                    websiteDataCleared = false
+                    clearRegularWebsiteData {
+                        isClearingWebsiteData = false
+                        websiteDataCleared = true
+                    }
+                }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This can sign you out of websites in regular tabs. Your bookmarks, history, downloads, and private tabs stay unchanged.")
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {

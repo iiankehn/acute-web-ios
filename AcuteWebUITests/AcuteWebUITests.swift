@@ -141,6 +141,42 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(element.exists && element.isHittable)
     }
 
+    func testBulkPrivateTabClosingRequiresConfirmation() {
+        openMoreMenu()
+        app.buttons["New Private Tab"].tap()
+        app.buttons["Tabs"].tap()
+        XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
+        let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
+        XCTAssertEqual(cards.count, 2)
+        app.buttons["Tab Actions"].tap()
+        app.buttons["Close Private Tabs"].tap()
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
+        app.buttons["Cancel"].tap()
+        XCTAssertEqual(cards.count, 2)
+        app.buttons["Tab Actions"].tap()
+        app.buttons["Close Private Tabs"].tap()
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
+        app.buttons["Close Private Tabs"].tap()
+        let closed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in cards.count == 1 }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 5), .completed)
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.staticTexts["The web, in focus."].waitForExistence(timeout: 5))
+    }
+
+    func testClearingWebsiteDataRequiresConfirmationAndCanBeCancelled() {
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        let clear = app.buttons["Clear Regular Website Data"]
+        scrollTo(clear)
+        clear.tap()
+        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Clear Website Data"].exists)
+        app.buttons["Cancel"].tap()
+        XCTAssertFalse(app.staticTexts["Regular website data cleared"].exists)
+        XCTAssertTrue(clear.exists)
+    }
+
     private func setSwitch(_ element: XCUIElement, enabled: Bool) {
         let expected = enabled ? "1" : "0"
         if element.value as? String != expected {

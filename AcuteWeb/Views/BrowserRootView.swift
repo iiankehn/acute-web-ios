@@ -24,11 +24,10 @@ struct BrowserRootView: View {
                 .presentationDetents([.medium, .large])
         }
         .sheet(isPresented: $browser.showsSettings) {
-            SettingsView(preferences: browser.preferences, history: browser.history) {
-                browser.applyPrivacyPreferences()
-            } applySessionPreferences: {
-                browser.saveSession()
-            }
+            SettingsView(preferences: browser.preferences, history: browser.history,
+                         clearRegularWebsiteData: { browser.clearRegularWebsiteData(completion: $0) },
+                         applyPrivacyPreferences: { browser.applyPrivacyPreferences() },
+                         applySessionPreferences: { browser.saveSession() })
         }
         .sheet(isPresented: $browser.showsDownloads) {
             DownloadsView(downloadCenter: browser.downloadCenter)

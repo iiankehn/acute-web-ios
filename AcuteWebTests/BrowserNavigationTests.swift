@@ -5,6 +5,66 @@ import WebKit
 
 final class BrowserNavigationTests: XCTestCase {
     @MainActor
+    func testBulkClosingPreservesUntargetedTabAndNeverRetainsPrivateAddresses() {
+        let browser = makeBrowser()
+        browser.newTab()
+        browser.newTab(isPrivate: true)
+        let privateTab = browser.selectedTab!
+        privateTab.lastRequestedURL = URL(string: "https://private.example/secret")!
+        var denied = false
+        browser.permissionBroker.request(tabID: privateTab.id, host: "private.example", kind: .camera) { denied = $0 == .deny }
+        browser.closeTabs(.regular)
+        XCTAssertEqual(browser.tabs.count, 1)
+        XCTAssertEqual(browser.selectedTabID, privateTab.id)
+        XCTAssertFalse(denied)
+        XCTAssertNotNil(browser.permissionBroker.pendingRequest)
+        browser.closeTabs(.privateTabs)
+        XCTAssertTrue(denied)
+        XCTAssertEqual(browser.tabs.count, 1)
+        XCTAssertFalse(browser.selectedTab!.isPrivate)
+        XCTAssertFalse(browser.recentlyClosed.contains { $0.url?.host == "private.example" })
+        browser.newTab()
+        browser.closeTabs(.all)
+        XCTAssertEqual(browser.tabs.count, 1)
+        XCTAssertNotNil(browser.selectedTab)
+        XCTAssertEqual(browser.addressDraft, "")
+    }
+
+    @MainActor
+    func testClearingRegularWebsiteDataDoesNotClearPrivateCookiesOrCloseTabs() throws {
+        let browser = makeBrowser()
+        browser.newTab(isPrivate: true)
+        let privateTab = browser.selectedTab!
+        let regularStore = WKWebsiteDataStore.default()
+        let privateStore = privateTab.webView.configuration.websiteDataStore
+        let cookie = try XCTUnwrap(HTTPCookie(properties: [
+            .domain: "acute-data-test.invalid", .path: "/", .name: "acute-fixture", .value: "test",
+            .expires: Date().addingTimeInterval(3600)
+        ]))
+        let stored = expectation(description: "Fixture cookies stored")
+        stored.expectedFulfillmentCount = 2
+        regularStore.httpCookieStore.setCookie(cookie) { stored.fulfill() }
+        privateStore.httpCookieStore.setCookie(cookie) { stored.fulfill() }
+        wait(for: [stored], timeout: 15)
+        let cleared = expectation(description: "Regular website data cleared")
+        browser.clearRegularWebsiteData { cleared.fulfill() }
+        wait(for: [cleared], timeout: 15)
+        let checked = expectation(description: "Cookie stores checked independently")
+        checked.expectedFulfillmentCount = 2
+        regularStore.httpCookieStore.getAllCookies { cookies in
+            XCTAssertFalse(cookies.contains { $0.name == cookie.name && $0.domain == cookie.domain })
+            checked.fulfill()
+        }
+        privateStore.httpCookieStore.getAllCookies { cookies in
+            XCTAssertTrue(cookies.contains { $0.name == cookie.name && $0.domain == cookie.domain })
+            checked.fulfill()
+        }
+        wait(for: [checked], timeout: 15)
+        XCTAssertEqual(browser.tabs.count, 2)
+        XCTAssertEqual(browser.selectedTabID, privateTab.id)
+    }
+
+    @MainActor
     func testDuplicateKeepsWebsiteViewingPreferencesAndPrivateMode() {
         let browser = makeBrowser()
         browser.newTab(isPrivate: true)

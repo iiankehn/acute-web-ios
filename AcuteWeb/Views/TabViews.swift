@@ -22,6 +22,7 @@ struct TabSidebar: View {
         }
         .navigationTitle("Acute Web")
         .toolbar {
+            ToolbarItem(placement: .primaryAction) { TabManagementMenu() }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button("New Tab", systemImage: "plus") { browser.newTab() }
@@ -92,6 +93,7 @@ struct TabGrid: View {
         }
         .navigationTitle("Tabs")
         .toolbar {
+            ToolbarItem(placement: .primaryAction) { TabManagementMenu() }
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") { dismiss() }
             }
@@ -108,6 +110,31 @@ struct TabGrid: View {
                 } label: { Image(systemName: "plus") }
                 .accessibilityLabel("New Tab Options")
             }
+        }
+    }
+}
+
+private struct TabManagementMenu: View {
+    @EnvironmentObject private var browser: BrowserStore
+    @State private var scope: TabCloseScope?
+
+    var body: some View {
+        Menu {
+            ForEach(TabCloseScope.allCases) { target in
+                Button(target.title, role: .destructive) { scope = target }
+                    .disabled(!browser.tabs.contains { target.includes($0) })
+            }
+        } label: {
+            Image(systemName: "ellipsis.circle")
+        }
+        .accessibilityLabel("Tab Actions")
+        .confirmationDialog(scope?.title ?? "Close Tabs", isPresented: Binding(
+            get: { scope != nil }, set: { if !$0 { scope = nil } }
+        ), titleVisibility: .visible, presenting: scope) { target in
+            Button(target.title, role: .destructive) { browser.closeTabs(target) }
+            Button("Cancel", role: .cancel) {}
+        } message: { target in
+            Text(target == .regular ? "Regular tabs can be reopened from the recent closed-tab list." : "Closed private tabs cannot be reopened. A regular start page opens if no tabs remain.")
         }
     }
 }
