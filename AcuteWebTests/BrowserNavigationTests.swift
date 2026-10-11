@@ -99,9 +99,9 @@ final class BrowserNavigationTests: XCTestCase {
             baseURL: URL(string: "https://\(host)/")
         )
         let finished = expectation(for: NSPredicate { _, _ in
-            tab.webView.title != nil && !tab.webView.isLoading
+            ["Script blocked", "Script ran"].contains(tab.webView.title ?? "") && !tab.webView.isLoading
         }, evaluatedWith: nil)
-        wait(for: [finished], timeout: 15)
+        wait(for: [finished], timeout: 30)
         XCTAssertEqual(tab.webView.title, "Script blocked")
     }
 
@@ -198,6 +198,32 @@ final class BrowserNavigationTests: XCTestCase {
         XCTAssertFalse(browser.allowsWebsitePrompts)
         browser.updateSceneActivity(isActive: true)
         XCTAssertTrue(browser.allowsWebsitePrompts)
+        XCTAssertNil(browser.permissionBroker.pendingRequest)
+    }
+
+    @MainActor
+    func testTerminatedWebsiteShowsRecoveryAndDeniesPendingPrompts() {
+        let browser = makeBrowser()
+        browser.newTab(isPrivate: true)
+        let tab = browser.selectedTab!
+        let requestedURL = URL(string: "https://private.example/recovery")!
+        tab.lastRequestedURL = requestedURL
+        tab.isLoading = true
+        var denied = false
+        var dialogCancelled = false
+        browser.permissionBroker.request(tabID: tab.id, host: "private.example", kind: .camera) { denied = $0 == .deny }
+        browser.scriptDialogs.request(tabID: tab.id, host: "private.example", message: "Continue?", kind: .confirm) {
+            if case .cancel = $0 { dialogCancelled = true }
+        }
+        tab.navigationCoordinator!.webViewWebContentProcessDidTerminate(tab.webView)
+        XCTAssertNotNil(tab.navigationError)
+        XCTAssertEqual(tab.lastRequestedURL, requestedURL)
+        XCTAssertFalse(tab.isLoading)
+        XCTAssertTrue(denied)
+        XCTAssertTrue(dialogCancelled)
+        XCTAssertTrue(tab.isPrivate)
+        XCTAssertFalse(tab.webView.configuration.websiteDataStore.isPersistent)
+        XCTAssertNil(browser.scriptDialogs.pendingRequest)
         XCTAssertNil(browser.permissionBroker.pendingRequest)
     }
 

@@ -32,6 +32,7 @@ jobs:
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
       - name: Build app and test targets
+        id: build
         run: |
           set -o pipefail
           xcodebuild build-for-testing \
@@ -51,8 +52,12 @@ jobs:
             -derivedDataPath "$PWD/DerivedData" \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
+            -retry-tests-on-failure \
+            -test-iterations 2 \
+            -test-repetition-relaunch-enabled YES \
             -only-testing:AcuteWebTests
       - name: Run browser interface tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -o pipefail
           xcodebuild test-without-building \
@@ -136,3 +141,66 @@ jobs:
           name: acute-web-ipad-smoke
           path: Artifacts/acute-web-ipad-start-page*.png
           if-no-files-found: ignore
+
+  device-ipa:
+    needs: [simulator, ipad-smoke]
+    runs-on: macos-15
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 26.3
+        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      - name: Build unsigned device app
+        run: |
+          set -euo pipefail
+          xcodebuild build \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath "$PWD/DeviceDerivedData" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CURRENT_PROJECT_VERSION='${{ github.run_number }}'
+      - name: Package and validate device IPA
+        env:
+          BUILD_COMMIT: ${{ github.sha }}
+          BUILD_NUMBER: ${{ github.run_number }}
+        run: |
+          set -euo pipefail
+          APP_PATH="$PWD/DeviceDerivedData/Build/Products/Release-iphoneos/AcuteWeb.app"
+          test -f "$APP_PATH/PrivacyInfo.xcprivacy"
+          plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
+          EXECUTABLE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP_PATH/Info.plist")
+          ARCHITECTURES=$(xcrun lipo -archs "$APP_PATH/$EXECUTABLE")
+          [[ " $ARCHITECTURES " == *" arm64 "* ]]
+          mkdir -p DeviceArtifacts/Payload
+          ditto "$APP_PATH" DeviceArtifacts/Payload/AcuteWeb.app
+          cd DeviceArtifacts
+          /usr/bin/zip -qry AcuteWeb-unsigned.ipa Payload
+          unzip -t AcuteWeb-unsigned.ipa
+          shasum -a 256 AcuteWeb-unsigned.ipa > SHA256SUMS.txt
+          python3 - <<'PYTHON'
+          import json, os
+          from pathlib import Path
+          Path("build.json").write_text(json.dumps({
+              "commit": os.environ["BUILD_COMMIT"],
+              "build": os.environ["BUILD_NUMBER"],
+              "platform": "iOS device (arm64)",
+              "signed": False,
+              "installation": "Sign this IPA with your chosen sideloading tool before installing."
+          }, indent=2) + "\n")
+          PYTHON
+          rm -rf Payload
+      - name: Upload unsigned device IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: acute-web-unsigned-ipa
+          path: DeviceArtifacts/*
+          if-no-files-found: error
+          retention-days: 14

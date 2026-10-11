@@ -61,6 +61,19 @@ struct WebView: UIViewRepresentable {
             showNavigationError(error)
         }
 
+        func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            guard let tab else { return }
+            scriptDialogs.cancel(tabID: tab.id)
+            permissionBroker.cancel(tabID: tab.id)
+            tab.isLoading = false
+            tab.estimatedProgress = 0
+            tab.snapshot = nil
+            tab.lastRequestedURL = webView.url ?? tab.lastRequestedURL
+            if tab.lastRequestedURL != nil {
+                tab.navigationError = "The website stopped responding. Try loading it again."
+            }
+        }
+
         private func showNavigationError(_ error: Error) {
             let failure = error as NSError
             guard !(failure.domain == NSURLErrorDomain && failure.code == NSURLErrorCancelled) else { return }

@@ -41,7 +41,7 @@ Version `1.0.0` includes:
 - Link menus for new regular/private tabs; links opened from private pages retain private browsing.
 - Editable bookmarks and searchable bookmarks/history.
 - Keyboard shortcuts for address focus, reopening tabs, navigation, page search, tab switching, zoom, and the start page.
-- Page-load errors with explicit retry.
+- Page-load errors and terminated website processes with explicit retry and cancellation of pending website prompts.
 - Native website alert, confirmation, and text-input dialogs with per-tab cancellation.
 - Explicit allow-once prompts for website camera and microphone access, cancelled when their tab closes, navigates, or loses selection.
 - Persistent user-created bookmarks and browsing history that is off by default.
@@ -63,6 +63,14 @@ Version `1.0.0` includes:
 
 Page commands follow the selected tab's current navigation and zoom state.
 
+## Device testing artifact
+
+After both simulator jobs pass, GitHub Actions builds the Release app for arm64
+iPhones and iPads and uploads `acute-web-unsigned-ipa`. The artifact contains
+`AcuteWeb-unsigned.ipa`, its SHA-256 checksum, and the source commit/build number.
+The IPA must be signed by your sideloading tool before installation. It is a
+device build; the separate simulator artifacts cannot be installed on a phone.
+
 ## Generate and build
 
 The committed Xcode project is generated from `project.yml` with XcodeGen.
@@ -81,4 +89,5 @@ the test result bundle. The XCUITest suite
 also covers privacy settings, private browsing, history, rotation, tab management,
 and start-page customization. CI uses Xcode 26.3 and an iOS 26.2 simulator so Liquid Glass code is
 compiled and exercised. Device and TestFlight builds require Apple Developer signing
-credentials.
+credentials. Failed unit tests get one retry in a fresh test process;
+both attempts remain in the test result bundle.
