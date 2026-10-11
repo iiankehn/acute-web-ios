@@ -9,6 +9,12 @@ struct StartPage: View {
     @FocusState private var searchFocused: Bool
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
+    private var brandLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 14))
+        : AnyLayout(HStackLayout(spacing: 18))
+    }
+
     private var tileColumns: [GridItem] {
         [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 220 : 96), spacing: 12)]
     }
@@ -29,7 +35,7 @@ struct StartPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                HStack(spacing: 18) {
+                brandLayout {
                     Image("AcuteMark")
                     .resizable()
                     .scaledToFit()
@@ -46,9 +52,8 @@ struct StartPage: View {
                         .font(.caption.weight(.medium))
                         .foregroundStyle(.tertiary)
                     }
-                    Spacer(minLength: 0)
                 }
-                .frame(maxWidth: .infinity)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, horizontalSizeClass == .compact ? 8 : 40)
                 .padding(.bottom, 4)
 
@@ -66,6 +71,21 @@ struct StartPage: View {
                     .onSubmit {
                         searchFocused = false
                         browser.navigate()
+                    }
+                    .layoutPriority(1)
+                    if !browser.addressDraft.isEmpty {
+                        Button {
+                            browser.addressDraft = ""
+                            searchFocused = true
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .frame(width: 44, height: 44)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Clear Search")
+                        .accessibilityIdentifier("clearStartSearch")
                     }
                 }
                 .padding(.horizontal, 18)
@@ -91,7 +111,8 @@ struct StartPage: View {
                                         VStack(alignment: .leading, spacing: 10) {
                                             Image(systemName: "bookmark.fill")
                                                 .foregroundStyle(Color.accentColor)
-                                            Text(bookmark.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                                            Text(bookmark.title).font(.subheadline.weight(.semibold))
+                                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                                             Text(bookmark.url?.host ?? "")
                                                 .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                         }
@@ -119,7 +140,8 @@ struct StartPage: View {
                                                 .foregroundStyle(Color.accentColor)
                                                 .frame(width: 44, height: 44)
                                                 .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
-                                            Text(favorite.title).font(.subheadline.weight(.medium)).lineLimit(2)
+                                            Text(favorite.title).font(.subheadline.weight(.medium))
+                                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                                         }
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .padding(12)
@@ -142,9 +164,10 @@ struct StartPage: View {
                                                 .foregroundStyle(Color.accentColor)
                                                 .frame(width: 32, height: 32)
                                             VStack(alignment: .leading) {
-                                                Text(site.title).lineLimit(1)
+                                                Text(site.title).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                                                 Text(site.url.host ?? site.url.absoluteString)
                                                 .font(.caption).foregroundStyle(.secondary)
+                                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                                             }
                                             Spacer()
                                             Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)

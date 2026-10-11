@@ -49,6 +49,7 @@ struct TabSidebar: View {
 private struct SidebarTabRow: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     var body: some View {
         HStack(spacing: 8) {
@@ -57,7 +58,7 @@ private struct SidebarTabRow: View {
                     Image(systemName: tab.isPrivate ? "hand.raised.fill" : "globe")
                         .foregroundStyle(Color.accentColor)
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(tab.title).lineLimit(1)
+                        Text(tab.title).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
                         Text(tab.url?.host ?? (tab.isPrivate ? "Private Tab" : "New Tab"))
                             .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                     }
@@ -72,6 +73,7 @@ private struct SidebarTabRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(tab.title)
+            .accessibilityAddTraits(browser.selectedTabID == tab.id ? .isSelected : [])
             .accessibilityValue(browser.selectedTabID == tab.id ? "Selected tab" : (tab.isPrivate ? "Private tab" : "Regular tab"))
 
             Button { browser.close(tab) } label: {
@@ -177,6 +179,7 @@ private struct TabClosingConfirmation: ViewModifier {
 private struct TabCard: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let select: () -> Void
 
     private var isSelected: Bool { browser.selectedTabID == tab.id }
@@ -223,7 +226,8 @@ private struct TabCard: View {
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
                     HStack(alignment: .top, spacing: 6) {
-                        Text(tab.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                        Text(tab.title).font(.subheadline.weight(.semibold))
+                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                         Spacer(minLength: 0)
                         if isSelected {
                             Image(systemName: "checkmark.circle.fill")
@@ -240,6 +244,7 @@ private struct TabCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(tab.title)
+            .accessibilityAddTraits(isSelected ? .isSelected : [])
             .accessibilityValue(isSelected ? "Selected tab" : (tab.isPrivate ? "Private tab" : "Regular tab"))
             .accessibilityIdentifier("selectTab_\(tab.id)")
             .contextMenu {

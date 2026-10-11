@@ -7,6 +7,13 @@ struct SettingsView: View {
     let applyPrivacyPreferences: () -> Void
     let applySessionPreferences: () -> Void
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var brandLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+        : AnyLayout(HStackLayout(spacing: 14))
+    }
     private enum Deletion {
         case history, websiteData
         var title: String { self == .history ? "Clear Saved History?" : "Clear Regular Website Data?" }
@@ -25,7 +32,7 @@ struct SettingsView: View {
         NavigationStack {
             Form {
                 Section {
-                    HStack(spacing: 14) {
+                    brandLayout {
                         Image("AcuteMark").resizable().scaledToFit()
                             .frame(width: 48, height: 48).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {

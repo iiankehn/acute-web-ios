@@ -3,6 +3,13 @@ import SwiftUI
 struct FindBar: View {
     @EnvironmentObject private var browser: BrowserStore
     @FocusState private var focused: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var resultsLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 4))
+        : AnyLayout(HStackLayout(spacing: 4))
+    }
 
     private var hasQuery: Bool {
         !browser.findQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
@@ -11,7 +18,10 @@ struct FindBar: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
-                Image(systemName: "text.magnifyingglass").foregroundStyle(.secondary)
+                if !dynamicTypeSize.isAccessibilitySize {
+                    Image(systemName: "text.magnifyingglass")
+                        .foregroundStyle(.secondary).accessibilityHidden(true)
+                }
                 TextField("Find on page", text: $browser.findQuery)
                     .accessibilityLabel("Find on page")
                     .accessibilityIdentifier("findField")
@@ -29,24 +39,27 @@ struct FindBar: View {
                 .accessibilityLabel("Close Find on Page")
                 .keyboardShortcut(.escape, modifiers: [])
             }
-            HStack(spacing: 4) {
+            resultsLayout {
                 Text(browser.findStatus.isEmpty ? "Enter text to find" : browser.findStatus)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
                     .accessibilityIdentifier("findStatus")
-                Spacer(minLength: 8)
-                Button { browser.findInPage(backwards: true) } label: {
-                    Image(systemName: "chevron.up").frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
+                HStack(spacing: 4) {
+                    Spacer(minLength: 8)
+                    Button { browser.findInPage(backwards: true) } label: {
+                        Image(systemName: "chevron.up").frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Previous Match")
+                    .disabled(!hasQuery)
+                    Button { browser.findInPage() } label: {
+                        Image(systemName: "chevron.down").frame(width: 44, height: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .accessibilityLabel("Next Match")
+                    .disabled(!hasQuery)
                 }
-                .accessibilityLabel("Previous Match")
-                .disabled(!hasQuery)
-                Button { browser.findInPage() } label: {
-                    Image(systemName: "chevron.down").frame(width: 44, height: 44)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("Next Match")
-                .disabled(!hasQuery)
             }
         }
         .buttonStyle(.plain)

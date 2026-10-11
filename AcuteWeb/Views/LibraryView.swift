@@ -5,6 +5,7 @@ struct LibraryView: View {
     @ObservedObject var bookmarks: BookmarkStore
     @ObservedObject var history: HistoryStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selection = 0
     @State private var query = ""
     @State private var editingBookmark: SavedSite?
@@ -105,8 +106,10 @@ struct LibraryView: View {
                     .frame(width: 36, height: 36)
                     .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(item.title).font(.body.weight(.medium)).foregroundStyle(.primary).lineLimit(2)
-                    Text(item.address).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                    Text(item.title).font(.body.weight(.medium)).foregroundStyle(.primary)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                    Text(item.address).font(.caption).foregroundStyle(.secondary)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                         .truncationMode(.middle)
                 }
                 Spacer(minLength: 0)

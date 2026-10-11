@@ -73,6 +73,12 @@ tools, saved content and Settings. Private-browsing guidance describes history,
 recovery and retained downloads in plain language.
 No public release is made by committing this first UI batch.
 
+The transparent silver mark also appears on the start page, Settings and empty
+tab previews. Brand headers stack at accessibility text sizes; saved-page and
+tab titles gain space to wrap. Start-page search offers a Clear action that
+keeps keyboard focus. Find results stack above their navigation controls at
+large text sizes, and selected tabs expose the native VoiceOver selection trait.
+
 ## Apple references
 
 - https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass

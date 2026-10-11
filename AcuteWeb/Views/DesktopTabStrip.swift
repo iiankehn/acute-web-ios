@@ -59,6 +59,7 @@ private struct DesktopTab: View {
                 .contentShape(Rectangle())
             }
             .accessibilityLabel(tab.title)
+            .accessibilityAddTraits(selected ? .isSelected : [])
             .accessibilityValue(selected ? "Selected tab" : (tab.isPrivate ? "Private tab" : "Regular tab"))
             .accessibilityIdentifier("desktopSelect_\(tab.id)")
             .hoverEffect(.highlight)
