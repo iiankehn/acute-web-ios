@@ -162,11 +162,13 @@ struct BrowserToolbar: View {
             Image(systemName: "square.on.square")
             .overlay(alignment: .center) {
                 Text("\(browser.tabs.count)").font(.system(size: 8, weight: .bold))
+                    .allowsHitTesting(false)
             }
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .accessibilityLabel("Tabs")
         .accessibilityValue("\(browser.tabs.count) open")
-        .frame(minWidth: 44, minHeight: 44)
     }
 
     private var bookmarkButton: some View {
