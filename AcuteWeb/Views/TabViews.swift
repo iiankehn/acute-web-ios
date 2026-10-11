@@ -21,9 +21,19 @@ struct TabSidebar: View {
             }
             .onMove(perform: browser.moveTabs)
         }
+        .listStyle(.sidebar)
         .navigationTitle("Acute Web")
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
+            ToolbarItemGroup(placement: .bottomBar) {
+                Button { browser.showsLibrary = true } label: {
+                    Label("Library", systemImage: "books.vertical")
+                }
+                Spacer()
+                Button { browser.showsDownloads = true } label: {
+                    Label("Downloads", systemImage: "arrow.down.circle")
+                }
+            }
             ToolbarItem(placement: .primaryAction) { TabManagementMenu(scope: $closingScope) }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
@@ -80,20 +90,33 @@ struct TabGrid: View {
     @EnvironmentObject private var browser: BrowserStore
     @Environment(\.dismiss) private var dismiss
     @State private var closingScope: TabCloseScope?
-    private let columns = [GridItem(.adaptive(minimum: 150), spacing: 12)]
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+    private var columns: [GridItem] {
+        [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 280 : 160), spacing: 16)]
+    }
 
     var body: some View {
         ScrollView {
-            LazyVGrid(columns: columns, spacing: 12) {
-                ForEach(browser.tabs) { tab in
-                    TabCard(tab: tab) {
-                        browser.select(tab)
-                        dismiss()
+            VStack(alignment: .leading, spacing: 16) {
+                HStack {
+                    Text("\(browser.tabs.count) open")
+                    Spacer()
+                    Label("\(browser.tabs.filter { $0.isPrivate }.count) private", systemImage: "hand.raised")
+                }
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.secondary)
+                LazyVGrid(columns: columns, spacing: 16) {
+                    ForEach(browser.tabs) { tab in
+                        TabCard(tab: tab) {
+                            browser.select(tab)
+                            dismiss()
+                        }
                     }
                 }
             }
             .padding()
         }
+        .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Tabs")
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
@@ -186,13 +209,17 @@ private struct TabCard: View {
                             Image(uiImage: snapshot)
                                 .resizable()
                                 .scaledToFit()
-                        } else {
-                            Image(systemName: tab.isPrivate ? "hand.raised.fill" : "globe")
+                        } else if tab.isPrivate {
+                            Image(systemName: "hand.raised.fill")
                                 .font(.title)
                                 .foregroundStyle(Color.accentColor)
+                        } else {
+                            Image("AcuteMark").resizable().scaledToFit()
+                                .frame(width: 56, height: 56)
+                                .accessibilityHidden(true)
                         }
                     }
-                    .frame(height: 100)
+                    .frame(height: 124)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
 
                     HStack(alignment: .top, spacing: 6) {
@@ -220,7 +247,7 @@ private struct TabCard: View {
                 Button("Close", systemImage: "xmark", role: .destructive) { browser.close(tab) }
             }
         }
-        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 20))
+        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
         .overlay {
             RoundedRectangle(cornerRadius: 20)
                 .stroke(isSelected ? Color.accentColor : Color.clear, lineWidth: 2)

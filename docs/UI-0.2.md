@@ -21,7 +21,11 @@ rotation/navigation workflows, and iPhone/iPad launches. Visual review and devic
 checks still need light/dark mode, Reduce Transparency, increased text size,
 VoiceOver, keyboard/pointer use, narrow iPad windows and real website loads.
 
-Start-page, tab-switcher and secondary-sheet polish remain in scope for 0.2.
+The next UI batch compacts the start-page brand header and favorites, exposes
+bookmark addresses, and uses simple system content surfaces rather than glass
+on every card. The tab switcher uses larger previews, open/private counts and
+accessibility-size card widths. iPad sidebar actions open Library and Downloads.
+Secondary-sheet polish and physical-device visual review remain in scope for 0.2.
 No public release is made by committing this first UI batch.
 
 ## Apple references

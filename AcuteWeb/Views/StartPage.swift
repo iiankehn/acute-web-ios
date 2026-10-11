@@ -7,6 +7,11 @@ struct StartPage: View {
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var searchFocused: Bool
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
+    private var tileColumns: [GridItem] {
+        [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 220 : 96), spacing: 12)]
+    }
 
     private struct FavoriteSite: Identifiable {
         let title: String
@@ -24,28 +29,27 @@ struct StartPage: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
-                VStack(spacing: 12) {
+                HStack(spacing: 18) {
                     Image("AcuteMark")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 88, height: 88)
-                    .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+                    .frame(width: 64, height: 64)
                     .accessibilityHidden(true)
 
-                    VStack(spacing: 6) {
+                    VStack(alignment: .leading, spacing: 6) {
                         Text("Acute Web")
                         .font(.system(.largeTitle, design: .rounded, weight: .bold))
-                        Text("by CORE")
-                        .font(.subheadline.weight(.medium))
-                        .foregroundStyle(.secondary)
                         Text(browser.selectedTab?.isPrivate == true ? "Private browsing" : "The web, in focus.")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        Text("by CORE")
+                        .font(.caption.weight(.medium))
+                        .foregroundStyle(.tertiary)
                     }
-                    .multilineTextAlignment(.center)
+                    Spacer(minLength: 0)
                 }
                 .frame(maxWidth: .infinity)
-                .padding(.top, horizontalSizeClass == .compact ? 12 : 36)
+                .padding(.top, horizontalSizeClass == .compact ? 8 : 40)
                 .padding(.bottom, 4)
 
                 HStack(spacing: 10) {
@@ -70,19 +74,29 @@ struct StartPage: View {
                 if browser.selectedTab?.isPrivate != true {
                     if preferences.showsStartBookmarks && !bookmarks.items.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
-                            sectionTitle("Bookmarks")
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                            HStack {
+                                sectionTitle("Bookmarks")
+                                Spacer()
+                                Button("See All") { browser.showsLibrary = true }
+                                    .font(.subheadline.weight(.medium))
+                                    .frame(minHeight: 44)
+                                    .accessibilityLabel("Open Bookmarks")
+                            }
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 220 : 140), spacing: 12)], spacing: 12) {
                                 ForEach(bookmarks.items.prefix(8)) { bookmark in
                                     Button {
                                         if let url = bookmark.url { browser.open(url) }
                                     } label: {
-                                        VStack(alignment: .leading, spacing: 12) {
-                                            Image(systemName: "bookmark.fill").font(.title2)
+                                        VStack(alignment: .leading, spacing: 10) {
+                                            Image(systemName: "bookmark.fill")
+                                                .foregroundStyle(Color.accentColor)
                                             Text(bookmark.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                                            Text(bookmark.url?.host ?? "")
+                                                .font(.caption).foregroundStyle(.secondary).lineLimit(1)
                                         }
-                                        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
+                                        .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
                                         .padding()
-                                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                                        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -93,18 +107,22 @@ struct StartPage: View {
                     if preferences.showsStartFavorites {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionTitle("Favorites")
-                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                            LazyVGrid(columns: tileColumns, spacing: 12) {
                                 ForEach(favorites) { favorite in
                                     Button {
                                         if let url = URL(string: favorite.address) { browser.open(url) }
                                     } label: {
-                                        VStack(alignment: .leading, spacing: 12) {
-                                            Image(systemName: favorite.symbol).font(.title2)
-                                            Text(favorite.title).font(.subheadline.weight(.semibold)).lineLimit(2)
+                                        VStack(spacing: 12) {
+                                            Image(systemName: favorite.symbol)
+                                                .font(.title3.weight(.medium))
+                                                .foregroundStyle(Color.accentColor)
+                                                .frame(width: 44, height: 44)
+                                                .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
+                                            Text(favorite.title).font(.subheadline.weight(.medium)).lineLimit(2)
                                         }
-                                        .frame(maxWidth: .infinity, minHeight: 76, alignment: .leading)
-                                        .padding()
-                                        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                                        .frame(maxWidth: .infinity, minHeight: 84)
+                                        .padding(12)
+                                        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -119,7 +137,9 @@ struct StartPage: View {
                                 ForEach(browser.recentSites) { site in
                                     Button { browser.open(site.url) } label: {
                                         HStack {
-                                            Image(systemName: "globe")
+                                            Image(systemName: "clock.arrow.circlepath")
+                                                .foregroundStyle(Color.accentColor)
+                                                .frame(width: 32, height: 32)
                                             VStack(alignment: .leading) {
                                                 Text(site.title).lineLimit(1)
                                                 Text(site.url.host ?? site.url.absoluteString)
@@ -128,8 +148,9 @@ struct StartPage: View {
                                             Spacer()
                                             Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
                                         }
+                                        .frame(minHeight: 44)
                                         .padding(12)
-                                        .background(.ultraThinMaterial, in: RoundedRectangle(cornerRadius: 14))
+                                        .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 14))
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -141,7 +162,7 @@ struct StartPage: View {
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding()
-                    .background(.thinMaterial, in: RoundedRectangle(cornerRadius: 18))
+                    .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
                 }
             }
             .frame(maxWidth: 760, alignment: .leading)
@@ -157,12 +178,12 @@ struct StartPage: View {
     }
 
     private func sectionTitle(_ title: String) -> some View {
-        Text(title).font(.subheadline.weight(.semibold)).foregroundStyle(.secondary)
+        Text(title).font(.headline).accessibilityAddTraits(.isHeader)
     }
 
     private var backgroundColors: [Color] {
         colorScheme == .dark
-        ? [.black, Color(red: 0.02, green: 0.10, blue: 0.15)]
-        : [Color(red: 0.95, green: 0.98, blue: 1.0), .white]
+        ? [Color(uiColor: .systemGroupedBackground), Color(red: 0.03, green: 0.06, blue: 0.08)]
+        : [Color(uiColor: .systemGroupedBackground), Color(red: 0.95, green: 0.97, blue: 0.99)]
     }
 }
