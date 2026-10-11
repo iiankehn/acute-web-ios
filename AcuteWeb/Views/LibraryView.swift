@@ -8,6 +8,7 @@ struct LibraryView: View {
     @State private var selection = 0
     @State private var query = ""
     @State private var editingBookmark: SavedSite?
+    @State private var confirmsHistoryDeletion = false
 
     var body: some View {
         NavigationStack {
@@ -26,6 +27,12 @@ struct LibraryView: View {
             }
             .onReceive(bookmarks.objectWillChange) { _ in browser.objectWillChange.send() }
             .navigationTitle("Library")
+            .alert("Clear Saved History?", isPresented: $confirmsHistoryDeletion) {
+                Button("Clear Saved History", role: .destructive) { history.clear() }
+                Button("Cancel", role: .cancel) {}
+            } message: {
+                Text("This removes all saved visits from this device, including visits outside the current search results.")
+            }
             .searchable(text: $query, prompt: "Search titles or addresses")
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
@@ -33,7 +40,7 @@ struct LibraryView: View {
                 }
                 if selection == 1 && !history.items.isEmpty {
                     ToolbarItem(placement: .secondaryAction) {
-                        Button("Clear", role: .destructive) { history.clear() }
+                        Button("Clear", role: .destructive) { confirmsHistoryDeletion = true }
                     }
                 }
             }

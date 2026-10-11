@@ -160,13 +160,15 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertEqual(cards.count, 2)
         app.buttons["Tab Actions"].tap()
         app.buttons["Close Private Tabs"].tap()
-        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
-        app.buttons["Cancel"].tap()
+        let confirmation = app.alerts["Close Private Tabs"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 5))
+        XCTAssertTrue(confirmation.buttons["Cancel"].exists)
+        confirmation.buttons["Cancel"].tap()
         XCTAssertEqual(cards.count, 2)
         app.buttons["Tab Actions"].tap()
         app.buttons["Close Private Tabs"].tap()
-        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
-        app.buttons["Close Private Tabs"].tap()
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 5))
+        confirmation.buttons["Close Private Tabs"].tap()
         let closed = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in cards.count == 1 }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [closed], timeout: 5), .completed)
         app.buttons["Done"].tap()
@@ -180,9 +182,10 @@ final class AcuteWebUITests: XCTestCase {
         let clear = app.buttons["Clear Regular Website Data"]
         scrollTo(clear)
         clear.tap()
-        XCTAssertTrue(app.buttons["Cancel"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.buttons["Clear Website Data"].exists)
-        app.buttons["Cancel"].tap()
+        let confirmation = app.alerts["Clear Regular Website Data?"]
+        XCTAssertTrue(confirmation.waitForExistence(timeout: 5))
+        XCTAssertTrue(confirmation.buttons["Clear Website Data"].exists)
+        confirmation.buttons["Cancel"].tap()
         XCTAssertFalse(app.staticTexts["Regular website data cleared"].exists)
         XCTAssertTrue(clear.exists)
     }

@@ -2,6 +2,7 @@ import SwiftUI
 
 struct TabSidebar: View {
     @EnvironmentObject private var browser: BrowserStore
+    @State private var closingScope: TabCloseScope?
 
     var body: some View {
         List {
@@ -21,8 +22,9 @@ struct TabSidebar: View {
             .onMove(perform: browser.moveTabs)
         }
         .navigationTitle("Acute Web")
+        .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
-            ToolbarItem(placement: .primaryAction) { TabManagementMenu() }
+            ToolbarItem(placement: .primaryAction) { TabManagementMenu(scope: $closingScope) }
             ToolbarItem(placement: .primaryAction) {
                 Menu {
                     Button("New Tab", systemImage: "plus") { browser.newTab() }
@@ -77,6 +79,7 @@ private struct SidebarTabRow: View {
 struct TabGrid: View {
     @EnvironmentObject private var browser: BrowserStore
     @Environment(\.dismiss) private var dismiss
+    @State private var closingScope: TabCloseScope?
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: 12)]
 
     var body: some View {
@@ -92,8 +95,9 @@ struct TabGrid: View {
             .padding()
         }
         .navigationTitle("Tabs")
+        .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
-            ToolbarItem(placement: .primaryAction) { TabManagementMenu() }
+            ToolbarItem(placement: .primaryAction) { TabManagementMenu(scope: $closingScope) }
             ToolbarItem(placement: .cancellationAction) {
                 Button("Done") { dismiss() }
             }
@@ -116,7 +120,7 @@ struct TabGrid: View {
 
 private struct TabManagementMenu: View {
     @EnvironmentObject private var browser: BrowserStore
-    @State private var scope: TabCloseScope?
+    @Binding var scope: TabCloseScope?
 
     var body: some View {
         Menu {
@@ -128,9 +132,17 @@ private struct TabManagementMenu: View {
             Image(systemName: "ellipsis.circle")
         }
         .accessibilityLabel("Tab Actions")
-        .confirmationDialog(scope?.title ?? "Close Tabs", isPresented: Binding(
+    }
+}
+
+private struct TabClosingConfirmation: ViewModifier {
+    @EnvironmentObject private var browser: BrowserStore
+    @Binding var scope: TabCloseScope?
+
+    func body(content: Content) -> some View {
+        content.alert(scope?.title ?? "Close Tabs", isPresented: Binding(
             get: { scope != nil }, set: { if !$0 { scope = nil } }
-        ), titleVisibility: .visible, presenting: scope) { target in
+        ), presenting: scope) { target in
             Button(target.title, role: .destructive) { browser.closeTabs(target) }
             Button("Cancel", role: .cancel) {}
         } message: { target in
