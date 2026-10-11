@@ -79,6 +79,13 @@ tab titles gain space to wrap. Start-page search offers a Clear action that
 keeps keyboard focus. Find results stack above their navigation controls at
 large text sizes, and selected tabs expose the native VoiceOver selection trait.
 
+The tab overview supports local title/address search and All, Regular and Private
+filters, with visible/total counts and explicit empty states. At accessibility
+text sizes the filter uses a menu to give labels space. The iPad sidebar also
+searches open tabs; reordering is disabled while search results are filtered.
+Search does not switch or close tabs, and bulk-close confirmations explicitly
+include tabs hidden by filters. Metadata changes refresh results while pages load.
+
 ## Apple references
 
 - https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass

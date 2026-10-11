@@ -1,6 +1,7 @@
 import Foundation
 import SwiftUI
 import WebKit
+import Combine
 
 struct RecentSite: Identifiable, Equatable {
     let id = UUID()
@@ -29,7 +30,9 @@ enum TabCloseScope: String, CaseIterable, Identifiable {
 
 @MainActor
 final class BrowserStore: ObservableObject {
-    @Published private(set) var tabs: [BrowserTab] = []
+    @Published private(set) var tabs: [BrowserTab] = [] {
+        didSet { observeTabMetadata() }
+    }
     @Published var selectedTabID: BrowserTab.ID?
     @Published var showsTabs = false
     @Published var showsSettings = false
@@ -55,6 +58,17 @@ final class BrowserStore: ObservableObject {
     private let contentBlocker = ContentBlocker()
     private let sessionStore: BrowserSessionStore
     private var findRequestID = UUID()
+    private var tabMetadataSubscriptions: [AnyCancellable] = []
+
+    private func observeTabMetadata() {
+        // Search results must follow title/address changes, including background tabs.
+        tabMetadataSubscriptions = tabs.map { tab in
+            tab.$title.combineLatest(tab.$url)
+                .dropFirst()
+                .receive(on: RunLoop.main)
+                .sink { [weak self] _ in self?.objectWillChange.send() }
+        }
+    }
     private(set) var allowsWebsitePrompts = true
 
     var selectedTab: BrowserTab? {

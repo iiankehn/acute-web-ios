@@ -1,12 +1,36 @@
 import SwiftUI
 
+private enum TabBrowseScope: String, CaseIterable, Identifiable {
+    case all = "All", regular = "Regular", privateTabs = "Private"
+    var id: String { rawValue }
+
+    @MainActor func includes(_ tab: BrowserTab) -> Bool {
+        switch self {
+        case .all: return true
+        case .regular: return !tab.isPrivate
+        case .privateTabs: return tab.isPrivate
+        }
+    }
+}
+
+@MainActor private func matchesTabSearch(_ tab: BrowserTab, query: String) -> Bool {
+    let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
+    return text.isEmpty || tab.title.localizedStandardContains(text)
+        || (tab.url?.absoluteString.localizedStandardContains(text) == true)
+}
+
 struct TabSidebar: View {
     @EnvironmentObject private var browser: BrowserStore
     @State private var closingScope: TabCloseScope?
+    @State private var query = ""
+
+    private var visibleTabs: [BrowserTab] {
+        browser.tabs.filter { matchesTabSearch($0, query: query) }
+    }
 
     var body: some View {
         List {
-            ForEach(browser.tabs) { tab in
+            ForEach(visibleTabs) { tab in
                 SidebarTabRow(tab: tab)
                     .listRowBackground(browser.selectedTabID == tab.id ? Color.accentColor.opacity(0.12) : Color.clear)
                     .swipeActions {
@@ -20,9 +44,14 @@ struct TabSidebar: View {
                     }
             }
             .onMove(perform: browser.moveTabs)
+            .moveDisabled(!query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         }
         .listStyle(.sidebar)
         .navigationTitle("Acute Web")
+        .searchable(text: $query, prompt: "Search tabs")
+        .overlay {
+            if visibleTabs.isEmpty { ContentUnavailableView.search(text: query) }
+        }
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
             ToolbarItemGroup(placement: .bottomBar) {
@@ -92,26 +121,61 @@ struct TabGrid: View {
     @EnvironmentObject private var browser: BrowserStore
     @Environment(\.dismiss) private var dismiss
     @State private var closingScope: TabCloseScope?
+    @State private var query = ""
+    @State private var browseScope: TabBrowseScope = .all
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private var columns: [GridItem] {
         [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 280 : 160), spacing: 16)]
     }
 
+    private var visibleTabs: [BrowserTab] {
+        browser.tabs.filter { browseScope.includes($0) && matchesTabSearch($0, query: query) }
+    }
+
+    private var scopePicker: some View {
+        Picker("Tab Filter", selection: $browseScope) {
+            ForEach(TabBrowseScope.allCases) { scope in Text(scope.rawValue).tag(scope) }
+        }
+        .pickerStyle(.segmented)
+        .accessibilityIdentifier("tabScopePicker")
+    }
+
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
+                if dynamicTypeSize.isAccessibilitySize {
+                    Picker("Tab Filter", selection: $browseScope) {
+                        ForEach(TabBrowseScope.allCases) { scope in Text(scope.rawValue).tag(scope) }
+                    }
+                    .pickerStyle(.menu)
+                    .frame(minHeight: 44)
+                } else {
+                    scopePicker
+                }
                 HStack {
-                    Text("\(browser.tabs.count) open")
+                    Text("\(visibleTabs.count) of \(browser.tabs.count) open")
                     Spacer()
                     Label("\(browser.tabs.filter { $0.isPrivate }.count) private", systemImage: "hand.raised")
                 }
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.secondary)
-                LazyVGrid(columns: columns, spacing: 16) {
-                    ForEach(browser.tabs) { tab in
-                        TabCard(tab: tab) {
-                            browser.select(tab)
-                            dismiss()
+                if visibleTabs.isEmpty {
+                    if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        ContentUnavailableView.search(text: query)
+                    } else {
+                        ContentUnavailableView(
+                            browseScope == .privateTabs ? "No Private Tabs" : "No Regular Tabs",
+                            systemImage: browseScope == .privateTabs ? "hand.raised" : "square.on.square",
+                            description: Text("Create a tab with New Tab Options or choose All to see your other tabs.")
+                        )
+                    }
+                } else {
+                    LazyVGrid(columns: columns, spacing: 16) {
+                        ForEach(visibleTabs) { tab in
+                            TabCard(tab: tab) {
+                                browser.select(tab)
+                                dismiss()
+                            }
                         }
                     }
                 }
@@ -120,6 +184,8 @@ struct TabGrid: View {
         }
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Tabs")
+        .navigationBarTitleDisplayMode(.inline)
+        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search tabs")
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
             ToolbarItem(placement: .primaryAction) { TabManagementMenu(scope: $closingScope) }
@@ -171,7 +237,7 @@ private struct TabClosingConfirmation: ViewModifier {
             Button(target.title, role: .destructive) { browser.closeTabs(target) }
             Button("Cancel", role: .cancel) {}
         } message: { target in
-            Text(target == .regular ? "Regular tabs can be reopened from the recent closed-tab list." : "Closed private tabs cannot be reopened. A regular start page opens if no tabs remain.")
+            Text((target == .regular ? "Regular tabs can be reopened from the recent closed-tab list." : "Closed private tabs cannot be reopened. A regular start page opens if no tabs remain.") + " This applies to all matching open tabs, including tabs hidden by search or filters.")
         }
     }
 }

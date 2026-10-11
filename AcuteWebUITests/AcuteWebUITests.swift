@@ -165,6 +165,53 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertEqual(app.textFields["addressField"].value as? String, "Search or enter address")
     }
 
+    func testTabFiltersPreserveSelectedPrivateTab() {
+        openMoreMenu()
+        app.buttons["New Private Tab"].tap()
+        app.buttons["Tabs"].tap()
+        XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
+        let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
+        let filter = app.segmentedControls["tabScopePicker"]
+        XCTAssertTrue(filter.waitForExistence(timeout: 5))
+        filter.buttons["Private"].tap()
+        XCTAssertEqual(cards.count, 1)
+        XCTAssertEqual(cards.firstMatch.value as? String, "Selected tab")
+        filter.buttons["Regular"].tap()
+        XCTAssertEqual(cards.count, 1)
+        XCTAssertEqual(cards.firstMatch.value as? String, "Regular tab")
+        filter.buttons["All"].tap()
+        XCTAssertEqual(cards.count, 2)
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
+    }
+
+    func testTabSearchClosesOnlyVisibleCardAndKeepsHiddenSelection() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestRenderedPage"]
+        app.launch()
+        XCTAssertTrue(app.buttons["condensedAddress"].waitForExistence(timeout: 15))
+        openMoreMenu()
+        app.buttons["New Private Tab"].tap()
+        app.buttons["Tabs"].tap()
+        let search = app.searchFields["Search tabs"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("acute-fixture.invalid")
+        let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
+        XCTAssertTrue(app.staticTexts["1 of 2 open"].waitForExistence(timeout: 5))
+        XCTAssertEqual(cards.count, 1)
+        XCTAssertEqual(cards.firstMatch.value as? String, "Regular tab")
+        app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'closeTab_'"))
+            .firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["0 of 1 open"].waitForExistence(timeout: 5))
+        XCTAssertEqual(cards.count, 0)
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.staticTexts["1 of 1 open"].waitForExistence(timeout: 5))
+        XCTAssertEqual(cards.firstMatch.value as? String, "Selected tab")
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
+    }
+
     func testPrivacySettingsDefaultToNoHistory() {
         openMoreMenu()
         app.buttons["Settings"].tap()
