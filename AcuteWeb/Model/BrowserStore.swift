@@ -28,6 +28,7 @@ final class BrowserStore: ObservableObject {
     let preferences = BrowserPreferences()
     let downloadCenter = DownloadCenter()
     let permissionBroker = PermissionBroker()
+    let scriptDialogs = ScriptDialogBroker()
     let bookmarks = BookmarkStore()
     let history = HistoryStore()
     let sitePrivacy = SitePrivacyStore()
@@ -60,7 +61,13 @@ final class BrowserStore: ObservableObject {
         let coordinator = WebView.Coordinator(
             tab: tab, downloadCenter: downloadCenter,
             permissionBroker: permissionBroker, sitePrivacy: sitePrivacy,
-            openLink: { [weak self] request, isPrivate in self?.openInNewTab(request, isPrivate: isPrivate) }
+            openLink: { [weak self] request, isPrivate in self?.openInNewTab(request, isPrivate: isPrivate) },
+            scriptDialogs: scriptDialogs,
+            prepareNavigation: { [weak self] webView, url, completion in
+                guard let self else { completion(); return }
+                let enabled = self.preferences.blocksTrackers && self.sitePrivacy.policy(for: url?.host).blocksTrackers
+                self.contentBlocker.apply(enabled: enabled, to: webView, completion: completion)
+            }
         )
         tab.navigationCoordinator = coordinator
         tab.webView.navigationDelegate = coordinator
@@ -78,6 +85,7 @@ final class BrowserStore: ObservableObject {
 
     func close(_ tab: BrowserTab) {
         guard let index = tabs.firstIndex(where: { $0.id == tab.id }) else { return }
+        scriptDialogs.cancel(tabID: tab.id)
         tab.captureSnapshot()
         recentlyClosed.insert((tab.url, tab.isPrivate), at: 0)
         recentlyClosed = Array(recentlyClosed.prefix(10))
@@ -171,6 +179,11 @@ final class BrowserStore: ObservableObject {
         navigate()
     }
 
+    func prepareNavigation(_ webView: WKWebView, url: URL?, completion: @escaping () -> Void) {
+        let enabled = preferences.blocksTrackers && sitePrivacy.policy(for: url?.host).blocksTrackers
+        contentBlocker.apply(enabled: enabled, to: webView, completion: completion)
+    }
+
     func applyPrivacyPreferences() {
         for tab in tabs {
             applyPrivacyPreferences(to: tab)
@@ -192,7 +205,7 @@ final class BrowserStore: ObservableObject {
         guard let tab = selectedTab else { completion(); return }
         let store = tab.webView.configuration.websiteDataStore
         store.fetchDataRecords(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes()) { records in
-            let matching = records.filter { $0.displayName == host || $0.displayName.hasSuffix(".\(host)") }
+            let matching = records.filter { SiteDataScope.matches(recordName: $0.displayName, host: host) }
             store.removeData(ofTypes: WKWebsiteDataStore.allWebsiteDataTypes(), for: matching) {
                 Task { @MainActor in completion() }
             }

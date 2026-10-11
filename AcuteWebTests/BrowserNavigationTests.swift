@@ -70,6 +70,38 @@ final class BrowserNavigationTests: XCTestCase {
     }
 
     @MainActor
+    func testWebsiteConfirmAndPromptResumeWithTheUsersResponses() {
+        let browser = makeBrowser()
+        let tab = browser.selectedTab!
+        tab.webView.loadHTMLString("<title>Dialog fixture</title>", baseURL: URL(string: "https://acute-dialog-test.invalid/"))
+        let loaded = expectation(for: NSPredicate { _, _ in tab.webView.title == "Dialog fixture" }, evaluatedWith: nil)
+        wait(for: [loaded], timeout: 15)
+        let confirmed = expectation(description: "Website received confirmation")
+        tab.webView.evaluateJavaScript("confirm('Continue?')") { value, error in
+            XCTAssertNil(error)
+            XCTAssertEqual(value as? Bool, true)
+            confirmed.fulfill()
+        }
+        let confirmShown = expectation(for: NSPredicate { _, _ in browser.scriptDialogs.pendingRequest?.kind == .confirm }, evaluatedWith: nil)
+        wait(for: [confirmShown], timeout: 5)
+        browser.scriptDialogs.resolve(.accept(""))
+        wait(for: [confirmed], timeout: 5)
+
+        let prompted = expectation(description: "Website received prompt input")
+        tab.webView.evaluateJavaScript("prompt('Name?', 'Default')") { value, error in
+            XCTAssertNil(error)
+            XCTAssertEqual(value as? String, "Acute")
+            prompted.fulfill()
+        }
+        let promptShown = expectation(for: NSPredicate { _, _ in browser.scriptDialogs.pendingRequest?.kind == .prompt }, evaluatedWith: nil)
+        wait(for: [promptShown], timeout: 5)
+        XCTAssertEqual(browser.scriptDialogs.pendingRequest?.defaultText, "Default")
+        XCTAssertEqual(browser.scriptDialogs.pendingRequest?.host, "acute-dialog-test.invalid")
+        browser.scriptDialogs.resolve(.accept("Acute"))
+        wait(for: [prompted], timeout: 5)
+    }
+
+    @MainActor
     func testCancelledNavigationDoesNotShowAnErrorButConnectionFailureDoes() {
         let browser = makeBrowser()
         let tab = browser.selectedTab!

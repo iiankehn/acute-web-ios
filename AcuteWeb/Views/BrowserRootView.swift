@@ -39,7 +39,10 @@ struct BrowserRootView: View {
             SitePrivacyView(sitePrivacy: browser.sitePrivacy).environmentObject(browser)
         }
         .background {
-            PermissionPromptHost(broker: browser.permissionBroker)
+            ZStack {
+                PermissionPromptHost(broker: browser.permissionBroker)
+                ScriptDialogHost(broker: browser.scriptDialogs)
+            }
         }
         .tint(.accentColor)
     }
@@ -67,7 +70,11 @@ private struct BrowserPage: View {
                 downloadCenter: browser.downloadCenter,
                 permissionBroker: browser.permissionBroker,
                 sitePrivacy: browser.sitePrivacy,
-                openLink: { request, isPrivate in browser.openInNewTab(request, isPrivate: isPrivate) }
+                openLink: { request, isPrivate in browser.openInNewTab(request, isPrivate: isPrivate) },
+                scriptDialogs: browser.scriptDialogs,
+                prepareNavigation: { webView, url, completion in
+                    browser.prepareNavigation(webView, url: url, completion: completion)
+                }
             )
             .ignoresSafeArea(.container, edges: .bottom)
             if tab.url == nil && tab.navigationError == nil {
