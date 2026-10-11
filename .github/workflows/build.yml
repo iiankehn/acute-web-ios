@@ -73,20 +73,12 @@ jobs:
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
           test -f "$APP_PATH/PrivacyInfo.xcprivacy"
           plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
-      - name: Install, launch, and capture app on iPhone
+      - name: Install and launch app on iPhone
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
-          mkdir -p Artifacts
           xcrun simctl install '${{ steps.simulator.outputs.id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.id }}' com.acuteweb.browser.ios
-          sleep 5
-          xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance light
-          sleep 2
-          xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page.png
-          xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance dark
-          sleep 2
-          xcrun simctl io '${{ steps.simulator.outputs.id }}' screenshot Artifacts/acute-web-start-page-dark.png
-      - name: Upload test results and simulator screenshot
+      - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -94,7 +86,6 @@ jobs:
           path: |
             TestResults.xcresult
             InterfaceResults.xcresult
-            Artifacts/acute-web-start-page*.png
           if-no-files-found: ignore
 
   ipad-smoke:
@@ -115,7 +106,7 @@ jobs:
           echo "id=$IPAD_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$IPAD_ID" || true
           xcrun simctl bootstatus "$IPAD_ID" -b
-      - name: Build, install, launch, and capture app on iPad
+      - name: Build, install, and launch app on iPad
         run: |
           xcodebuild build \
             -project AcuteWeb.xcodeproj \
@@ -124,23 +115,8 @@ jobs:
             -destination-timeout 120 \
             -derivedDataPath "$PWD/iPadDerivedData"
           APP_PATH="$PWD/iPadDerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
-          mkdir -p Artifacts
           xcrun simctl install '${{ steps.ipad.outputs.id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.ipad.outputs.id }}' com.acuteweb.browser.ios
-          sleep 5
-          xcrun simctl ui '${{ steps.ipad.outputs.id }}' appearance light
-          sleep 2
-          xcrun simctl io '${{ steps.ipad.outputs.id }}' screenshot Artifacts/acute-web-ipad-start-page.png
-          xcrun simctl ui '${{ steps.ipad.outputs.id }}' appearance dark
-          sleep 2
-          xcrun simctl io '${{ steps.ipad.outputs.id }}' screenshot Artifacts/acute-web-ipad-start-page-dark.png
-      - name: Upload iPad screenshot
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: acute-web-ipad-smoke
-          path: Artifacts/acute-web-ipad-start-page*.png
-          if-no-files-found: ignore
 
   device-ipa:
     needs: [simulator, ipad-smoke]

@@ -37,8 +37,8 @@ downloads remain in the app's local Documents container.
 
 `project.yml` is the source of truth for the Xcode project. GitHub Actions uses
 XcodeGen and available iPhone/iPad simulators. The iPhone job runs unit and
-interface tests; both simulator jobs launch the app and capture light/dark
-screenshots. Only after those jobs pass does CI package an unsigned arm64 IPA
+interface tests; both simulator jobs launch the app. Visual review uses the
+physical device without routine screenshot capture. Only after those jobs pass does CI package an unsigned arm64 IPA
 from a Release device build. Device signing and installation are separate.
 
 The [0.1 foundation gate](FOUNDATION-0.1.md) distinguishes automated coverage

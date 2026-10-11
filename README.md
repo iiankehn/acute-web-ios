@@ -97,8 +97,9 @@ xcodebuild -project AcuteWeb.xcodeproj -scheme AcuteWeb \
 
 GitHub Actions regenerates the project, compiles the app and full XCUITest target,
 runs the unit and full interface suites, validates the bundled privacy manifest, installs and launches
-Acute on iPhone and iPad simulators, and retains both start-page screenshots with
-the test result bundle. The XCUITest suite
+Acute on iPhone and iPad simulators, and retains the test result bundles.
+Visual review uses physical-device testing; routine screenshots are not captured.
+The XCUITest suite
 also covers privacy settings, private browsing, history, rotation, tab management,
 and start-page customization. CI uses Xcode 26.3 and an iOS 26.2 simulator so Liquid Glass code is
 compiled and exercised. Device and TestFlight builds require Apple Developer signing

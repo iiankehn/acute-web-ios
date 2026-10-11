@@ -14,7 +14,6 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["Acute Web"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["The web, in focus."].exists)
         XCTAssertTrue(app.textFields["addressField"].exists)
-        attachScreenshot("Start Page")
     }
 
     func testRenderedPhonePageCondensesAndCanExpandControls() {
@@ -26,7 +25,6 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertFalse(app.textFields["addressField"].exists)
         XCTAssertTrue(app.buttons["Tabs"].isHittable)
         XCTAssertTrue(app.buttons["More"].isHittable)
-        attachScreenshot("Condensed Navigation")
         condensed.tap()
         XCTAssertTrue(app.textFields["addressField"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Back"].exists)
@@ -56,14 +54,12 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertGreaterThan(address.frame.width, 180)
         XCTAssertTrue(app.buttons["More"].isHittable)
         XCTAssertTrue(app.buttons["Tabs"].isHittable)
-        attachScreenshot("iPhone Portrait")
 
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
         XCTAssertTrue(address.isHittable)
         XCTAssertGreaterThan(address.frame.width, 180)
         XCTAssertTrue(app.buttons["More"].isHittable)
-        attachScreenshot("iPhone Landscape")
         openMoreMenu()
         XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5))
     }
@@ -74,7 +70,6 @@ final class AcuteWebUITests: XCTestCase {
         let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
         XCTAssertEqual(cards.count, 1)
         XCTAssertEqual(cards.firstMatch.value as? String, "Selected tab")
-        attachScreenshot("Tab Switcher")
 
         app.buttons["New Tab Options"].tap()
         app.buttons["New Private Tab"].tap()
@@ -82,7 +77,6 @@ final class AcuteWebUITests: XCTestCase {
         app.buttons["Tabs"].tap()
         XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
         XCTAssertEqual(cards.count, 2)
-        attachScreenshot("Private Tab Switcher")
 
         let closeButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'closeTab_'"))
         closeButtons.firstMatch.tap()
@@ -106,7 +100,6 @@ final class AcuteWebUITests: XCTestCase {
         let historySwitch = app.switches["Save browsing history"]
         XCTAssertTrue(historySwitch.exists)
         XCTAssertEqual(historySwitch.value as? String, "0")
-        attachScreenshot("Privacy Settings")
     }
 
     func testPrivateTabUsesPrivateStartPage() {
@@ -117,7 +110,6 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'non-persistent WebKit data store'")).firstMatch.exists)
         XCTAssertFalse(app.staticTexts["Favorites"].exists)
         XCTAssertFalse(app.staticTexts["Bookmarks"].exists)
-        attachScreenshot("Private Browsing")
     }
 
     func testLibraryExposesBookmarksAndHistory() {
@@ -128,7 +120,6 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Bookmarks"].exists)
         app.buttons["History"].tap()
         XCTAssertTrue(app.staticTexts["No History"].waitForExistence(timeout: 5))
-        attachScreenshot("History Off")
     }
 
     func testSessionRecoveryExplainsPrivateTabExclusion() {
@@ -142,7 +133,6 @@ final class AcuteWebUITests: XCTestCase {
         let explanation = app.staticTexts["sessionRecoveryExplanation"]
         scrollTo(explanation)
         XCTAssertTrue(explanation.label.contains("Private tabs are never saved or restored"))
-        attachScreenshot("Session Recovery")
     }
 
     func testStartPageCustomizationUpdatesImmediately() {
@@ -228,10 +218,4 @@ final class AcuteWebUITests: XCTestCase {
         more.tap()
     }
 
-    private func attachScreenshot(_ name: String) {
-        let attachment = XCTAttachment(screenshot: XCUIScreen.main.screenshot())
-        attachment.name = name
-        attachment.lifetime = .keepAlways
-        add(attachment)
-    }
 }
