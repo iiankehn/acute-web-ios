@@ -11,7 +11,12 @@ targets:
   AcuteWeb:
     type: application
     platform: iOS
-    sources: [AcuteWeb]
+    sources:
+      - path: AcuteWeb
+        excludes: [AppIcon.icon]
+      - path: AcuteWeb/AppIcon.icon
+        type: file
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.acuteweb.browser.ios

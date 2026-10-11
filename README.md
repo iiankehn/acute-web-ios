@@ -1,7 +1,7 @@
 # Acute Web for iOS and iPadOS
 
 <p align="center">
-  <img src="AcuteWeb/Assets.xcassets/AppIcon.appiconset/AcuteWebIcon-Clear.png" alt="Acute Web clear-glass cat-fox mark" width="180">
+  <img src="AcuteWeb/AppIcon.icon/Assets/AcuteCatFox.png" alt="Acute Web silver cat-fox mark" width="180">
 </p>
 
 Native SwiftUI browser shell using WebKit. The product principles carry across
@@ -10,9 +10,13 @@ platforms.
 
 **Acute Web by CORE** — *The web, in focus.*
 
-Acute Web uses the clear-glass cat-fox exclusively. Stable builds use the
-unbadged clear icon, while beta builds use the matching clear `BETA` icon. The
-system derives its supported Home Screen appearances from this clear master.
+Acute Web uses the clear-glass cat-fox exclusively. The primary `AppIcon.icon`
+separates the neutral silver mark from the system-rendered enclosure, with
+space around the silhouette. iOS 26 renders its default, dark, clear and tinted
+Home Screen appearances; the user's Home Screen appearance and tint choices
+control the installed icon independently of the browser's interface theme.
+The asset catalog retains the older flat icon for compatibility. The unused
+legacy `BETA` asset is not the primary icon for current development builds.
 
 ## Principles
 
