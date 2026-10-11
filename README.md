@@ -31,7 +31,7 @@ Version `1.0.0` includes:
 
 - A native start page for regular and private tabs, with controls to show bookmarks, favorites, and recent session sites.
 - A start-page action that preserves tab position and private mode.
-- Per-tab page zoom from 50% to 200%, with new tabs starting at 100%.
+- Per-tab page zoom from 50% to 200%, restored for regular tabs; new tabs start at 100%.
 - Session-only recent sites that never include private browsing.
 - Tab snapshots, duplication, reopening, reordering, and adaptive iPad layouts.
 - Search-engine selection with DuckDuckGo as the default.
@@ -45,7 +45,7 @@ Version `1.0.0` includes:
 - Native website alert, confirmation, and text-input dialogs with per-tab cancellation.
 - Explicit allow-once prompts for website camera and microphone access, cancelled when their tab closes, navigates, or loses selection.
 - Persistent user-created bookmarks and browsing history that is off by default.
-- Crash-safe restoration for regular tabs, with a user-controlled startup toggle.
+- Crash-safe restoration for regular pages and start-page tabs, preserving selection and website viewing preferences, with a user-controlled startup toggle.
 - Private tabs excluded from saved sessions, recent sites, browsing history, and closed-tab recovery.
 - Private browsing is covered while the app is inactive for app-switcher snapshots.
 - Per-site controls for tracker blocking, JavaScript, media capture, and local website data.

@@ -5,6 +5,24 @@ import WebKit
 
 final class BrowserNavigationTests: XCTestCase {
     @MainActor
+    func testDuplicateKeepsWebsiteViewingPreferencesAndPrivateMode() {
+        let browser = makeBrowser()
+        browser.newTab(isPrivate: true)
+        let original = browser.selectedTab!
+        original.setPageZoom(1.75)
+        original.usesDesktopSite = true
+        browser.duplicate(original)
+        let duplicate = browser.selectedTab!
+        XCTAssertNotEqual(duplicate.id, original.id)
+        XCTAssertTrue(duplicate.isPrivate)
+        XCTAssertFalse(duplicate.webView.configuration.websiteDataStore.isPersistent)
+        XCTAssertEqual(duplicate.pageZoom, 1.75)
+        XCTAssertEqual(duplicate.webView.pageZoom, 1.75)
+        XCTAssertTrue(duplicate.usesDesktopSite)
+        XCTAssertEqual(duplicate.webView.configuration.defaultWebpagePreferences.preferredContentMode, .desktop)
+    }
+
+    @MainActor
     func testKeyboardTabSelectionWrapsAndClearsFindAndPermissionRequests() {
         let browser = makeBrowser()
         let first = browser.selectedTab!

@@ -139,7 +139,7 @@ struct BrowserToolbar: View {
             Menu {
                 ForEach([50, 75, 100, 125, 150, 175, 200], id: \.self) { percent in
                     Button {
-                        tab.setPageZoom(Double(percent) / 100)
+                        browser.setPageZoom(Double(percent) / 100)
                     } label: {
                         if Int((tab.pageZoom * 100).rounded()) == percent {
                             Label("\(percent)%", systemImage: "checkmark")

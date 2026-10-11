@@ -55,13 +55,13 @@ private struct SelectedTabCommands: View {
             }
             .disabled(tab.url == nil)
             Divider()
-            Button("Zoom In") { tab.setPageZoom(tab.pageZoom + 0.25) }
+            Button("Zoom In") { browser.setPageZoom(tab.pageZoom + 0.25) }
                 .keyboardShortcut("=", modifiers: .command)
                 .disabled(tab.url == nil || tab.pageZoom >= 2)
-            Button("Zoom Out") { tab.setPageZoom(tab.pageZoom - 0.25) }
+            Button("Zoom Out") { browser.setPageZoom(tab.pageZoom - 0.25) }
                 .keyboardShortcut("-", modifiers: .command)
                 .disabled(tab.url == nil || tab.pageZoom <= 0.5)
-            Button("Actual Size") { tab.setPageZoom(1) }
+            Button("Actual Size") { browser.setPageZoom(1) }
                 .keyboardShortcut("0", modifiers: .command)
                 .disabled(tab.url == nil || tab.pageZoom == 1)
             Button("Start Page") { browser.showStartPage() }
