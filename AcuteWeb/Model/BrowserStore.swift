@@ -46,10 +46,21 @@ final class BrowserStore: ObservableObject {
 
     func newTab(isPrivate: Bool = false) {
         let tab = BrowserTab(isPrivate: isPrivate)
+        configureNavigation(for: tab)
         tabs.append(tab)
         selectedTabID = tab.id
         addressDraft = ""
         contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
+    }
+
+    private func configureNavigation(for tab: BrowserTab) {
+        let coordinator = WebView.Coordinator(
+            tab: tab, downloadCenter: downloadCenter,
+            permissionBroker: permissionBroker, sitePrivacy: sitePrivacy
+        )
+        tab.navigationCoordinator = coordinator
+        tab.webView.navigationDelegate = coordinator
+        tab.webView.uiDelegate = coordinator
     }
 
     func select(_ tab: BrowserTab) {
@@ -77,9 +88,18 @@ final class BrowserStore: ObservableObject {
     func navigate() {
         guard let tab = selectedTab,
               let url = AddressResolver.resolve(addressDraft, searchEngine: preferences.searchEngine) else { return }
+        tab.navigationError = nil
+        tab.lastRequestedURL = url
         tab.webView.load(URLRequest(url: url))
         addressDraft = url.absoluteString
         saveSession(selectedURLOverride: url)
+    }
+
+    func retryNavigation() {
+        guard let tab = selectedTab, let url = tab.lastRequestedURL else { return }
+        tab.navigationError = nil
+        addressDraft = url.absoluteString
+        tab.webView.load(URLRequest(url: url))
     }
 
     func refreshAddress() {
@@ -192,6 +212,7 @@ final class BrowserStore: ObservableObject {
         let restoredTabs = validSavedTabs.compactMap { saved -> BrowserTab? in
             guard let url = saved.url else { return nil }
             let tab = BrowserTab()
+            configureNavigation(for: tab)
             tab.usesDesktopSite = saved.usesDesktopSite
             tab.webView.configuration.defaultWebpagePreferences.preferredContentMode = saved.usesDesktopSite ? .desktop : .mobile
             contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)

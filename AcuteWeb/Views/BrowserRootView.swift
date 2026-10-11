@@ -45,37 +45,64 @@ struct BrowserRootView: View {
     }
 
     private var browserContent: some View {
+        Group {
+            if let tab = browser.selectedTab {
+                BrowserPage(tab: tab)
+                    .id(tab.id)
+            }
+        }
+    }
+}
+
+private struct BrowserPage: View {
+    @EnvironmentObject private var browser: BrowserStore
+    @ObservedObject var tab: BrowserTab
+
+    var body: some View {
         ZStack {
             Color(uiColor: .systemBackground).ignoresSafeArea()
-            if let tab = browser.selectedTab {
-                if tab.url == nil {
-                    StartPage()
-                } else {
-                    WebView(
-                        tab: tab,
-                        downloadCenter: browser.downloadCenter,
-                        permissionBroker: browser.permissionBroker,
-                        sitePrivacy: browser.sitePrivacy
-                    )
-                        .ignoresSafeArea(.container, edges: .bottom)
+            // Keep WebKit mounted before the first request so its policy and permission delegates are ready.
+            WebView(
+                tab: tab,
+                downloadCenter: browser.downloadCenter,
+                permissionBroker: browser.permissionBroker,
+                sitePrivacy: browser.sitePrivacy
+            )
+            .ignoresSafeArea(.container, edges: .bottom)
+            if tab.url == nil && tab.navigationError == nil {
+                StartPage()
+            }
+            if let error = tab.navigationError {
+                ContentUnavailableView {
+                    Label("Unable to Load Page", systemImage: "wifi.exclamationmark")
+                } description: {
+                    Text(error)
+                } actions: {
+                    Button("Try Again") { browser.retryNavigation() }
+                        .buttonStyle(.borderedProminent)
                 }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(uiColor: .systemBackground))
             }
         }
         .safeAreaInset(edge: .top, spacing: 0) {
             VStack(spacing: 0) {
-                BrowserToolbar()
+                BrowserToolbar(tab: tab)
                 if browser.showsFindBar {
                     FindBar()
                 }
-                if let tab = browser.selectedTab, tab.isLoading {
+                if tab.isLoading {
                     ProgressView(value: tab.estimatedProgress)
                         .progressViewStyle(.linear)
                         .tint(.accentColor)
                 }
             }
         }
-        .onChange(of: browser.selectedTab?.url) { _, _ in
+        .onChange(of: tab.url) { _, _ in
             browser.refreshAddress()
+            browser.recordCurrentVisit()
+        }
+        .onChange(of: tab.title) { _, _ in
             browser.recordCurrentVisit()
         }
     }

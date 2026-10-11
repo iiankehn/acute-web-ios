@@ -8,10 +8,11 @@ struct WebView: UIViewRepresentable {
     let sitePrivacy: SitePrivacyStore
 
     func makeCoordinator() -> Coordinator {
-        Coordinator(downloadCenter: downloadCenter, permissionBroker: permissionBroker, sitePrivacy: sitePrivacy)
+        tab.navigationCoordinator ?? Coordinator(tab: tab, downloadCenter: downloadCenter, permissionBroker: permissionBroker, sitePrivacy: sitePrivacy)
     }
 
     func makeUIView(context: Context) -> WKWebView {
+        tab.navigationCoordinator = context.coordinator
         tab.webView.navigationDelegate = context.coordinator
         tab.webView.uiDelegate = context.coordinator
         return tab.webView
@@ -20,14 +21,34 @@ struct WebView: UIViewRepresentable {
     func updateUIView(_ webView: WKWebView, context: Context) {}
 
     final class Coordinator: NSObject, WKNavigationDelegate, WKUIDelegate {
+        weak var tab: BrowserTab?
         let downloadCenter: DownloadCenter
         let permissionBroker: PermissionBroker
         let sitePrivacy: SitePrivacyStore
 
-        init(downloadCenter: DownloadCenter, permissionBroker: PermissionBroker, sitePrivacy: SitePrivacyStore) {
+        init(tab: BrowserTab, downloadCenter: DownloadCenter, permissionBroker: PermissionBroker, sitePrivacy: SitePrivacyStore) {
+            self.tab = tab
             self.downloadCenter = downloadCenter
             self.permissionBroker = permissionBroker
             self.sitePrivacy = sitePrivacy
+        }
+
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            tab?.navigationError = nil
+        }
+
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            showNavigationError(error)
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            showNavigationError(error)
+        }
+
+        private func showNavigationError(_ error: Error) {
+            let failure = error as NSError
+            guard !(failure.domain == NSURLErrorDomain && failure.code == NSURLErrorCancelled) else { return }
+            tab?.navigationError = error.localizedDescription
         }
 
         func webView(
@@ -36,6 +57,9 @@ struct WebView: UIViewRepresentable {
             preferences: WKWebpagePreferences,
             decisionHandler: @escaping (WKNavigationActionPolicy, WKWebpagePreferences) -> Void
         ) {
+            if navigationAction.targetFrame?.isMainFrame != false {
+                tab?.lastRequestedURL = navigationAction.request.url
+            }
             preferences.allowsContentJavaScript = sitePrivacy.policy(for: navigationAction.request.url?.host).allowsJavaScript
             if navigationAction.shouldPerformDownload {
                 decisionHandler(.download, preferences)

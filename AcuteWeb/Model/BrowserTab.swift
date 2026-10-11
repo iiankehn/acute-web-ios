@@ -7,11 +7,14 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
     let id = UUID()
     let isPrivate: Bool
     let webView: WKWebView
+    var lastRequestedURL: URL?
+    var navigationCoordinator: WebView.Coordinator?
 
     @Published var title = "New Tab"
     @Published var url: URL?
     @Published var estimatedProgress = 0.0
     @Published var isLoading = false
+    @Published var navigationError: String?
     @Published var canGoBack = false
     @Published var canGoForward = false
     @Published var snapshot: UIImage?

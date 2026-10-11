@@ -2,6 +2,7 @@ import SwiftUI
 
 struct BrowserToolbar: View {
     @EnvironmentObject private var browser: BrowserStore
+    @ObservedObject var tab: BrowserTab
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var addressFocused: Bool
 
