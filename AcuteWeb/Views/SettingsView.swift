@@ -30,6 +30,10 @@ struct SettingsView: View {
                         .onChange(of: preferences.blocksTrackers) { _, _ in applyPrivacyPreferences() }
                     LabeledContent("Fraudulent website warnings", value: "On")
                     LabeledContent("Acute telemetry", value: "None")
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("Acute telemetry")
+                        .accessibilityValue("None")
+                        .accessibilityIdentifier("telemetryStatus")
                     LabeledContent("Diagnostic uploads", value: "None")
                     Toggle("Save browsing history", isOn: $preferences.savesHistory)
                     if !history.items.isEmpty {
@@ -52,6 +56,7 @@ struct SettingsView: View {
                     Text("Startup")
                 } footer: {
                     Text("Regular web addresses are stored only on this device for recovery. Private tabs are never saved or restored.")
+                        .accessibilityIdentifier("sessionRecoveryExplanation")
                 }
 
                 Section("Start Page") {

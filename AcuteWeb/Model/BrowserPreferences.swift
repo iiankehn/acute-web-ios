@@ -36,36 +36,38 @@ final class BrowserPreferences: ObservableObject {
         static let showsStartRecentSites = "showsStartRecentSites"
     }
 
+    private let defaults: UserDefaults
+
     @Published var searchEngine: SearchEngine {
-        didSet { UserDefaults.standard.set(searchEngine.rawValue, forKey: Key.searchEngine) }
+        didSet { defaults.set(searchEngine.rawValue, forKey: Key.searchEngine) }
     }
 
     @Published var blocksTrackers: Bool {
-        didSet { UserDefaults.standard.set(blocksTrackers, forKey: Key.blocksTrackers) }
+        didSet { defaults.set(blocksTrackers, forKey: Key.blocksTrackers) }
     }
 
     @Published var savesHistory: Bool {
-        didSet { UserDefaults.standard.set(savesHistory, forKey: Key.savesHistory) }
+        didSet { defaults.set(savesHistory, forKey: Key.savesHistory) }
     }
 
     @Published var restoresTabs: Bool {
-        didSet { UserDefaults.standard.set(restoresTabs, forKey: Key.restoresTabs) }
+        didSet { defaults.set(restoresTabs, forKey: Key.restoresTabs) }
     }
 
     @Published var showsStartBookmarks: Bool {
-        didSet { UserDefaults.standard.set(showsStartBookmarks, forKey: Key.showsStartBookmarks) }
+        didSet { defaults.set(showsStartBookmarks, forKey: Key.showsStartBookmarks) }
     }
 
     @Published var showsStartFavorites: Bool {
-        didSet { UserDefaults.standard.set(showsStartFavorites, forKey: Key.showsStartFavorites) }
+        didSet { defaults.set(showsStartFavorites, forKey: Key.showsStartFavorites) }
     }
 
     @Published var showsStartRecentSites: Bool {
-        didSet { UserDefaults.standard.set(showsStartRecentSites, forKey: Key.showsStartRecentSites) }
+        didSet { defaults.set(showsStartRecentSites, forKey: Key.showsStartRecentSites) }
     }
 
-    init() {
-        let defaults = UserDefaults.standard
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
         searchEngine = SearchEngine(rawValue: defaults.string(forKey: Key.searchEngine) ?? "") ?? .duckDuckGo
         blocksTrackers = defaults.object(forKey: Key.blocksTrackers) as? Bool ?? true
         savesHistory = defaults.object(forKey: Key.savesHistory) as? Bool ?? false

@@ -67,8 +67,10 @@ final class AcuteWebUITests: XCTestCase {
         app.buttons["Settings"].tap()
 
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
-        XCTAssertTrue(app.staticTexts["Acute telemetry"].exists)
-        XCTAssertTrue(app.staticTexts["None"].exists)
+        let telemetry = app.descendants(matching: .any).matching(identifier: "telemetryStatus").firstMatch
+        scrollTo(telemetry)
+        XCTAssertEqual(telemetry.label, "Acute telemetry")
+        XCTAssertEqual(telemetry.value as? String, "None")
         let historySwitch = app.switches["Save browsing history"]
         XCTAssertTrue(historySwitch.exists)
         XCTAssertEqual(historySwitch.value as? String, "0")
@@ -103,10 +105,11 @@ final class AcuteWebUITests: XCTestCase {
 
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         let restoreSwitch = app.switches["Restore regular tabs"]
-        XCTAssertTrue(restoreSwitch.exists)
-        XCTAssertTrue(app.staticTexts.matching(NSPredicate(
-            format: "label CONTAINS 'Private tabs are never saved or restored'"
-        )).firstMatch.exists)
+        scrollTo(restoreSwitch)
+        XCTAssertEqual(restoreSwitch.value as? String, "0")
+        let explanation = app.staticTexts["sessionRecoveryExplanation"]
+        scrollTo(explanation)
+        XCTAssertTrue(explanation.label.contains("Private tabs are never saved or restored"))
         attachScreenshot("Session Recovery")
     }
 
@@ -115,25 +118,37 @@ final class AcuteWebUITests: XCTestCase {
         app.buttons["Settings"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         let favorites = app.switches["Show favorites"]
-        for _ in 0..<4 {
-            if favorites.isHittable { break }
-            app.swipeUp()
-        }
-        XCTAssertTrue(favorites.isHittable)
-        favorites.tap()
+        scrollTo(favorites)
+        setSwitch(favorites, enabled: false)
         app.buttons["Done"].tap()
         XCTAssertTrue(app.textFields["startSearchField"].waitForExistence(timeout: 5))
-        XCTAssertFalse(app.staticTexts["Favorites"].exists)
+        let hidden = XCTNSPredicateExpectation(predicate: NSPredicate(format: "exists == false"), object: app.staticTexts["Favorites"])
+        XCTAssertEqual(XCTWaiter.wait(for: [hidden], timeout: 5), .completed)
 
         openMoreMenu()
         app.buttons["Settings"].tap()
-        for _ in 0..<4 {
-            if favorites.isHittable { break }
-            app.swipeUp()
-        }
-        favorites.tap()
+        scrollTo(favorites)
+        setSwitch(favorites, enabled: true)
         app.buttons["Done"].tap()
         XCTAssertTrue(app.staticTexts["Favorites"].waitForExistence(timeout: 5))
+    }
+
+    private func scrollTo(_ element: XCUIElement) {
+        for _ in 0..<6 {
+            if element.exists && element.isHittable { return }
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.exists && element.isHittable)
+    }
+
+    private func setSwitch(_ element: XCUIElement, enabled: Bool) {
+        let expected = enabled ? "1" : "0"
+        if element.value as? String != expected {
+            // Tap the trailing switch control rather than the center of its labeled Form row.
+            element.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        }
+        let changed = XCTNSPredicateExpectation(predicate: NSPredicate(format: "value == %@", expected), object: element)
+        XCTAssertEqual(XCTWaiter.wait(for: [changed], timeout: 5), .completed)
     }
 
     private func openMoreMenu() {
