@@ -36,6 +36,32 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5))
     }
 
+    func testTabSwitcherCreatesPrivateTabsAndClosesLastTab() {
+        app.buttons["Tabs"].tap()
+        XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
+        let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
+        XCTAssertEqual(cards.count, 1)
+        XCTAssertEqual(cards.firstMatch.value as? String, "Selected tab")
+        attachScreenshot("Tab Switcher")
+
+        app.buttons["New Tab Options"].tap()
+        app.buttons["New Private Tab"].tap()
+        XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
+        app.buttons["Tabs"].tap()
+        XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
+        XCTAssertEqual(cards.count, 2)
+        attachScreenshot("Private Tab Switcher")
+
+        let closeButtons = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'closeTab_'"))
+        closeButtons.firstMatch.tap()
+        XCTAssertEqual(cards.count, 1)
+        closeButtons.firstMatch.tap()
+        XCTAssertEqual(cards.count, 1)
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.staticTexts["The web, in focus."].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.textFields["addressField"].value as? String, "Search or enter address")
+    }
+
     func testPrivacySettingsDefaultToNoHistory() {
         openMoreMenu()
         app.buttons["Settings"].tap()

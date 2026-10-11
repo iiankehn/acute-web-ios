@@ -62,7 +62,7 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
     }
 
     func captureSnapshot() {
-        guard url != nil else { return }
+        guard !isPrivate, url != nil else { return }
         webView.takeSnapshot(with: nil) { [weak self] image, _ in
             Task { @MainActor in self?.snapshot = image }
         }

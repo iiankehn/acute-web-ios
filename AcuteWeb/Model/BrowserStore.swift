@@ -69,6 +69,7 @@ final class BrowserStore: ObservableObject {
         if tabs.isEmpty { newTab() }
         if selectedTabID == tab.id {
             selectedTabID = tabs[min(index, tabs.count - 1)].id
+            refreshAddress()
         }
         saveSession()
     }

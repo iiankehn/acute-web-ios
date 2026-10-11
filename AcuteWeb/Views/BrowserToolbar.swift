@@ -95,7 +95,10 @@ struct BrowserToolbar: View {
     }
 
     private var tabsButton: some View {
-        Button { browser.showsTabs = true } label: {
+        Button {
+            browser.selectedTab?.captureSnapshot()
+            browser.showsTabs = true
+        } label: {
             Image(systemName: "square.on.square")
             .overlay(alignment: .center) {
                 Text("\(browser.tabs.count)").font(.system(size: 8, weight: .bold))
