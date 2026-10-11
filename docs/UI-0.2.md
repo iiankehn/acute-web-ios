@@ -33,6 +33,10 @@ Settings and the bookmark editor use compact native titles and clearer form
 sections. The iPad tab strip follows keyboard selection, honors Reduce Motion,
 and widens for accessibility text sizes. When an iPad detail pane cannot fit
 the single-row toolbar, its controls wrap above the persistent tab strip.
+Custom glass controls use opaque system surfaces with Reduce Transparency.
+Toolbar labels define their full 44-point hit areas. Find-in-page uses the
+same navigation surface, with a local-page test covering find/close behavior
+from condensed phone controls.
 No public release is made by committing this first UI batch.
 
 ## Apple references

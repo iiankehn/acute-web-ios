@@ -13,6 +13,7 @@ struct FindBar: View {
             HStack(spacing: 10) {
                 Image(systemName: "text.magnifyingglass").foregroundStyle(.secondary)
                 TextField("Find on page", text: $browser.findQuery)
+                    .accessibilityLabel("Find on page")
                     .accessibilityIdentifier("findField")
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
@@ -50,7 +51,9 @@ struct FindBar: View {
         }
         .buttonStyle(.plain)
         .padding(.horizontal, 14)
-        .background(.regularMaterial)
+        .acuteGlass(cornerRadius: 22)
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
         .onAppear { focused = true }
     }
 }

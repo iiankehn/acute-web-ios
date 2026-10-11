@@ -49,8 +49,11 @@ struct BrowserToolbar: View {
                             Button {
                                 addressFocused = false
                                 controlsExpanded = false
-                            } label: { Image(systemName: "chevron.up") }
-                            .frame(minWidth: 44, minHeight: 44)
+                            } label: {
+                                Image(systemName: "chevron.up")
+                                    .frame(minWidth: 44, minHeight: 44)
+                                    .contentShape(Rectangle())
+                            }
                             .accessibilityLabel("Condense Controls")
                         }
                         bookmarkButton
@@ -118,16 +121,18 @@ struct BrowserToolbar: View {
         Group {
             Button { browser.selectedTab?.webView.goBack() } label: {
                 Image(systemName: "chevron.backward")
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Back")
-            .frame(minWidth: 44, minHeight: 44)
             .disabled(browser.selectedTab?.canGoBack != true)
 
             Button { browser.selectedTab?.webView.goForward() } label: {
                 Image(systemName: "chevron.forward")
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel("Forward")
-            .frame(minWidth: 44, minHeight: 44)
             .disabled(browser.selectedTab?.canGoForward != true)
 
         }
@@ -139,6 +144,7 @@ struct BrowserToolbar: View {
             .font(.caption)
             .foregroundStyle(.secondary)
             TextField("Search or enter address", text: $browser.addressDraft)
+            .accessibilityLabel("Search or enter address")
             .accessibilityIdentifier("addressField")
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
@@ -157,9 +163,10 @@ struct BrowserToolbar: View {
                 }
             } label: {
                 Image(systemName: browser.selectedTab?.isLoading == true ? "xmark" : "arrow.clockwise")
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
             }
             .accessibilityLabel(browser.selectedTab?.isLoading == true ? "Stop" : "Reload")
-            .frame(minWidth: 44, minHeight: 44)
         }
         .padding(.horizontal, 12)
         .frame(minHeight: 44)
@@ -190,9 +197,10 @@ struct BrowserToolbar: View {
             if let url = tab.url, WebAddress.url(url.absoluteString, allowMissingScheme: false) != nil, !tab.isPrivate {
                 Button { browser.toggleBookmark() } label: {
                     Image(systemName: browser.bookmarks.contains(browser.selectedTab?.url) ? "bookmark.fill" : "bookmark")
+                        .frame(minWidth: 44, minHeight: 44)
+                        .contentShape(Rectangle())
                 }
                 .accessibilityLabel(browser.bookmarks.contains(browser.selectedTab?.url) ? "Remove Bookmark" : "Add Bookmark")
-                .frame(minWidth: 44, minHeight: 44)
             }
 
         }
@@ -257,9 +265,9 @@ struct BrowserToolbar: View {
             Button("Settings", systemImage: "gearshape") { browser.showsSettings = true }
         } label: {
             Image(systemName: "ellipsis")
-            .frame(width: 32, height: 32)
+            .frame(minWidth: 44, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .accessibilityLabel("More")
-        .frame(minWidth: 44, minHeight: 44)
     }
 }

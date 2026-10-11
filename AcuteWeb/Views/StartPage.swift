@@ -56,6 +56,7 @@ struct StartPage: View {
                     Image(systemName: browser.selectedTab?.isPrivate == true ? "hand.raised.fill" : "magnifyingglass")
                     .foregroundStyle(.secondary)
                     TextField("Search with \(preferences.searchEngine.title)", text: $browser.addressDraft)
+                    .accessibilityLabel("Search with \(preferences.searchEngine.title)")
                     .focused($searchFocused)
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()

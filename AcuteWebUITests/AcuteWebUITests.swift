@@ -47,6 +47,27 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["The web, in focus."].exists)
     }
 
+    func testFindFromCondensedControlsReturnsToCondensedPage() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestRenderedPage"]
+        app.launch()
+        let condensed = app.buttons["condensedAddress"]
+        XCTAssertTrue(condensed.waitForExistence(timeout: 15))
+        openMoreMenu()
+        app.buttons["Find on Page"].tap()
+        let field = app.textFields["findField"]
+        XCTAssertTrue(field.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.textFields["addressField"].exists)
+        field.tap()
+        field.typeText("Loaded")
+        let status = app.staticTexts["findStatus"]
+        let found = XCTNSPredicateExpectation(predicate: NSPredicate(format: "label == %@", "Match found"), object: status)
+        XCTAssertEqual(XCTWaiter.wait(for: [found], timeout: 10), .completed)
+        app.buttons["Close Find on Page"].tap()
+        XCTAssertTrue(condensed.waitForExistence(timeout: 5))
+        XCTAssertFalse(field.exists)
+    }
+
     func testCompactToolbarKeepsAddressAndMenuUsableAfterRotation() {
         defer { XCUIDevice.shared.orientation = .portrait }
         let address = app.textFields["addressField"]

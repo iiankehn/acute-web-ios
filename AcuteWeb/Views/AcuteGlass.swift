@@ -21,24 +21,45 @@ struct AcuteGlassContainer<Content: View>: View {
 }
 
 extension View {
-    @ViewBuilder
     func acuteGlass(cornerRadius: CGFloat) -> some View {
-#if compiler(>=6.2)
-        if #available(iOS 26.0, *) {
-            self.glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
-        } else {
-            self.background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+        modifier(AcuteGlassSurface(cornerRadius: cornerRadius))
+    }
+}
+
+private struct AcuteGlassSurface: ViewModifier {
+    let cornerRadius: CGFloat
+    @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+    @Environment(\.colorSchemeContrast) private var contrast
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if reduceTransparency {
+            content.background(Color(uiColor: .secondarySystemBackground), in: RoundedRectangle(cornerRadius: cornerRadius))
                 .overlay {
                     RoundedRectangle(cornerRadius: cornerRadius)
-                        .stroke(.white.opacity(0.14), lineWidth: 0.5)
+                        .stroke(.primary.opacity(contrast == .increased ? 0.45 : 0.15), lineWidth: 1)
+                        .allowsHitTesting(false)
+                }
+        } else {
+#if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content.glassEffect(.regular.interactive(), in: .rect(cornerRadius: cornerRadius))
+        } else {
+            content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+                .overlay {
+                    RoundedRectangle(cornerRadius: cornerRadius)
+                        .stroke(.primary.opacity(contrast == .increased ? 0.45 : 0.1), lineWidth: 1)
+                        .allowsHitTesting(false)
                 }
         }
 #else
-        self.background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
+        content.background(.regularMaterial, in: RoundedRectangle(cornerRadius: cornerRadius))
             .overlay {
                 RoundedRectangle(cornerRadius: cornerRadius)
-                    .stroke(.white.opacity(0.14), lineWidth: 0.5)
+                    .stroke(.primary.opacity(contrast == .increased ? 0.45 : 0.1), lineWidth: 1)
+                    .allowsHitTesting(false)
             }
 #endif
+        }
     }
 }
