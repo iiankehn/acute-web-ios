@@ -21,7 +21,14 @@ struct AcuteWebApp: App {
                        let tab = browser.selectedTab, tab.lastRequestedURL == nil {
                         let url = URL(string: "https://acute-fixture.invalid")!
                         tab.lastRequestedURL = url
-                        tab.webView.loadHTMLString("<title>Acute navigation fixture</title><body><h1>Loaded page</h1></body>", baseURL: url)
+                        tab.webView.loadHTMLString("""
+                            <meta name="viewport" content="width=device-width,initial-scale=1">
+                            <title>Acute navigation fixture</title>
+                            <body><h1>Loaded page</h1>
+                            <button style="padding:16px" onclick="history.pushState({}, '', '/next'); document.title='Second fixture page'">Next fixture page</button>
+                            <script>addEventListener('popstate', () => { document.title = location.pathname === '/next' ? 'Second fixture page' : 'Acute navigation fixture'; });</script>
+                            </body>
+                            """, baseURL: url)
                     }
 #endif
                 }

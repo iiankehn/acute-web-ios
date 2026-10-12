@@ -103,7 +103,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Browsing Layout")
                 } footer: {
-                    Text("Phone controls can sit above the page or within thumb reach. iPad keeps persistent navigation. Editing, loading and Find keep controls expanded.")
+                    Text("Phone controls can sit above the page or within thumb reach. Tabs and navigation share one row. Editing, loading and Find show the address field; successful loading can show the page title instead. iPad keeps navigation at the top.")
                 }
 
                 Section {
