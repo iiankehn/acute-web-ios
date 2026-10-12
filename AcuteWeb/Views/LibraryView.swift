@@ -109,21 +109,21 @@ struct LibraryView: View {
     }
 
     private func siteRow(_ item: SavedSite, isBookmark: Bool, remove: @escaping () -> Void) -> some View {
-            HStack(spacing: 8) {
-                Button {
+        HStack(spacing: 8) {
+            Button {
                 if let url = item.url { browser.open(url); dismiss() }
             } label: {
                 HStack(spacing: 12) {
                     Image(systemName: isBookmark ? "bookmark.fill" : "clock")
-                        .foregroundStyle(Color.accentColor)
-                        .frame(width: 36, height: 36)
-                        .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
+                    .foregroundStyle(Color.accentColor)
+                    .frame(width: 36, height: 36)
+                    .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
                     VStack(alignment: .leading, spacing: 4) {
                         Text(item.title).font(.body.weight(.medium)).foregroundStyle(.primary)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                         Text(item.address).font(.caption).foregroundStyle(.secondary)
-                            .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                            .truncationMode(.middle)
+                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                        .truncationMode(.middle)
                     }
                     Spacer(minLength: 0)
                     Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.tertiary)
@@ -133,14 +133,14 @@ struct LibraryView: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.borderless)
-                if isBookmark {
-                    Button {
-                        searchPresented = false
-                        editingBookmark = item
+            if isBookmark {
+                Button {
+                    searchPresented = false
+                    editingBookmark = item
                 } label: {
                     Image(systemName: "pencil")
-                        .frame(minWidth: 44, minHeight: 44)
-                        .contentShape(Rectangle())
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Edit \(item.title)")

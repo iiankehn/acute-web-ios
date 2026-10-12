@@ -30,11 +30,11 @@ struct BookmarkEditor: View {
                 Section {
                     HStack {
                         TextField("Website address", text: $address)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                        .keyboardType(.URL)
-                        .focused($focusedField, equals: .address)
-                        .accessibilityIdentifier("bookmarkAddress")
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                            .keyboardType(.URL)
+                            .focused($focusedField, equals: .address)
+                            .accessibilityIdentifier("bookmarkAddress")
                         Button {
                             address = ""
                             focusedField = .address
