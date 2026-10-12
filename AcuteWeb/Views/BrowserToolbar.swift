@@ -189,6 +189,18 @@ struct BrowserToolbar: View {
         .padding(.horizontal, 12)
         .frame(minHeight: 44)
         .acuteGlass(cornerRadius: 22)
+        .overlay(alignment: .bottom) {
+            if tab.isLoading {
+                ProgressView(value: tab.estimatedProgress)
+                    .progressViewStyle(.linear)
+                    .tint(.accentColor)
+                    .padding(.horizontal, 18)
+                    .padding(.bottom, 3)
+                    .allowsHitTesting(false)
+                    .accessibilityLabel("Loading page")
+                    .accessibilityIdentifier("addressLoadingProgress")
+            }
+        }
         .layoutPriority(1)
 
     }

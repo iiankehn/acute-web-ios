@@ -86,6 +86,13 @@ searches open tabs; reordering is disabled while search results are filtered.
 Search does not switch or close tabs, and bulk-close confirmations explicitly
 include tabs hidden by filters. Metadata changes refresh results while pages load.
 
+Loading progress sits inside the address capsule alongside the persistent Stop
+control. Failed pages identify the requested host and provide Retry, Edit Address
+and Start Page actions. The error content scrolls beneath the selected navigation
+position; recovery actions wrap vertically when space or text size requires it.
+A local failure fixture covers editing the draft and returning to the start page
+without depending on a real website or network failure.
+
 ## Apple references
 
 - https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass

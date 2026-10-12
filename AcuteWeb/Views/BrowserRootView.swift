@@ -95,17 +95,12 @@ private struct BrowserPage: View {
                     }
             }
             if let error = tab.navigationError {
-                ContentUnavailableView {
-                    Label("Unable to Load Page", systemImage: "wifi.exclamationmark")
-                } description: {
-                    Text(error)
-                } actions: {
-                    Button("Try Again") { browser.retryNavigation() }
-                        .buttonStyle(.borderedProminent)
-                }
+                PageLoadErrorView(tab: tab, message: error)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .padding(controlsAtBottom ? .bottom : .top, navigationHeight)
                 .background(Color(uiColor: .systemBackground))
+                .safeAreaInset(edge: controlsAtBottom ? .bottom : .top, spacing: 0) {
+                    Color.clear.frame(height: navigationHeight)
+                }
             }
         }
         .overlay(alignment: controlsAtBottom ? .bottom : .top) {
@@ -113,11 +108,6 @@ private struct BrowserPage: View {
                 BrowserToolbar(tab: tab, preferences: preferences)
                 if browser.showsFindBar {
                     FindBar()
-                }
-                if tab.isLoading {
-                    ProgressView(value: tab.estimatedProgress)
-                        .progressViewStyle(.linear)
-                        .tint(.accentColor)
                 }
             }
             .onGeometryChange(for: CGFloat.self) { proxy in

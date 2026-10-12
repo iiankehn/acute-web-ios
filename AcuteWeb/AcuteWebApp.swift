@@ -11,6 +11,12 @@ struct AcuteWebApp: App {
                 .environmentObject(browser)
                 .onAppear {
 #if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains("-acuteUITestPageError"),
+                       let tab = browser.selectedTab, tab.lastRequestedURL == nil {
+                        tab.lastRequestedURL = URL(string: "https://acute-error.invalid")!
+                        tab.navigationError = "The test website could not be reached."
+                        browser.refreshAddress()
+                    }
                     if ProcessInfo.processInfo.arguments.contains("-acuteUITestRenderedPage"),
                        let tab = browser.selectedTab, tab.lastRequestedURL == nil {
                         let url = URL(string: "https://acute-fixture.invalid")!

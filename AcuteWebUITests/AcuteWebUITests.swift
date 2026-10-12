@@ -11,6 +11,27 @@ final class AcuteWebUITests: XCTestCase {
         app.launch()
     }
 
+    func testFailedPageCanEditAddressAndReturnToStartPage() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestPageError"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["Unable to Load Page"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["failedPageHost"].label, "acute-error.invalid")
+        XCTAssertTrue(app.buttons["Try Again"].isHittable)
+        app.buttons["editFailedAddress"].tap()
+        let clear = app.buttons["clearAddress"]
+        XCTAssertTrue(clear.waitForExistence(timeout: 5))
+        clear.tap()
+        let address = app.textFields["addressField"]
+        address.typeText("replacement query")
+        XCTAssertEqual(address.value as? String, "replacement query")
+        scrollTo(app.buttons["failedPageStartPage"])
+        app.buttons["failedPageStartPage"].tap()
+        XCTAssertTrue(app.staticTexts["The web, in focus."].waitForExistence(timeout: 5))
+        XCTAssertFalse(app.staticTexts["Unable to Load Page"].exists)
+        XCTAssertEqual(app.textFields["addressField"].value as? String, "Search or enter address")
+    }
+
     func testLaunchShowsNativeStartPage() {
         XCTAssertTrue(app.staticTexts["Acute Web"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.staticTexts["The web, in focus."].exists)
