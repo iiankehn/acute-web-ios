@@ -87,6 +87,8 @@ Search does not switch or close tabs, and bulk-close confirmations explicitly
 include tabs hidden by filters. Metadata changes refresh results while pages load.
 Empty tab-search results offer Clear Search directly; recovery does not depend
 on whether the system search presentation includes a Cancel button.
+Clear Search also ends native search presentation so the keyboard dismisses
+and the overview's Done action returns. Regression coverage checks that exit.
 
 Loading progress sits inside the address capsule alongside the persistent Stop
 control. Failed pages identify the requested host and provide Retry, Edit Address

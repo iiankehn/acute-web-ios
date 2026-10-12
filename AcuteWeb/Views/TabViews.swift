@@ -21,6 +21,7 @@ private enum TabBrowseScope: String, CaseIterable, Identifiable {
 
 private struct EmptyTabSearch: View {
     @Binding var query: String
+    @Binding var searchPresented: Bool
 
     var body: some View {
         ContentUnavailableView {
@@ -28,7 +29,10 @@ private struct EmptyTabSearch: View {
         } description: {
             Text("Try another title or address, or clear your search to see your open tabs.")
         } actions: {
-            Button { query = "" } label: {
+            Button {
+                query = ""
+                searchPresented = false
+            } label: {
                 Text("Clear Search").frame(minHeight: 44)
             }
             .buttonStyle(.bordered)
@@ -41,6 +45,7 @@ struct TabSidebar: View {
     @EnvironmentObject private var browser: BrowserStore
     @State private var closingScope: TabCloseScope?
     @State private var query = ""
+    @State private var searchPresented = false
 
     private var visibleTabs: [BrowserTab] {
         browser.tabs.filter { matchesTabSearch($0, query: query) }
@@ -66,9 +71,11 @@ struct TabSidebar: View {
         }
         .listStyle(.sidebar)
         .navigationTitle("Acute Web")
-        .searchable(text: $query, prompt: "Search tabs")
+        .searchable(text: $query, isPresented: $searchPresented, prompt: "Search tabs")
         .overlay {
-            if visibleTabs.isEmpty { EmptyTabSearch(query: $query) }
+            if visibleTabs.isEmpty {
+                EmptyTabSearch(query: $query, searchPresented: $searchPresented)
+            }
         }
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
@@ -140,6 +147,7 @@ struct TabGrid: View {
     @Environment(\.dismiss) private var dismiss
     @State private var closingScope: TabCloseScope?
     @State private var query = ""
+    @State private var searchPresented = false
     @State private var browseScope: TabBrowseScope = .all
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     private var columns: [GridItem] {
@@ -179,7 +187,7 @@ struct TabGrid: View {
                 .foregroundStyle(.secondary)
                 if visibleTabs.isEmpty {
                     if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        EmptyTabSearch(query: $query)
+                        EmptyTabSearch(query: $query, searchPresented: $searchPresented)
                     } else {
                         ContentUnavailableView(
                             browseScope == .privateTabs ? "No Private Tabs" : "No Regular Tabs",
@@ -204,7 +212,8 @@ struct TabGrid: View {
         .navigationTitle("Tabs")
         .navigationBarTitleDisplayMode(.inline)
         .scrollDismissesKeyboard(.immediately)
-        .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search tabs")
+        .searchable(text: $query, isPresented: $searchPresented,
+                    placement: .navigationBarDrawer(displayMode: .always), prompt: "Search tabs")
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
             ToolbarItem(placement: .primaryAction) { TabManagementMenu(scope: $closingScope) }

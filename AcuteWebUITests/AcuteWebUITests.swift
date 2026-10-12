@@ -232,7 +232,10 @@ final class AcuteWebUITests: XCTestCase {
         clearSearch.tap()
         XCTAssertTrue(app.staticTexts["1 of 1 open"].waitForExistence(timeout: 5))
         XCTAssertEqual(cards.firstMatch.value as? String, "Selected tab")
-        app.buttons["Done"].tap()
+        let done = app.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 5))
+        XCTAssertTrue(done.isHittable)
+        done.tap()
         XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
     }
 
