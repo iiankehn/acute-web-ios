@@ -4,24 +4,32 @@ struct SitePrivacyView: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var sitePrivacy: SitePrivacyStore
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var clearedData = false
     @State private var isClearingData = false
     @State private var confirmsClearing = false
 
     private var host: String { browser.selectedTab?.url?.host ?? "This Website" }
     private var policy: SitePrivacyPolicy { sitePrivacy.policy(for: host) }
+    private var connectionLayout: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+        : AnyLayout(HStackLayout(spacing: 12))
+    }
 
     var body: some View {
         NavigationStack {
             Form {
                 Section("Connection") {
-                    HStack(spacing: 12) {
+                    connectionLayout {
                         Image(systemName: browser.selectedTab?.url?.scheme == "https" ? "lock" : "globe")
                             .foregroundStyle(Color.accentColor)
                             .frame(width: 40, height: 40)
                             .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                            .accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {
                             Text(host).font(.headline).textSelection(.enabled)
+                                .fixedSize(horizontal: false, vertical: true)
                             Text(browser.selectedTab?.isPrivate == true ? "Private tab" : "Regular tab")
                                 .font(.caption).foregroundStyle(.secondary)
                         }
@@ -43,8 +51,15 @@ struct SitePrivacyView: View {
                 }
 
                 Section("Website Data") {
-                    Button(isClearingData ? "Clearing Website Data…" : "Clear Cookies and Website Data", role: .destructive) {
+                    Button(role: .destructive) {
                         confirmsClearing = true
+                    } label: {
+                        HStack(spacing: 12) {
+                            if isClearingData { ProgressView().accessibilityHidden(true) }
+                            Text(isClearingData ? "Clearing Website Data…" : "Clear Cookies and Website Data")
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(minHeight: 44, alignment: .leading)
                     }
                     .disabled(isClearingData)
                     if clearedData { Label("Website data cleared", systemImage: "checkmark.circle.fill").foregroundStyle(.green) }

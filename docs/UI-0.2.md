@@ -97,6 +97,12 @@ position; recovery actions wrap vertically when space or text size requires it.
 A local failure fixture covers editing the draft and returning to the start page
 without depending on a real website or network failure.
 
+Phone layout choices include a visible checkmark, stronger selected outline and
+VoiceOver selection trait. Their preview cards stack at accessibility text sizes.
+Site connection headers also stack and wrap long host names. Global and per-site
+website-data clearing actions show activity while their existing confirmations
+and asynchronous deletion behavior remain in place.
+
 ## Apple references
 
 - https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
