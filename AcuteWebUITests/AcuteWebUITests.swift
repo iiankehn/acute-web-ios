@@ -82,11 +82,9 @@ final class AcuteWebUITests: XCTestCase {
         condensed.tap()
         XCTAssertTrue(app.textFields["addressField"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Back"].exists)
-        app.buttons["Condense Controls"].tap()
+        finishAddressEditing()
         XCTAssertTrue(condensed.waitForExistence(timeout: 5))
-        openMoreMenu()
-        XCTAssertTrue(app.buttons["Reload"].exists)
-        app.buttons["New Tab"].tap()
+        chooseMoreAction("New Tab", category: "Tab Management")
         XCTAssertTrue(app.textFields["addressField"].waitForExistence(timeout: 5))
         XCTAssertFalse(condensed.exists)
     }
@@ -119,7 +117,7 @@ final class AcuteWebUITests: XCTestCase {
         address.typeText("replacement query")
         XCTAssertEqual(address.value as? String, "replacement query")
         clear.tap()
-        app.buttons["Condense Controls"].tap()
+        finishAddressEditing()
         XCTAssertTrue(condensed.waitForExistence(timeout: 5))
         XCTAssertTrue((condensed.value as? String)?.contains("acute-fixture.invalid") == true)
     }
@@ -131,6 +129,7 @@ final class AcuteWebUITests: XCTestCase {
         let condensed = app.buttons["condensedAddress"]
         XCTAssertTrue(condensed.waitForExistence(timeout: 15))
         openMoreMenu()
+        app.buttons["Page Tools"].tap()
         app.buttons["Find on Page"].tap()
         let field = app.textFields["findField"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
@@ -149,16 +148,17 @@ final class AcuteWebUITests: XCTestCase {
         defer { XCUIDevice.shared.orientation = .portrait }
         let address = app.textFields["addressField"]
         XCTAssertTrue(address.waitForExistence(timeout: 10))
-        XCTAssertGreaterThan(address.frame.width, 180)
+        XCTAssertGreaterThan(address.frame.width, 80)
         XCTAssertTrue(app.buttons["More"].isHittable)
         XCTAssertTrue(app.buttons["Tabs"].isHittable)
 
         XCUIDevice.shared.orientation = .landscapeLeft
         XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
         XCTAssertTrue(address.isHittable)
-        XCTAssertGreaterThan(address.frame.width, 180)
+        XCTAssertGreaterThan(address.frame.width, 80)
         XCTAssertTrue(app.buttons["More"].isHittable)
         openMoreMenu()
+        app.buttons["Tab Management"].tap()
         XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5))
     }
 
@@ -187,8 +187,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testTabFiltersPreserveSelectedPrivateTab() {
-        openMoreMenu()
-        app.buttons["New Private Tab"].tap()
+        chooseMoreAction("New Private Tab", category: "Tab Management")
         app.buttons["Tabs"].tap()
         XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
         let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
@@ -211,8 +210,7 @@ final class AcuteWebUITests: XCTestCase {
         app.launchArguments += ["-acuteUITestRenderedPage"]
         app.launch()
         XCTAssertTrue(app.buttons["condensedAddress"].waitForExistence(timeout: 15))
-        openMoreMenu()
-        app.buttons["New Private Tab"].tap()
+        chooseMoreAction("New Private Tab", category: "Tab Management")
         app.buttons["Tabs"].tap()
         let search = app.searchFields["Search tabs"]
         XCTAssertTrue(search.waitForExistence(timeout: 5))
@@ -254,8 +252,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testPrivateTabUsesPrivateStartPage() {
-        openMoreMenu()
-        app.buttons["New Private Tab"].tap()
+        chooseMoreAction("New Private Tab", category: "Tab Management")
 
         XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Downloaded files remain on this device'")).firstMatch.exists)
@@ -264,8 +261,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testLibraryExposesBookmarksAndHistory() {
-        openMoreMenu()
-        app.buttons["Bookmarks and History"].tap()
+        chooseMoreAction("Bookmarks and History", category: "Saved Content")
 
         XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["Bookmarks"].exists)
@@ -315,8 +311,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testBulkPrivateTabClosingRequiresConfirmation() {
-        openMoreMenu()
-        app.buttons["New Private Tab"].tap()
+        chooseMoreAction("New Private Tab", category: "Tab Management")
         app.buttons["Tabs"].tap()
         XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
         let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
@@ -367,6 +362,66 @@ final class AcuteWebUITests: XCTestCase {
         let more = app.buttons["More"]
         XCTAssertTrue(more.waitForExistence(timeout: 10))
         more.tap()
+    }
+
+    private func chooseMoreAction(_ title: String, category: String) {
+        openMoreMenu()
+        let group = app.buttons[category]
+        XCTAssertTrue(group.waitForExistence(timeout: 5))
+        group.tap()
+        let action = app.buttons[title]
+        XCTAssertTrue(action.waitForExistence(timeout: 5))
+        action.tap()
+    }
+
+    private func finishAddressEditing() {
+        chooseMoreAction("Done Editing", category: "Page Tools")
+    }
+
+    func testCapsuleRowKeepsHistoryNavigationVisible() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestHistoryPage"]
+        app.launch()
+        let address = app.buttons["condensedAddress"]
+        XCTAssertTrue(address.waitForExistence(timeout: 15))
+        let back = app.buttons["Back"]
+        XCTAssertTrue(back.exists)
+        XCTAssertFalse(back.isEnabled)
+        XCTAssertFalse(app.buttons["Forward"].exists)
+        XCTAssertEqual(back.frame.midY, address.frame.midY, accuracy: 2)
+        XCTAssertEqual(app.buttons["More"].frame.midY, address.frame.midY, accuracy: 2)
+        let next = app.webViews.links["Next fixture page"]
+        XCTAssertTrue(next.waitForExistence(timeout: 5))
+        next.tap()
+        XCTAssertTrue(app.webViews.staticTexts["Second fixture page"].waitForExistence(timeout: 5))
+        let enabled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in back.isEnabled }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+        XCTAssertTrue(back.isHittable)
+        back.tap()
+        let forward = app.buttons["Forward"]
+        XCTAssertTrue(forward.waitForExistence(timeout: 5))
+        XCTAssertTrue(forward.isHittable)
+        XCTAssertEqual(forward.frame.midY, app.buttons["More"].frame.midY, accuracy: 2)
+        forward.tap()
+        let hidden = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in !forward.exists }, object: nil)
+        XCTAssertEqual(XCTWaiter.wait(for: [hidden], timeout: 5), .completed)
+    }
+
+    func testCapsuleRowSwitchesBetweenRegularAndPrivateTabs() {
+        chooseMoreAction("New Private Tab", category: "Tab Management")
+        XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
+        let capsules = app.scrollViews["navigationTabCapsules"]
+        let otherTab = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'toolbarSelect_'"))
+        capsules.swipeRight()
+        XCTAssertTrue(otherTab.firstMatch.isHittable)
+        otherTab.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["The web, in focus."].waitForExistence(timeout: 5))
+        capsules.swipeLeft()
+        XCTAssertTrue(otherTab.firstMatch.isHittable)
+        otherTab.firstMatch.tap()
+        XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Back"].exists)
+        XCTAssertTrue(app.buttons["More"].isHittable)
     }
 
 }

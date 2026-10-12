@@ -32,8 +32,9 @@ legacy `BETA` asset is not the primary icon for current development builds.
 ## Version 0.2 interface work
 
 The current development build begins the [0.2 UI stage](docs/UI-0.2.md):
-phone navigation condenses after successful page rendering, while wide iPad
-windows retain an address toolbar, horizontal tab strip and sidebar. Custom
+navigation uses a single row of tab/address capsules with persistent Back,
+conditional Forward, and Refresh/Stop inside the selected tab. Wide iPad
+windows retain a sidebar and use native menu-bar commands. Custom
 navigation uses grouped Liquid Glass on iOS 26 with system-material fallbacks.
 
 ## Version 0.1 foundation

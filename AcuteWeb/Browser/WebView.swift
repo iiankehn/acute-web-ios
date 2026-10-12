@@ -102,6 +102,14 @@ struct WebView: UIViewRepresentable {
                 return
             }
             guard ["http", "https", "about", "data", "blob"].contains(scheme) else {
+#if DEBUG
+                if scheme == UITestNavigationFixture.scheme,
+                   ProcessInfo.processInfo.arguments.contains(UITestNavigationFixture.launchArgument) {
+                    tab?.lastRequestedURL = navigationAction.request.url
+                    decisionHandler(.allow, preferences)
+                    return
+                }
+#endif
                 decisionHandler(.cancel, preferences)
                 if let url = navigationAction.request.url {
                     requestExternalLink(url, navigationType: navigationAction.navigationType,

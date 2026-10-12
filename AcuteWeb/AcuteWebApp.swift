@@ -11,6 +11,12 @@ struct AcuteWebApp: App {
                 .environmentObject(browser)
                 .onAppear {
 #if DEBUG
+                    if ProcessInfo.processInfo.arguments.contains(UITestNavigationFixture.launchArgument),
+                       let tab = browser.selectedTab, tab.lastRequestedURL == nil {
+                        let url = URL(string: "acute-ui-fixture://pages/first")!
+                        tab.lastRequestedURL = url
+                        tab.webView.load(URLRequest(url: url))
+                    }
                     if ProcessInfo.processInfo.arguments.contains("-acuteUITestPageError"),
                        let tab = browser.selectedTab, tab.lastRequestedURL == nil {
                         tab.lastRequestedURL = URL(string: "https://acute-error.invalid")!
@@ -21,7 +27,12 @@ struct AcuteWebApp: App {
                        let tab = browser.selectedTab, tab.lastRequestedURL == nil {
                         let url = URL(string: "https://acute-fixture.invalid")!
                         tab.lastRequestedURL = url
-                        tab.webView.loadHTMLString("<title>Acute navigation fixture</title><body><h1>Loaded page</h1></body>", baseURL: url)
+                        tab.webView.loadHTMLString("""
+                            <meta name="viewport" content="width=device-width,initial-scale=1">
+                            <title>Acute navigation fixture</title>
+                            <body><h1>Loaded page</h1>
+                            </body>
+                            """, baseURL: url)
                     }
 #endif
                 }
