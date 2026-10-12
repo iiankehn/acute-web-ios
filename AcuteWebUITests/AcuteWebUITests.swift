@@ -226,7 +226,10 @@ final class AcuteWebUITests: XCTestCase {
             .firstMatch.tap()
         XCTAssertTrue(app.staticTexts["0 of 1 open"].waitForExistence(timeout: 5))
         XCTAssertEqual(cards.count, 0)
-        app.buttons["Cancel"].tap()
+        let clearSearch = app.buttons["clearTabSearch"]
+        XCTAssertTrue(clearSearch.waitForExistence(timeout: 5))
+        scrollTo(clearSearch)
+        clearSearch.tap()
         XCTAssertTrue(app.staticTexts["1 of 1 open"].waitForExistence(timeout: 5))
         XCTAssertEqual(cards.firstMatch.value as? String, "Selected tab")
         app.buttons["Done"].tap()

@@ -19,6 +19,24 @@ private enum TabBrowseScope: String, CaseIterable, Identifiable {
         || (tab.url?.absoluteString.localizedStandardContains(text) == true)
 }
 
+private struct EmptyTabSearch: View {
+    @Binding var query: String
+
+    var body: some View {
+        ContentUnavailableView {
+            Label("No Matching Tabs", systemImage: "magnifyingglass")
+        } description: {
+            Text("Try another title or address, or clear your search to see your open tabs.")
+        } actions: {
+            Button { query = "" } label: {
+                Text("Clear Search").frame(minHeight: 44)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityIdentifier("clearTabSearch")
+        }
+    }
+}
+
 struct TabSidebar: View {
     @EnvironmentObject private var browser: BrowserStore
     @State private var closingScope: TabCloseScope?
@@ -50,7 +68,7 @@ struct TabSidebar: View {
         .navigationTitle("Acute Web")
         .searchable(text: $query, prompt: "Search tabs")
         .overlay {
-            if visibleTabs.isEmpty { ContentUnavailableView.search(text: query) }
+            if visibleTabs.isEmpty { EmptyTabSearch(query: $query) }
         }
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {
@@ -161,7 +179,7 @@ struct TabGrid: View {
                 .foregroundStyle(.secondary)
                 if visibleTabs.isEmpty {
                     if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        ContentUnavailableView.search(text: query)
+                        EmptyTabSearch(query: $query)
                     } else {
                         ContentUnavailableView(
                             browseScope == .privateTabs ? "No Private Tabs" : "No Regular Tabs",
@@ -185,6 +203,7 @@ struct TabGrid: View {
         .background(Color(uiColor: .systemGroupedBackground))
         .navigationTitle("Tabs")
         .navigationBarTitleDisplayMode(.inline)
+        .scrollDismissesKeyboard(.immediately)
         .searchable(text: $query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search tabs")
         .modifier(TabClosingConfirmation(scope: $closingScope))
         .toolbar {

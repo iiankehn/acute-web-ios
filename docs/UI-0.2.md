@@ -85,6 +85,8 @@ text sizes the filter uses a menu to give labels space. The iPad sidebar also
 searches open tabs; reordering is disabled while search results are filtered.
 Search does not switch or close tabs, and bulk-close confirmations explicitly
 include tabs hidden by filters. Metadata changes refresh results while pages load.
+Empty tab-search results offer Clear Search directly; recovery does not depend
+on whether the system search presentation includes a Cancel button.
 
 Loading progress sits inside the address capsule alongside the persistent Stop
 control. Failed pages identify the requested host and provide Retry, Edit Address
