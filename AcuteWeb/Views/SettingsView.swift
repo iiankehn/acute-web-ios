@@ -14,6 +14,11 @@ struct SettingsView: View {
         ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
         : AnyLayout(HStackLayout(spacing: 14))
     }
+    private var layoutOptions: AnyLayout {
+        dynamicTypeSize.isAccessibilitySize
+        ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
+        : AnyLayout(HStackLayout(spacing: 12))
+    }
     private enum Deletion {
         case history, websiteData
         var title: String { self == .history ? "Clear Saved History?" : "Clear Regular Website Data?" }
@@ -51,7 +56,7 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    HStack(spacing: 12) {
+                    layoutOptions {
                         ForEach(PhoneControlsPosition.allCases) { position in
                             Button { preferences.phoneControlsPosition = position } label: {
                                 VStack(spacing: 8) {
@@ -62,7 +67,14 @@ struct SettingsView: View {
                                             Capsule().fill(Color.accentColor).frame(width: 16, height: 4).padding(4)
                                         }
                                         .accessibilityHidden(true)
-                                    Text(position.title).font(.subheadline.weight(.semibold))
+                                    HStack(spacing: 6) {
+                                        Text(position.title).font(.subheadline.weight(.semibold))
+                                        if preferences.phoneControlsPosition == position {
+                                            Image(systemName: "checkmark.circle.fill")
+                                                .foregroundStyle(Color.accentColor)
+                                                .accessibilityHidden(true)
+                                        }
+                                    }
                                     Text(position == .top ? "Above the page" : "Within thumb reach")
                                         .font(.caption).foregroundStyle(.secondary)
                                 }
@@ -72,7 +84,8 @@ struct SettingsView: View {
                                             in: RoundedRectangle(cornerRadius: 16))
                                 .overlay {
                                     RoundedRectangle(cornerRadius: 16)
-                                        .stroke(preferences.phoneControlsPosition == position ? Color.accentColor : Color.secondary.opacity(0.2), lineWidth: 1)
+                                        .stroke(preferences.phoneControlsPosition == position ? Color.accentColor : Color.secondary.opacity(0.2),
+                                                lineWidth: preferences.phoneControlsPosition == position ? 2 : 1)
                                         .allowsHitTesting(false)
                                 }
                                 .contentShape(Rectangle())
@@ -80,6 +93,7 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
                             .accessibilityLabel("\(position.title) Controls")
                             .accessibilityValue(preferences.phoneControlsPosition == position ? "Selected" : "Not selected")
+                            .accessibilityAddTraits(preferences.phoneControlsPosition == position ? .isSelected : [])
                             .accessibilityIdentifier("phoneLayout_\(position.rawValue)")
                         }
                     }
@@ -117,8 +131,15 @@ struct SettingsView: View {
                 }
 
                 Section {
-                    Button(isClearingWebsiteData ? "Clearing Website Data…" : "Clear Regular Website Data", role: .destructive) {
+                    Button(role: .destructive) {
                         deletion = .websiteData
+                    } label: {
+                        HStack(spacing: 12) {
+                            if isClearingWebsiteData { ProgressView().accessibilityHidden(true) }
+                            Text(isClearingWebsiteData ? "Clearing Website Data…" : "Clear Regular Website Data")
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        .frame(minHeight: 44, alignment: .leading)
                     }
                     .disabled(isClearingWebsiteData)
                     if websiteDataCleared {
