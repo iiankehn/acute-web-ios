@@ -110,6 +110,9 @@ space to the address; Show All Tabs remains in Tab Management. Page Tools offers
 Done Editing. Inactive capsules support duplicate/close via their context menus;
 the full overview retains search, regular/private filters and bulk confirmation.
 Local interface fixtures cover same-row history controls and capsule switching.
+The history fixture serves two real local documents through a debug-only WebKit
+scheme handler, so Back/Forward assertions exercise the actual navigation list.
+The add-tab capsule has a distinct accessible name from the New Tab menu action.
 
 ## Apple references
 

@@ -28,6 +28,11 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable {
         self.isPrivate = isPrivate
 
         let configuration = WKWebViewConfiguration()
+#if DEBUG
+        if ProcessInfo.processInfo.arguments.contains(UITestNavigationFixture.launchArgument) {
+            configuration.setURLSchemeHandler(UITestNavigationFixture(), forURLScheme: UITestNavigationFixture.scheme)
+        }
+#endif
         configuration.websiteDataStore = isPrivate ? .nonPersistent() : .default()
         configuration.preferences.isFraudulentWebsiteWarningEnabled = true
         configuration.defaultWebpagePreferences.allowsContentJavaScript = true

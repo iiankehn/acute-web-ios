@@ -2,15 +2,17 @@ import SwiftUI
 
 struct AcuteGlassContainer<Content: View>: View {
     let content: Content
+    let spacing: CGFloat
 
-    init(@ViewBuilder content: () -> Content) {
+    init(spacing: CGFloat = 12, @ViewBuilder content: () -> Content) {
         self.content = content()
+        self.spacing = spacing
     }
 
     var body: some View {
 #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
-            GlassEffectContainer(spacing: 12) { content }
+            GlassEffectContainer(spacing: spacing) { content }
         } else {
             content
         }

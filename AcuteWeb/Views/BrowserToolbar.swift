@@ -15,7 +15,7 @@ struct BrowserToolbar: View {
     }
 
     var body: some View {
-        AcuteGlassContainer {
+        AcuteGlassContainer(spacing: 4) {
             GeometryReader { row in
                 HStack(spacing: 6) {
                     navigationButtons.acuteGlass(cornerRadius: rowHeight / 2)
@@ -34,6 +34,9 @@ struct BrowserToolbar: View {
         .onChange(of: browser.addressFocusRequest) { _, _ in
             controlsExpanded = true
             addressFocused = true
+        }
+        .onChange(of: addressFocused) { _, focused in
+            if focused { controlsExpanded = true }
         }
         .alert("Unable to Open Address", isPresented: Binding(
             get: { browser.addressInputError != nil }, set: { if !$0 { browser.addressInputError = nil } }
@@ -68,7 +71,7 @@ struct BrowserToolbar: View {
                                 .contentShape(Rectangle())
                         }
                         .acuteGlass(cornerRadius: rowHeight / 2)
-                        .accessibilityLabel("New Tab")
+                        .accessibilityLabel("Add Tab")
                     }
                 }
                 .scrollIndicators(.hidden)

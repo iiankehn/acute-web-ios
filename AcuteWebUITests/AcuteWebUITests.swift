@@ -380,7 +380,7 @@ final class AcuteWebUITests: XCTestCase {
 
     func testCapsuleRowKeepsHistoryNavigationVisible() {
         app.terminate()
-        app.launchArguments += ["-acuteUITestRenderedPage"]
+        app.launchArguments += ["-acuteUITestHistoryPage"]
         app.launch()
         let address = app.buttons["condensedAddress"]
         XCTAssertTrue(address.waitForExistence(timeout: 15))
@@ -390,9 +390,10 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Forward"].exists)
         XCTAssertEqual(back.frame.midY, address.frame.midY, accuracy: 2)
         XCTAssertEqual(app.buttons["More"].frame.midY, address.frame.midY, accuracy: 2)
-        let next = app.webViews.buttons["Next fixture page"]
+        let next = app.webViews.links["Next fixture page"]
         XCTAssertTrue(next.waitForExistence(timeout: 5))
         next.tap()
+        XCTAssertTrue(app.webViews.staticTexts["Second fixture page"].waitForExistence(timeout: 5))
         let enabled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in back.isEnabled }, object: nil)
         XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
         XCTAssertTrue(back.isHittable)
