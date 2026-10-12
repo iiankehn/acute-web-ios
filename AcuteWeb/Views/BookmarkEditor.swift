@@ -7,6 +7,8 @@ struct BookmarkEditor: View {
     @State private var title: String
     @State private var address: String
     @State private var failedToSave = false
+    @FocusState private var focusedField: Field?
+    private enum Field: Hashable { case title, address }
 
     init(bookmarks: BookmarkStore, item: SavedSite) {
         self.bookmarks = bookmarks
@@ -20,14 +22,32 @@ struct BookmarkEditor: View {
             Form {
                 Section("Title") {
                     TextField("Title", text: $title)
+                        .focused($focusedField, equals: .title)
+                        .submitLabel(.next)
+                        .onSubmit { focusedField = .address }
                         .accessibilityIdentifier("bookmarkTitle")
                 }
                 Section {
-                    TextField("Website address", text: $address)
+                    HStack {
+                        TextField("Website address", text: $address)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled()
                         .keyboardType(.URL)
+                        .focused($focusedField, equals: .address)
                         .accessibilityIdentifier("bookmarkAddress")
+                        Button {
+                            address = ""
+                            focusedField = .address
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .foregroundStyle(.secondary)
+                                .frame(minWidth: 44, minHeight: 44)
+                        }
+                        .buttonStyle(.borderless)
+                        .disabled(address.isEmpty)
+                        .accessibilityLabel("Clear bookmark address")
+                        .accessibilityIdentifier("clearBookmarkAddress")
+                    }
                 } header: { Text("Address") } footer: {
                     if BookmarkStore.validatedURL(address) == nil {
                         Text("Enter an HTTP or HTTPS website address.")

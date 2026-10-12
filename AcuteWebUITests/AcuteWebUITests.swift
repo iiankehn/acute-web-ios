@@ -269,6 +269,75 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["No History"].waitForExistence(timeout: 5))
     }
 
+    func testLibrarySearchRecoveryRestoresSheetNavigation() {
+        chooseMoreAction("Bookmarks and History", category: "Saved Content")
+        let search = app.searchFields["Search titles or addresses"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("no matching saved page 48291")
+        let clear = app.buttons["clearLibrarySearch"]
+        XCTAssertTrue(clear.waitForExistence(timeout: 5))
+        clear.tap()
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Done"].isHittable)
+        app.buttons["History"].tap()
+        XCTAssertTrue(app.staticTexts["No History"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
+    }
+
+    func testDownloadsSearchRecoveryRestoresSheetNavigation() {
+        chooseMoreAction("Downloads", category: "Saved Content")
+        let search = app.searchFields["Search downloads"]
+        XCTAssertTrue(search.waitForExistence(timeout: 5))
+        search.tap()
+        search.typeText("no matching download 48291")
+        let clear = app.buttons["clearDownloadsSearch"]
+        XCTAssertTrue(clear.waitForExistence(timeout: 5))
+        clear.tap()
+        XCTAssertTrue(app.buttons["Done"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["Done"].isHittable)
+        app.buttons["Done"].tap()
+        XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 5))
+    }
+
+    func testBookmarkQuickEditValidatesAddressAndPreservesCancelledChanges() {
+        app.terminate()
+        app.launchArguments += ["-acuteUITestRenderedPage"]
+        app.launch()
+        XCTAssertTrue(app.buttons["condensedAddress"].waitForExistence(timeout: 15))
+        openMoreMenu()
+        app.buttons["Saved Content"].tap()
+        // The test may run against an existing bookmark from an earlier run.
+        if app.buttons["Add Bookmark"].exists {
+            app.buttons["Add Bookmark"].tap()
+            chooseMoreAction("Bookmarks and History", category: "Saved Content")
+        } else {
+            app.buttons["Bookmarks and History"].tap()
+        }
+        let edit = app.buttons["Edit Acute navigation fixture"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 5))
+        edit.tap()
+        XCTAssertTrue(app.navigationBars["Edit Bookmark"].waitForExistence(timeout: 5))
+        app.buttons["clearBookmarkAddress"].tap()
+        XCTAssertFalse(app.buttons["Save"].isEnabled)
+        XCTAssertTrue(app.staticTexts["Enter an HTTP or HTTPS website address."].exists)
+        let address = app.textFields["bookmarkAddress"]
+        address.typeText("https://acute-fixture.invalid/")
+        XCTAssertTrue(app.buttons["Save"].isEnabled)
+        app.buttons["Save"].tap()
+        XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
+        edit.tap()
+        app.buttons["clearBookmarkAddress"].tap()
+        address.typeText("https://cancelled-edit.invalid/")
+        app.buttons["Cancel"].tap()
+        XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
+        edit.tap()
+        XCTAssertEqual(address.value as? String, "https://acute-fixture.invalid/")
+        app.buttons["Cancel"].tap()
+        app.buttons["Done"].tap()
+    }
+
     func testSessionRecoveryExplainsPrivateTabExclusion() {
         openMoreMenu()
         app.buttons["Settings"].tap()

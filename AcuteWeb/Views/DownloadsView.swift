@@ -5,6 +5,7 @@ struct DownloadsView: View {
     @ObservedObject var downloadCenter: DownloadCenter
     @State private var previewURL: URL?
     @State private var query = ""
+    @State private var searchPresented = false
     @State private var pendingDelete: DownloadItem?
     @State private var deletionError: String?
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -24,14 +25,14 @@ struct DownloadsView: View {
     var body: some View {
         NavigationStack {
             Group {
-                if downloadCenter.items.isEmpty {
+                if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && filteredItems.isEmpty {
+                    SearchRecoveryView(query: $query, searchPresented: $searchPresented, identifier: "clearDownloadsSearch")
+                } else if downloadCenter.items.isEmpty {
                     ContentUnavailableView(
                         "No Downloads",
                         systemImage: "arrow.down.circle",
                         description: Text("Files downloaded from websites will appear here.")
                     )
-                } else if filteredItems.isEmpty {
-                    ContentUnavailableView.search(text: query)
                 } else {
                     List(filteredItems) { item in
                         rowLayout {
@@ -105,7 +106,8 @@ struct DownloadsView: View {
             }
             .navigationTitle("Downloads")
             .navigationBarTitleDisplayMode(.inline)
-            .searchable(text: $query, prompt: "Search downloads")
+            .searchable(text: $query, isPresented: $searchPresented, prompt: "Search downloads")
+            .scrollDismissesKeyboard(.immediately)
             .confirmationDialog("Delete Download?", isPresented: Binding(
                 get: { pendingDelete != nil }, set: { if !$0 { pendingDelete = nil } }
             ), titleVisibility: .visible) {
