@@ -8,18 +8,14 @@ struct LibraryView: View {
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @State private var selection = 0
     @State private var query = ""
+    @State private var searchPresented = false
     @State private var editingBookmark: SavedSite?
     @State private var confirmsHistoryDeletion = false
 
     var body: some View {
         NavigationStack {
             VStack(spacing: 0) {
-                Picker("Library", selection: $selection) {
-                    Text("Bookmarks").tag(0)
-                    Text("History").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .padding()
+                libraryPicker.padding()
 
                 if selection == 0 { bookmarksList } else { historyList }
             }
@@ -36,7 +32,8 @@ struct LibraryView: View {
             } message: {
                 Text("This removes all saved visits from this device, including visits outside the current search results.")
             }
-            .searchable(text: $query, prompt: "Search titles or addresses")
+            .searchable(text: $query, isPresented: $searchPresented, prompt: "Search titles or addresses")
+            .scrollDismissesKeyboard(.immediately)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
@@ -50,11 +47,26 @@ struct LibraryView: View {
         }
     }
 
+    private var libraryChoices: some View {
+        Picker("Library", selection: $selection) {
+            Text("Bookmarks").tag(0)
+            Text("History").tag(1)
+        }
+    }
+
+    @ViewBuilder private var libraryPicker: some View {
+        if dynamicTypeSize.isAccessibilitySize {
+            libraryChoices.pickerStyle(.menu)
+        } else {
+            libraryChoices.pickerStyle(.segmented)
+        }
+    }
+
     @ViewBuilder private var bookmarksList: some View {
-        if bookmarks.items.isEmpty {
-            ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Save a page with the bookmark button in the toolbar."))
-        } else if filtered(bookmarks.items).isEmpty {
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && filtered(bookmarks.items).isEmpty {
             noSearchResults
+        } else if bookmarks.items.isEmpty {
+            ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Open More, then Saved Content, to bookmark the current page."))
         } else {
             List {
                 Section {
@@ -68,14 +80,14 @@ struct LibraryView: View {
     }
 
     @ViewBuilder private var historyList: some View {
-        if history.items.isEmpty {
+        if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && filtered(history.items).isEmpty {
+            noSearchResults
+        } else if history.items.isEmpty {
             ContentUnavailableView(
                 "No History",
                 systemImage: "clock.arrow.circlepath",
                 description: Text(browser.preferences.savesHistory ? "Pages you visit will appear here." : "History is off by default. You can enable it in Settings.")
             )
-        } else if filtered(history.items).isEmpty {
-            noSearchResults
         } else {
             List {
                 Section {
@@ -89,7 +101,7 @@ struct LibraryView: View {
     }
 
     private var noSearchResults: some View {
-        ContentUnavailableView.search(text: query)
+        SearchRecoveryView(query: $query, searchPresented: $searchPresented, identifier: "clearLibrarySearch")
     }
 
     private func filtered(_ items: [SavedSite]) -> [SavedSite] {
@@ -97,27 +109,43 @@ struct LibraryView: View {
     }
 
     private func siteRow(_ item: SavedSite, isBookmark: Bool, remove: @escaping () -> Void) -> some View {
-        Button {
-            if let url = item.url { browser.open(url); dismiss() }
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: isBookmark ? "bookmark.fill" : "clock")
+        HStack(spacing: 8) {
+            Button {
+                if let url = item.url { browser.open(url); dismiss() }
+            } label: {
+                HStack(spacing: 12) {
+                    Image(systemName: isBookmark ? "bookmark.fill" : "clock")
                     .foregroundStyle(Color.accentColor)
                     .frame(width: 36, height: 36)
                     .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 10))
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.title).font(.body.weight(.medium)).foregroundStyle(.primary)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(item.title).font(.body.weight(.medium)).foregroundStyle(.primary)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
-                    Text(item.address).font(.caption).foregroundStyle(.secondary)
+                        Text(item.address).font(.caption).foregroundStyle(.secondary)
                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                         .truncationMode(.middle)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.tertiary)
                 }
-                Spacer(minLength: 0)
-                Image(systemName: "arrow.up.right").font(.caption).foregroundStyle(.tertiary)
+                .frame(minHeight: 44)
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
             }
-            .frame(minHeight: 44)
-            .padding(.vertical, 4)
-            .contentShape(Rectangle())
+            .buttonStyle(.borderless)
+            if isBookmark {
+                Button {
+                    searchPresented = false
+                    editingBookmark = item
+                } label: {
+                    Image(systemName: "pencil")
+                    .frame(minWidth: 44, minHeight: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Edit \(item.title)")
+                .accessibilityIdentifier("editBookmark_\(item.id.uuidString)")
+            }
         }
         .swipeActions { Button("Delete", role: .destructive, action: remove) }
         .contextMenu {
@@ -133,7 +161,10 @@ struct LibraryView: View {
                 ShareLink(item: url)
             }
             if isBookmark {
-                Button("Edit Bookmark", systemImage: "pencil") { editingBookmark = item }
+                Button("Edit Bookmark", systemImage: "pencil") {
+                    searchPresented = false
+                    editingBookmark = item
+                }
             }
             Button("Delete", systemImage: "trash", role: .destructive, action: remove)
         }

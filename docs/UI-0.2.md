@@ -114,6 +114,15 @@ The history fixture serves two real local documents through a debug-only WebKit
 scheme handler, so Back/Forward assertions exercise the actual navigation list.
 The add-tab capsule has a distinct accessible name from the New Tab menu action.
 
+Library and Downloads share a Clear Search recovery action that ends native
+search presentation, including searches of an empty collection. Library uses a
+menu instead of cramped segments at accessibility text sizes. Bookmarks have a
+visible 44-point edit action; the editor can clear the address without losing
+focus and still disables Save for invalid addresses. Cancellation leaves the
+saved bookmark unchanged. UI regression tests cover both search exits and the
+bookmark editing/validation/cancellation flow. Branch CI must pass before merge;
+physical iPhone and iPad presentation remains device-test work.
+
 ## Apple references
 
 - https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
