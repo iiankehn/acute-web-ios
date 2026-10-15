@@ -56,13 +56,21 @@ def validate_bundle(app, release=False):
             raise ValueError("Debug-only browser fixtures found in Release binary")
 
 
+def validate_command_log(log):
+    if "Keyboard Shortcut (duplicate modifierFlags:" in log:
+        raise ValueError("Duplicate keyboard shortcuts reported by UIKit menu registration")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("app", type=Path)
     parser.add_argument("--release", action="store_true")
+    parser.add_argument("--command-log", type=Path, action="append", default=[])
     args = parser.parse_args()
     try:
         validate_bundle(args.app, args.release)
+        for path in args.command_log:
+            validate_command_log(path.read_text(encoding="utf-8", errors="replace"))
     except (OSError, ValueError, TypeError, KeyError) as error:
         parser.exit(1, f"Release validation failed: {error}\n")
     print("Scoped privacy, policy, permission and release-fixture checks passed.")

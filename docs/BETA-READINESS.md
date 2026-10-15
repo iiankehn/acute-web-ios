@@ -28,6 +28,19 @@ changes in this audit batch. Their own branch CI must pass before merge.
   declarations, bundled policy, camera/microphone descriptions, versions, and
   no unreviewed ATS exceptions. Scan Release executables for debug fixture
   markers. These scoped checks do not discover every API use or private API.
+- Branch Build 83 passed 66 unit tests (including both new policy tests), all
+  five validator tests, and iPad build/install/launch. Cold iPhone test-host
+  startup consumed about 10 minutes before the unit suite itself ran in about
+  34 seconds. The UI run was cancelled at the 20-minute job boundary after four
+  passing cases; no full UI/IPA success is claimed. Increase only the outer job
+  budgets to 35 minutes (iPhone suite) and 20 minutes (iPad), without relaxing
+  test assertions or per-test waits, then validate the new candidate in full.
+- The same log exposed duplicate Command-comma registrations: the system
+  Settings item and Acute's Library Settings command. Replace the native
+  appSettings command group with Acute's Settings action and keep the Library
+  entry without a second shortcut. Capture test logs and fail validation if
+  UIKit reports duplicate keyboard shortcuts. This is registration coverage,
+  not a claim of full physical-keyboard testing.
 - No telemetry SDK, account service, background mode or alternate engine was
   found in this source pass. WebKit is used, fraudulent-site warnings are on,
   and private stores are non-persistent. These are source findings, not proof
@@ -81,3 +94,4 @@ a separate submission task. Do not publish a beta as a finished App Store app.
 - Adopting Liquid Glass: https://developer.apple.com/documentation/technologyoverviews/adopting-liquid-glass
 - Required reason APIs: https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api
 - Approved API categories/reasons: https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitype
+- Settings command placement: https://developer.apple.com/documentation/swiftui/commandgroupplacement/appsettings

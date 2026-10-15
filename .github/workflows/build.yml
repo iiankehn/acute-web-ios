@@ -15,7 +15,10 @@ concurrency:
 jobs:
   simulator:
     runs-on: macos-15
-    timeout-minutes: 20
+    # A cold iOS runtime can spend ~10 minutes installing/starting the test host
+    # before the suite runs. Keep assertion timeouts unchanged and allow the
+    # full unit + UI suites and artifact upload to finish on a slow runner.
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
       - name: Select Xcode 26.3
@@ -57,7 +60,7 @@ jobs:
             -retry-tests-on-failure \
             -test-iterations 2 \
             -test-repetition-relaunch-enabled YES \
-            -only-testing:AcuteWebTests
+            -only-testing:AcuteWebTests | tee UnitTests.log
       - name: Run browser interface tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
@@ -69,13 +72,13 @@ jobs:
             -derivedDataPath "$PWD/DerivedData" \
             -resultBundlePath InterfaceResults.xcresult \
             -parallel-testing-enabled NO \
-            -only-testing:AcuteWebUITests
+            -only-testing:AcuteWebUITests | tee InterfaceTests.log
       - name: Validate bundled privacy manifest
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
           test -f "$APP_PATH/PrivacyInfo.xcprivacy"
           plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
-          python3 scripts/validate_release.py "$APP_PATH"
+          python3 scripts/validate_release.py "$APP_PATH" --command-log UnitTests.log --command-log InterfaceTests.log
       - name: Install and launch app on iPhone
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
@@ -89,11 +92,13 @@ jobs:
           path: |
             TestResults.xcresult
             InterfaceResults.xcresult
+            UnitTests.log
+            InterfaceTests.log
           if-no-files-found: ignore
 
   ipad-smoke:
     runs-on: macos-15
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
       - name: Select Xcode 26.3

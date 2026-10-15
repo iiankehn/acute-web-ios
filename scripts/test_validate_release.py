@@ -4,7 +4,7 @@ import plistlib
 import tempfile
 import unittest
 
-from validate_release import EXPECTED_REASONS, validate_bundle, validate_manifest
+from validate_release import EXPECTED_REASONS, validate_bundle, validate_command_log, validate_manifest
 
 
 def manifest():
@@ -20,6 +20,11 @@ def manifest():
 
 
 class ReleaseValidationTests(unittest.TestCase):
+    def test_duplicate_keyboard_registration_fails(self):
+        validate_command_log("Metadata extraction skipped. No AppIntents.framework dependency found.")
+        with self.assertRaises(ValueError):
+            validate_command_log("Keyboard Shortcut (duplicate modifierFlags: command, input: ,):")
+
     def test_current_manifest_passes(self):
         validate_manifest(manifest())
 
