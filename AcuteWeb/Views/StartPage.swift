@@ -16,7 +16,7 @@ struct StartPage: View {
     }
 
     private var tileColumns: [GridItem] {
-        [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 220 : 96), spacing: 12)]
+        [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 220 : 140), spacing: 12)]
     }
 
     private struct FavoriteSite: Identifiable {
@@ -140,8 +140,9 @@ struct StartPage: View {
                                                 .foregroundStyle(Color.accentColor)
                                                 .frame(width: 44, height: 44)
                                                 .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
-                                            Text(favorite.title).font(.subheadline.weight(.medium))
-                                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                                            Text(favorite.title).font(.subheadline)
+                                                .fixedSize(horizontal: false, vertical: true)
+                                                .frame(maxWidth: .infinity)
                                         }
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .padding(12)

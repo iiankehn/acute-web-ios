@@ -218,7 +218,7 @@ struct TabGrid: View {
         .toolbar {
             ToolbarItem(placement: .primaryAction) { TabManagementMenu(scope: $closingScope) }
             ToolbarItem(placement: .cancellationAction) {
-                Button("Done") { dismiss() }
+                SheetDoneButton { dismiss() }
             }
             ToolbarItem(placement: .primaryAction) {
                 Menu {

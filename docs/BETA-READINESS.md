@@ -88,6 +88,16 @@ later work. Material-backed controls still require actual UI audits;
 the color calculation alone does not validate their composited appearance.
 This batch is pending its own CI validation.
 
+Build 87 passed 67 unit tests, including the resolved-palette contrast check,
+and iPad launch. The start-page contrast failures were resolved, but complete
+audits exposed more Settings contrast, Dynamic Type and picker-value clipping
+issues. The follow-up uses explicit scalable primary text for Settings headings,
+details and values, a wrapped search-engine row with a native selection list,
+and a shared plain Done control with body text and a 44-point minimum target.
+Favorite tiles give their untruncated text more width. Tabs exposes one
+VoiceOver element with the full open count, rather than a redundant text child.
+These changes require another complete candidate run; Build 87 is not a pass.
+
 - Block beta for crashes, data loss, private-data leaks, misleading disclosures,
   unusable primary navigation, inaccessible core actions and incomplete review
   metadata/signing for the selected distribution path.

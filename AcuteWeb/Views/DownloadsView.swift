@@ -126,7 +126,7 @@ struct DownloadsView: View {
             .quickLookPreview($previewURL)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    SheetDoneButton { dismiss() }
                 }
             }
         }

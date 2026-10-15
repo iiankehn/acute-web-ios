@@ -284,6 +284,23 @@ final class AcuteWebUITests: XCTestCase {
         app.buttons["Done"].tap()
     }
 
+    func testSearchEngineSelectionReturnsToSettingsAndUpdatesValue() {
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        let setting = app.buttons["searchEngineSetting"]
+        XCTAssertTrue(setting.waitForExistence(timeout: 5))
+        setting.tap()
+        XCTAssertTrue(app.navigationBars["Search Engine"].waitForExistence(timeout: 5))
+        app.buttons["Brave Search"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        XCTAssertEqual(setting.value as? String, "Brave Search")
+        setting.tap()
+        app.buttons["DuckDuckGo"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        XCTAssertEqual(setting.value as? String, "DuckDuckGo")
+        app.buttons["Done"].tap()
+    }
+
     func testLibrarySearchRecoveryRestoresSheetNavigation() {
         chooseMoreAction("Bookmarks and History", category: "Saved Content")
         let search = app.searchFields["Search titles or addresses"]

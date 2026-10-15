@@ -92,7 +92,7 @@ struct SitePrivacyView: View {
                 Text("This can sign you out. WebKit may share cookies and data with this domain's subdomains.")
             }
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } }
+                ToolbarItem(placement: .confirmationAction) { SheetDoneButton { dismiss() } }
             }
         }
     }

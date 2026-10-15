@@ -36,7 +36,7 @@ struct LibraryView: View {
             .scrollDismissesKeyboard(.immediately)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    SheetDoneButton { dismiss() }
                 }
                 if selection == 1 && !history.items.isEmpty {
                     ToolbarItem(placement: .secondaryAction) {

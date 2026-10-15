@@ -42,18 +42,28 @@ struct SettingsView: View {
                             .frame(width: 48, height: 48).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Acute Web").font(.title3.weight(.semibold))
-                            Text("by CORE").font(.subheadline).foregroundStyle(.secondary)
+                            Text("by CORE").font(.subheadline).foregroundStyle(.primary)
                         }
                     }
                     .padding(.vertical, 6)
                 }
-                Section("Search") {
-                    Picker("Search engine", selection: $preferences.searchEngine) {
-                        ForEach(SearchEngine.allCases) { engine in
-                            Text(engine.title).tag(engine)
+                Section {
+                    NavigationLink {
+                        SearchEngineSelectionView(preferences: preferences)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Search engine").font(.body)
+                            Text(preferences.searchEngine.title).font(.subheadline)
+                                .frame(maxWidth: .infinity, alignment: .leading)
                         }
+                        .foregroundStyle(.primary)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                     }
-                }
+                    .accessibilityLabel("Search engine")
+                    .accessibilityValue(preferences.searchEngine.title)
+                    .accessibilityIdentifier("searchEngineSetting")
+                } header: { sectionHeading("Search") }
 
                 Section {
                     layoutOptions {
@@ -76,7 +86,7 @@ struct SettingsView: View {
                                         }
                                     }
                                     Text(position == .top ? "Above the page" : "Within thumb reach")
-                                        .font(.caption).foregroundStyle(.secondary)
+                                        .font(.caption).foregroundStyle(.primary)
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 96)
                                 .padding(8)
@@ -101,34 +111,34 @@ struct SettingsView: View {
                     Toggle("Show page title in compact bar", isOn: $preferences.showsCompactPageTitle)
                         .disabled(!preferences.condensesPhoneControls)
                 } header: {
-                    Text("Browsing Layout")
+                    sectionHeading("Browsing Layout")
                 } footer: {
-                    Text("Phone controls can sit above the page or within thumb reach. Tabs and navigation share one row. Editing, loading and Find show the address field; successful loading can show the page title instead. iPad keeps navigation at the top.")
+                    details("Phone controls can sit above the page or within thumb reach. Tabs and navigation share one row. Editing, loading and Find show the address field; successful loading can show the page title instead. iPad keeps navigation at the top.")
                 }
 
                 Section {
                     Toggle("Block known trackers", isOn: $preferences.blocksTrackers)
                         .onChange(of: preferences.blocksTrackers) { _, _ in applyPrivacyPreferences() }
-                    LabeledContent("Fraudulent website warnings", value: "On")
-                    LabeledContent("Acute telemetry", value: "None")
+                    valueRow("Fraudulent website warnings", value: "On")
+                    valueRow("Acute telemetry", value: "None")
                         .accessibilityElement(children: .ignore)
                         .accessibilityLabel("Acute telemetry")
                         .accessibilityValue("None")
                         .accessibilityIdentifier("telemetryStatus")
-                    LabeledContent("Diagnostic uploads", value: "None")
+                    valueRow("Diagnostic uploads", value: "None")
                     Toggle("Save browsing history", isOn: $preferences.savesHistory)
                     if !history.items.isEmpty {
                         Button("Clear Saved History", role: .destructive) { deletion = .history }
                     }
                 } header: {
-                    Text("Privacy Protection")
+                    sectionHeading("Privacy Protection")
                 } footer: {
-                    Text("Tracker protection uses WebKit content rules on the device. Browsing activity is not sent to Acute.")
+                    details("Tracker protection uses WebKit content rules on the device. Browsing activity is not sent to Acute.")
                 }
 
-                Section("Private Browsing") {
+                Section {
                     Label("Private tabs stay out of history and session recovery. Downloaded files remain on this device until you delete them.", systemImage: "hand.raised.fill")
-                }
+                } header: { sectionHeading("Private Browsing") }
 
                 Section {
                     Button(role: .destructive) {
@@ -146,34 +156,34 @@ struct SettingsView: View {
                         Label("Regular website data cleared", systemImage: "checkmark.circle.fill")
                     }
                 } header: {
-                    Text("Website Data")
+                    sectionHeading("Website Data")
                 } footer: {
-                    Text("Removes regular-tab cookies, caches, and website storage. This can sign you out. Bookmarks, history, downloads, and private tabs are not removed. Open pages may store new data.")
+                    details("Removes regular-tab cookies, caches, and website storage. This can sign you out. Bookmarks, history, downloads, and private tabs are not removed. Open pages may store new data.")
                 }
 
                 Section {
                     Toggle("Restore regular tabs", isOn: $preferences.restoresTabs)
                         .onChange(of: preferences.restoresTabs) { _, _ in applySessionPreferences() }
                 } header: {
-                    Text("Startup")
+                    sectionHeading("Startup")
                 } footer: {
-                    Text("Regular web addresses are saved locally for recovery and may be included in device backups. Private tabs are never saved or restored.")
+                    details("Regular web addresses are saved locally for recovery and may be included in device backups. Private tabs are never saved or restored.")
                         .accessibilityIdentifier("sessionRecoveryExplanation")
                 }
 
-                Section("Start Page") {
+                Section {
                     Toggle("Show bookmarks", isOn: $preferences.showsStartBookmarks)
                     Toggle("Show favorites", isOn: $preferences.showsStartFavorites)
                     Toggle("Show recent session sites", isOn: $preferences.showsStartRecentSites)
-                }
+                } header: { sectionHeading("Start Page") }
 
-                Section("About") {
-                    LabeledContent("Version", value: appVersion)
-                    LabeledContent("Rendering engine", value: "WebKit")
+                Section {
+                    valueRow("Version", value: appVersion)
+                    valueRow("Rendering engine", value: "WebKit")
                     NavigationLink("Privacy Policy") { PrivacyPolicyView() }
                         .accessibilityIdentifier("privacyPolicyLink")
                     Link("Support & Feedback", destination: PrivacyPolicy.supportURL)
-                }
+                } header: { sectionHeading("About") }
             }
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
@@ -198,9 +208,28 @@ struct SettingsView: View {
             }
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    SheetDoneButton { dismiss() }
                 }
             }
+        }
+    }
+
+    private func sectionHeading(_ title: String) -> some View {
+        Text(title).font(.headline).foregroundStyle(.primary)
+    }
+
+    private func details(_ text: String) -> some View {
+        Text(text).font(.footnote).foregroundStyle(.primary)
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private func valueRow(_ title: String, value: String) -> some View {
+        LabeledContent {
+            Text(value).font(.body).foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
+        } label: {
+            Text(title).font(.body).foregroundStyle(.primary)
+                .fixedSize(horizontal: false, vertical: true)
         }
     }
 }
