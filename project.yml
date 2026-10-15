@@ -17,6 +17,9 @@ targets:
       - path: AcuteWeb/AppIcon.icon
         type: file
         buildPhase: resources
+      - path: PRIVACY.md
+        type: file
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.acuteweb.browser.ios

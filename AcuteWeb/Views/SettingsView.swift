@@ -157,7 +157,7 @@ struct SettingsView: View {
                 } header: {
                     Text("Startup")
                 } footer: {
-                    Text("Regular web addresses are stored only on this device for recovery. Private tabs are never saved or restored.")
+                    Text("Regular web addresses are saved locally for recovery and may be included in device backups. Private tabs are never saved or restored.")
                         .accessibilityIdentifier("sessionRecoveryExplanation")
                 }
 
@@ -170,6 +170,9 @@ struct SettingsView: View {
                 Section("About") {
                     LabeledContent("Version", value: appVersion)
                     LabeledContent("Rendering engine", value: "WebKit")
+                    NavigationLink("Privacy Policy") { PrivacyPolicyView() }
+                        .accessibilityIdentifier("privacyPolicyLink")
+                    Link("Support & Feedback", destination: PrivacyPolicy.supportURL)
                 }
             }
             .navigationTitle("Settings")

@@ -2,6 +2,7 @@
 
 0.2 develops Acute's own browser layout using Apple's Liquid Glass APIs and
 native interactions. It is a development version, not a published release.
+The next phase is [beta hardening](BETA-READINESS.md), not feature expansion.
 
 - iPhone: a single row of glass capsules combines tabs, address and navigation.
   Back stays visible; Forward appears when available. The selected capsule has

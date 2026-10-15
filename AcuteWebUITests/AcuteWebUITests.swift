@@ -269,6 +269,21 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["No History"].waitForExistence(timeout: 5))
     }
 
+    func testPrivacyPolicyIsReadableInsideSettings() {
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        let policy = app.buttons["privacyPolicyLink"]
+        scrollTo(policy)
+        policy.tap()
+        XCTAssertTrue(app.navigationBars["Privacy Policy"].waitForExistence(timeout: 5))
+        let text = app.staticTexts["privacyPolicyText"]
+        XCTAssertTrue(text.waitForExistence(timeout: 5))
+        XCTAssertTrue(text.label.contains("No support report is sent automatically"))
+        app.navigationBars["Privacy Policy"].buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        app.buttons["Done"].tap()
+    }
+
     func testLibrarySearchRecoveryRestoresSheetNavigation() {
         chooseMoreAction("Bookmarks and History", category: "Saved Content")
         let search = app.searchFields["Search titles or addresses"]
