@@ -62,19 +62,22 @@ jobs:
             -test-iterations 2 \
             -test-repetition-relaunch-enabled YES \
             -only-testing:AcuteWebTests | tee UnitTests.log
-      - name: Run browser interface tests
+      - name: Audit native screens in light appearance
+        id: lightaudit
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -o pipefail
+          xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance light
           xcodebuild test-without-building \
             -project AcuteWeb.xcodeproj \
             -scheme AcuteWeb \
             -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
             -derivedDataPath "$PWD/DerivedData" \
-            -resultBundlePath InterfaceResults.xcresult \
+            -resultBundlePath LightAccessibilityResults.xcresult \
             -parallel-testing-enabled NO \
-            -only-testing:AcuteWebUITests | tee InterfaceTests.log
+            -only-testing:AcuteWebUITests/BetaAccessibilityTests | tee LightAccessibility.log
       - name: Audit native screens in dark appearance
+        id: darkaudit
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -o pipefail
@@ -87,12 +90,26 @@ jobs:
             -resultBundlePath DarkAccessibilityResults.xcresult \
             -parallel-testing-enabled NO \
             -only-testing:AcuteWebUITests/BetaAccessibilityTests | tee DarkAccessibility.log
+      - name: Run browser interface tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.lightaudit.outcome == 'success' && steps.darkaudit.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance light
+          xcodebuild test-without-building \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
+            -derivedDataPath "$PWD/DerivedData" \
+            -resultBundlePath InterfaceResults.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:AcuteWebUITests \
+            -skip-testing:AcuteWebUITests/BetaAccessibilityTests | tee InterfaceTests.log
       - name: Validate bundled privacy manifest
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
           test -f "$APP_PATH/PrivacyInfo.xcprivacy"
           plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
-          python3 scripts/validate_release.py "$APP_PATH" --command-log UnitTests.log --command-log InterfaceTests.log --command-log DarkAccessibility.log
+          python3 scripts/validate_release.py "$APP_PATH" --command-log UnitTests.log --command-log InterfaceTests.log --command-log LightAccessibility.log --command-log DarkAccessibility.log
       - name: Install and launch app on iPhone
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
@@ -106,9 +123,11 @@ jobs:
           path: |
             TestResults.xcresult
             InterfaceResults.xcresult
+            LightAccessibilityResults.xcresult
             DarkAccessibilityResults.xcresult
             UnitTests.log
             InterfaceTests.log
+            LightAccessibility.log
             DarkAccessibility.log
           if-no-files-found: ignore
 

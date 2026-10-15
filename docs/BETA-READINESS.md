@@ -75,8 +75,17 @@ Type, hit regions, descriptions, clipping and traits, using actual simulator
 light/dark appearances. It does not audit third-party websites or establish
 physical VoiceOver, iPad, Reduce Transparency or all-text-size conformance.
 Audits fail on reported issues; no issue-suppression handler is installed.
-The start-page attribution uses secondary text for clearer contrast, and the
+The start-page subtitle and attribution use primary text for clearer contrast, and the
 tab count uses scalable caption text instead of a fixed eight-point font.
+Build 86 passed all 24 existing functional UI tests but the new audits found
+start-page subtitle contrast failures and near-threshold Settings Done contrast
+in light and dark appearances. The follow-up gives the accent separate light,
+dark and increased-contrast variants, with a unit check against native opaque
+surfaces. Audit diagnostics report element labels and detailed issues without
+suppressing failures. CI runs both appearance audits before the long functional
+suite, which remains mandatory before IPA packaging; a failed audit stops that
+later work. Material-backed controls still require actual UI audits;
+the color calculation alone does not validate their composited appearance.
 This batch is pending its own CI validation.
 
 - Block beta for crashes, data loss, private-data leaks, misleading disclosures,

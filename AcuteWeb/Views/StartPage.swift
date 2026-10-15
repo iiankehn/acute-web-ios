@@ -47,10 +47,10 @@ struct StartPage: View {
                         .font(.system(.largeTitle, design: .rounded, weight: .bold))
                         Text(browser.selectedTab?.isPrivate == true ? "Private browsing" : "The web, in focus.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                         Text("by CORE")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.primary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

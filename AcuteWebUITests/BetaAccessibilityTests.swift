@@ -42,11 +42,19 @@ final class BetaAccessibilityTests: XCTestCase {
 
     @MainActor
     private func auditVisibleNativeContent() throws {
-        // Do not silently suppress audit issues. Investigate reported elements
-        // before adding any narrowly explained exception.
+        // Log every issue for diagnosis while leaving all failures intact.
+        let previousContinuation = continueAfterFailure
+        continueAfterFailure = true
+        defer { continueAfterFailure = previousContinuation }
         try app.performAccessibilityAudit(for: [
             .contrast, .dynamicType, .hitRegion, .sufficientElementDescription,
             .textClipped, .trait
-        ])
+        ]) { issue in
+            print("ACCESSIBILITY AUDIT: \(issue.compactDescription) — \(issue.detailedDescription)")
+            if let element = issue.element, element.exists {
+                print("AUDIT ELEMENT: \(element.elementType), label=\(element.label), id=\(element.identifier), frame=\(element.frame)")
+            }
+            return false // Never mark an issue handled or suppress its failure.
+        }
     }
 }
