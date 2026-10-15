@@ -50,7 +50,7 @@ struct StartPage: View {
                         .foregroundStyle(.secondary)
                         Text("by CORE")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.secondary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)

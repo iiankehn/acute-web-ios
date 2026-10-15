@@ -12,35 +12,29 @@ for controls/navigation, not decorative glass on every content surface.
 
 ## Current evidence and first audit findings
 
-Build 81 validated the prior merged baseline: 64 unit tests, 23 interface tests,
-iPhone/iPad launches and unsigned arm64 IPA packaging. It does not validate the
-changes in this audit batch. Their own branch CI must pass before merge.
+Build 84 validated the merged hardening baseline: 66 unit tests, 24 interface
+tests, six validator tests, iPhone/iPad launches and unsigned arm64 IPA packaging.
+The bundled policy, required-reason declarations, debug-fixture exclusion and
+keyboard registration checks passed. Later changes need their own branch CI.
 
 - Downloads reads `contentModificationDate` inside the app container. The manifest
-  previously declared only UserDefaults. Add FileTimestamp with reason C617.1;
-  retain UserDefaults reason CA92.1. Neither use is for fingerprinting.
-- The existing privacy baseline lacked an in-app policy entry and complete
-  retention/backup/contact explanations. Expand PRIVACY.md and bundle the same
-  document for offline reading via Settings, with a current public-policy link.
-- Replace the absolute recovery claim "only on this device" with local-storage
-  wording that acknowledges operating-system backups.
-- Validate actual built bundles: required reasons, no tracking/collected-data
+  declares FileTimestamp with reason C617.1 and UserDefaults with reason CA92.1.
+  Neither use is for fingerprinting.
+- PRIVACY.md describes retention, backups, third-party boundaries and contact.
+  The same document is bundled for offline Settings access, with a public link.
+- Recovery disclosures acknowledge operating-system backups rather than claiming
+  saved data can only exist on the current device.
+- CI validates actual built bundles: required reasons, no tracking/collected-data
   declarations, bundled policy, camera/microphone descriptions, versions, and
   no unreviewed ATS exceptions. Scan Release executables for debug fixture
   markers. These scoped checks do not discover every API use or private API.
-- Branch Build 83 passed 66 unit tests (including both new policy tests), all
-  five validator tests, and iPad build/install/launch. Cold iPhone test-host
-  startup consumed about 10 minutes before the unit suite itself ran in about
-  34 seconds. The UI run was cancelled at the 20-minute job boundary after four
-  passing cases; no full UI/IPA success is claimed. Increase only the outer job
-  budgets to 35 minutes (iPhone suite) and 20 minutes (iPad), without relaxing
-  test assertions or per-test waits, then validate the new candidate in full.
-- The same log exposed duplicate Command-comma registrations: the system
-  Settings item and Acute's Library Settings command. Replace the native
-  appSettings command group with Acute's Settings action and keep the Library
-  entry without a second shortcut. Capture test logs and fail validation if
-  UIKit reports duplicate keyboard shortcuts. This is registration coverage,
-  not a claim of full physical-keyboard testing.
+- Outer job budgets are 35 minutes (iPhone suite) and 20 minutes (iPad) after
+  Build 83 spent about 10 minutes starting a cold test host and was cancelled
+  at its earlier job boundary. Test assertions and per-test waits remain intact.
+- Acute replaces the native appSettings command group and keeps the Library
+  Settings entry without a second Command-comma shortcut. CI rejects duplicate
+  keyboard-registration warnings; Build 84 passed this check. This does not
+  establish full physical-keyboard behavior.
 - No telemetry SDK, account service, background mode or alternate engine was
   found in this source pass. WebKit is used, fraudulent-site warnings are on,
   and private stores are non-persistent. These are source findings, not proof
@@ -51,7 +45,7 @@ changes in this audit batch. Their own branch CI must pass before merge.
 | Area | Gate / required evidence | Status |
 | --- | --- | --- |
 | Completeness (2.1) | Final candidate's full CI and IPA checks pass; review retries and failures, never merge a red candidate | Required for each candidate |
-| Privacy (5.1.1) | Bundled and public policy match shipping behavior; maintainer reviews identity, contact route and retention disclosures; public URL resolves without login | Audit changes pending validation/review |
+| Privacy (5.1.1) | Bundled and public policy match shipping behavior; maintainer reviews identity, contact route and retention disclosures; public URL resolves without login | Build 84 validated code/resources; maintainer/metadata review pending |
 | Privacy declarations | Verify required-reason API inventory on the final binary/SDKs; review Xcode privacy report and App Store Connect privacy answers, including browser/search/provider boundaries | Manual final review pending |
 | Native utility / identity (4.1, 4.2) | Preserve original cat-fox branding and useful browser features; no Safari impersonation or unsupported marketing claims | Source reviewed; device review pending |
 | Design / accessibility | Readable light/dark and Increase Contrast; Reduce Transparency/Motion; Dynamic Type through accessibility sizes; VoiceOver/Voice Control; keyboard focus; no hidden critical navigation or clipped controls | Physical-device audit pending |
@@ -75,6 +69,16 @@ a separate submission task. Do not publish a beta as a finished App Store app.
 
 ## Defect and release policy
 
+The next accessibility batch adds Apple's XCTest accessibility audits for the
+native start page and Settings (top and bottom). It checks contrast, Dynamic
+Type, hit regions, descriptions, clipping and traits, using actual simulator
+light/dark appearances. It does not audit third-party websites or establish
+physical VoiceOver, iPad, Reduce Transparency or all-text-size conformance.
+Audits fail on reported issues; no issue-suppression handler is installed.
+The start-page attribution uses secondary text for clearer contrast, and the
+tab count uses scalable caption text instead of a fixed eight-point font.
+This batch is pending its own CI validation.
+
 - Block beta for crashes, data loss, private-data leaks, misleading disclosures,
   unusable primary navigation, inaccessible core actions and incomplete review
   metadata/signing for the selected distribution path.
@@ -95,3 +99,4 @@ a separate submission task. Do not publish a beta as a finished App Store app.
 - Required reason APIs: https://developer.apple.com/documentation/bundleresources/describing-use-of-required-reason-api
 - Approved API categories/reasons: https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitype
 - Settings command placement: https://developer.apple.com/documentation/swiftui/commandgroupplacement/appsettings
+- XCTest accessibility audits: https://developer.apple.com/documentation/xcuiautomation/xcuiapplication/performaccessibilityaudit(for:_:)

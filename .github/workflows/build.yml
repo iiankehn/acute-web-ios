@@ -36,6 +36,7 @@ jobs:
           echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
+          xcrun simctl ui "$DEVICE_ID" appearance light
       - name: Build app and test targets
         id: build
         run: |
@@ -73,12 +74,25 @@ jobs:
             -resultBundlePath InterfaceResults.xcresult \
             -parallel-testing-enabled NO \
             -only-testing:AcuteWebUITests | tee InterfaceTests.log
+      - name: Audit native screens in dark appearance
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance dark
+          xcodebuild test-without-building \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
+            -derivedDataPath "$PWD/DerivedData" \
+            -resultBundlePath DarkAccessibilityResults.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:AcuteWebUITests/BetaAccessibilityTests | tee DarkAccessibility.log
       - name: Validate bundled privacy manifest
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
           test -f "$APP_PATH/PrivacyInfo.xcprivacy"
           plutil -lint "$APP_PATH/PrivacyInfo.xcprivacy"
-          python3 scripts/validate_release.py "$APP_PATH" --command-log UnitTests.log --command-log InterfaceTests.log
+          python3 scripts/validate_release.py "$APP_PATH" --command-log UnitTests.log --command-log InterfaceTests.log --command-log DarkAccessibility.log
       - name: Install and launch app on iPhone
         run: |
           APP_PATH="$PWD/DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
@@ -92,8 +106,10 @@ jobs:
           path: |
             TestResults.xcresult
             InterfaceResults.xcresult
+            DarkAccessibilityResults.xcresult
             UnitTests.log
             InterfaceTests.log
+            DarkAccessibility.log
           if-no-files-found: ignore
 
   ipad-smoke:
