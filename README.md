@@ -31,6 +31,12 @@ legacy `BETA` asset is not the primary icon for current development builds.
 
 ## Version 0.2 interface work
 
+Work is moving into beta hardening. The [beta readiness gate](docs/BETA-READINESS.md)
+tracks App Review requirements, design/accessibility checks, device evidence and
+submission blockers separately. Passing CI is not App Store approval or a claim
+that physical iPad validation is complete. [The privacy policy](PRIVACY.md) is
+available in Settings and bundled for offline reading.
+
 The current development build begins the [0.2 UI stage](docs/UI-0.2.md):
 navigation uses a single row of tab/address capsules with persistent Back,
 conditional Forward, and Refresh/Stop inside the selected tab. Wide iPad

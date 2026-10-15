@@ -4,6 +4,10 @@ struct BrowserCommands: Commands {
     @ObservedObject var browser: BrowserStore
 
     var body: some Commands {
+        CommandGroup(replacing: .appSettings) {
+            Button("Settings…") { browser.showsSettings = true }
+                .keyboardShortcut(",", modifiers: .command)
+        }
         CommandMenu("Tabs") {
             Button("New Tab") { browser.newTab() }.keyboardShortcut("t", modifiers: .command)
             Button("New Private Tab") { browser.newTab(isPrivate: true) }
@@ -33,7 +37,7 @@ struct BrowserCommands: Commands {
             Button("Bookmarks and History") { browser.showsLibrary = true }
             Button("Downloads") { browser.showsDownloads = true }
             Divider()
-            Button("Settings") { browser.showsSettings = true }.keyboardShortcut(",", modifiers: .command)
+            Button("Settings") { browser.showsSettings = true }
         }
     }
 }
