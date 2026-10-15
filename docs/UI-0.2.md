@@ -69,8 +69,10 @@ Preferences persist locally and update immediately. iPad retains its persistent
 top navigation; phone-position preferences do not change its layout.
 
 Download rows stack filenames and labeled actions at accessibility text sizes;
-active transfers show an indeterminate activity indicator. More offers Tab
-Management, Page Tools, Saved Content and Privacy submenus plus Settings.
+active transfers show an indeterminate activity indicator. More offers Tabs,
+Page, Library and Privacy submenus plus Settings. These names align with Android
+where equivalent groups exist; Android retains Navigation and Extensions.
+iOS retains native Liquid Glass; Android retains native Google/Material surfaces.
 Private-browsing guidance describes history,
 recovery and retained downloads in plain language.
 No public release is made by committing this first UI batch.
@@ -107,7 +109,7 @@ and asynchronous deletion behavior remain in place.
 
 Back and More remain outside the scrolling tab region. While editing, or on
 very narrow phones with Forward visible, the separate overview button yields
-space to the address; Show All Tabs remains in Tab Management. Page Tools offers
+space to the address; Show All Tabs remains in Tabs. Page offers
 Done Editing. Inactive capsules support duplicate/close via their context menus;
 the full overview retains search, regular/private filters and bulk confirmation.
 Local interface fixtures cover same-row history controls and capsule switching.

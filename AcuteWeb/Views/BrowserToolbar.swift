@@ -211,7 +211,7 @@ struct BrowserToolbar: View {
 
     private var moreMenu: some View {
         Menu {
-            Menu("Tab Management", systemImage: "square.on.square") {
+            Menu("Tabs", systemImage: "square.on.square") {
                 Button("New Tab", systemImage: "plus") { browser.newTab() }
                 Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
                 Button("Show All Tabs", systemImage: "square.on.square") {
@@ -220,7 +220,8 @@ struct BrowserToolbar: View {
                 Button("Reopen Closed Tab", systemImage: "arrow.uturn.backward") { browser.reopenLastClosedTab() }
                     .disabled(browser.recentlyClosed.isEmpty)
             }
-            Menu("Page Tools", systemImage: "doc.text") {
+            .accessibilityIdentifier("moreTabsMenu")
+            Menu("Page", systemImage: "doc.text") {
                 if controlsExpanded {
                     Button("Done Editing", systemImage: "checkmark") {
                         addressFocused = false
@@ -238,7 +239,8 @@ struct BrowserToolbar: View {
                 }.disabled(tab.url == nil)
                 if let url = tab.url { ShareLink(item: url) }
             }
-            Menu("Saved Content", systemImage: "books.vertical") {
+            .accessibilityIdentifier("morePageMenu")
+            Menu("Library", systemImage: "books.vertical") {
                 Button(browser.bookmarks.contains(tab.url) ? "Remove Bookmark" : "Add Bookmark", systemImage: "bookmark") {
                     browser.toggleBookmark()
                 }
@@ -246,10 +248,12 @@ struct BrowserToolbar: View {
                 Button("Bookmarks and History", systemImage: "books.vertical") { browser.showsLibrary = true }
                 Button("Downloads", systemImage: "arrow.down.circle") { browser.showsDownloads = true }
             }
+            .accessibilityIdentifier("moreLibraryMenu")
             Menu("Privacy", systemImage: "shield.lefthalf.filled") {
                 Button("Site Privacy", systemImage: "shield.lefthalf.filled") { browser.showsSitePrivacy = true }
                     .disabled(tab.url == nil)
             }
+            .accessibilityIdentifier("morePrivacyMenu")
             Divider()
             Button("Settings", systemImage: "gearshape") { browser.showsSettings = true }
         } label: {

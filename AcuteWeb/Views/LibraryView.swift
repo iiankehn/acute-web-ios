@@ -66,7 +66,7 @@ struct LibraryView: View {
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && filtered(bookmarks.items).isEmpty {
             noSearchResults
         } else if bookmarks.items.isEmpty {
-            ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Open More, then Saved Content, to bookmark the current page."))
+            ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Open More, then Library, to bookmark the current page."))
         } else {
             List {
                 Section {
