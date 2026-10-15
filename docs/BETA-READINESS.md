@@ -98,6 +98,15 @@ Favorite tiles give their untruncated text more width. Tabs exposes one
 VoiceOver element with the full open count, rather than a redundant text child.
 These changes require another complete candidate run; Build 87 is not a pass.
 
+Build 88 passed 67 unit tests and iPad launch; the picker clipping report was
+removed, but Settings contrast and some Dynamic Type reports remained. Explicit
+semantic label colors now replace relative inherited foreground styles, and
+destructive Settings actions use a separate adaptive contrast-checked red.
+A largest-text UI regression measures favorite-title and Settings-description
+growth and checks navigation remains usable. The audit remains fully enabled;
+no remaining font report is classified as a framework false positive without
+evidence. Build 88 is not a passing candidate.
+
 - Block beta for crashes, data loss, private-data leaks, misleading disclosures,
   unusable primary navigation, inaccessible core actions and incomplete review
   metadata/signing for the selected distribution path.

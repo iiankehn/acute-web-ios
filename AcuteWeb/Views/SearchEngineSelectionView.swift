@@ -13,7 +13,7 @@ struct SearchEngineSelectionView: View {
                 HStack(spacing: 12) {
                     Text(engine.title)
                         .font(.body)
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Color(uiColor: .label))
                         .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                     if preferences.searchEngine == engine {

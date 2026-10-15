@@ -1,4 +1,5 @@
 import XCTest
+import UIKit
 
 /// Native surfaces only. External website accessibility is outside these audits.
 final class BetaAccessibilityTests: XCTestCase {
@@ -17,9 +18,43 @@ final class BetaAccessibilityTests: XCTestCase {
     }
 
     @MainActor
+    func testLargestTextScalesFavoritesAndSettingsDescriptions() throws {
+        let title = app.staticTexts["favoriteTitle_GitHub"]
+        XCTAssertTrue(title.waitForExistence(timeout: 10))
+        let normalTitleHeight = title.frame.height
+        app.buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        let description = app.staticTexts["browsingLayoutExplanation"]
+        scrollTo(description)
+        let normalDescriptionHeight = description.frame.height
+        app.terminate()
+        app.launchArguments += ["-UIPreferredContentSizeCategoryName",
+                                UIContentSizeCategory.accessibilityExtraExtraExtraLarge.rawValue]
+        app.launch()
+        scrollTo(title)
+        XCTAssertGreaterThan(title.frame.height, normalTitleHeight * 1.5)
+        XCTAssertTrue(title.isHittable)
+        app.buttons["More"].tap()
+        app.buttons["Settings"].tap()
+        scrollTo(description)
+        XCTAssertGreaterThan(description.frame.height, normalDescriptionHeight * 1.5)
+        XCTAssertTrue(app.buttons["Done"].isHittable)
+        app.buttons["Done"].tap()
+    }
+
+    @MainActor
     func testStartPageAccessibility() throws {
         XCTAssertTrue(app.staticTexts["The web, in focus."].waitForExistence(timeout: 10))
         try auditVisibleNativeContent()
+    }
+
+    @MainActor
+    private func scrollTo(_ element: XCUIElement) {
+        for _ in 0..<16 {
+            if element.exists && element.isHittable { return }
+            app.swipeUp()
+        }
+        XCTAssertTrue(element.exists && element.isHittable)
     }
 
     @MainActor

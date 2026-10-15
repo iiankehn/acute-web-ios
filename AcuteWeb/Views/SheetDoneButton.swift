@@ -8,7 +8,7 @@ struct SheetDoneButton: View {
         Button(action: action) {
             Text("Done")
                 .font(.body)
-                .foregroundStyle(.primary)
+                .foregroundStyle(Color(uiColor: .label))
                 .padding(.horizontal, 8)
                 .frame(minWidth: 44, minHeight: 44)
                 .contentShape(Rectangle())

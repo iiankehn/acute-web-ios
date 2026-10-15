@@ -42,7 +42,7 @@ struct SettingsView: View {
                             .frame(width: 48, height: 48).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Acute Web").font(.title3.weight(.semibold))
-                            Text("by CORE").font(.subheadline).foregroundStyle(.primary)
+                            Text("by CORE").font(.subheadline).foregroundStyle(Color(uiColor: .label))
                         }
                     }
                     .padding(.vertical, 6)
@@ -56,7 +56,7 @@ struct SettingsView: View {
                             Text(preferences.searchEngine.title).font(.subheadline)
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .foregroundStyle(.primary)
+                        .foregroundStyle(Color(uiColor: .label))
                         .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
                     }
@@ -86,7 +86,7 @@ struct SettingsView: View {
                                         }
                                     }
                                     Text(position == .top ? "Above the page" : "Within thumb reach")
-                                        .font(.caption).foregroundStyle(.primary)
+                                        .font(.caption).foregroundStyle(Color(uiColor: .label))
                                 }
                                 .frame(maxWidth: .infinity, minHeight: 96)
                                 .padding(8)
@@ -114,6 +114,7 @@ struct SettingsView: View {
                     sectionHeading("Browsing Layout")
                 } footer: {
                     details("Phone controls can sit above the page or within thumb reach. Tabs and navigation share one row. Editing, loading and Find show the address field; successful loading can show the page title instead. iPad keeps navigation at the top.")
+                        .accessibilityIdentifier("browsingLayoutExplanation")
                 }
 
                 Section {
@@ -128,7 +129,9 @@ struct SettingsView: View {
                     valueRow("Diagnostic uploads", value: "None")
                     Toggle("Save browsing history", isOn: $preferences.savesHistory)
                     if !history.items.isEmpty {
-                        Button("Clear Saved History", role: .destructive) { deletion = .history }
+                        Button(role: .destructive) { deletion = .history } label: {
+                            Text("Clear Saved History").foregroundStyle(Color("DestructiveAction"))
+                        }
                     }
                 } header: {
                     sectionHeading("Privacy Protection")
@@ -147,6 +150,7 @@ struct SettingsView: View {
                         HStack(spacing: 12) {
                             if isClearingWebsiteData { ProgressView().accessibilityHidden(true) }
                             Text(isClearingWebsiteData ? "Clearing Website Data…" : "Clear Regular Website Data")
+                                .foregroundStyle(Color("DestructiveAction"))
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         .frame(minHeight: 44, alignment: .leading)
@@ -215,20 +219,20 @@ struct SettingsView: View {
     }
 
     private func sectionHeading(_ title: String) -> some View {
-        Text(title).font(.headline).foregroundStyle(.primary)
+        Text(title).font(.headline).foregroundStyle(Color(uiColor: .label))
     }
 
     private func details(_ text: String) -> some View {
-        Text(text).font(.footnote).foregroundStyle(.primary)
+        Text(text).font(.footnote).foregroundStyle(Color(uiColor: .label))
             .fixedSize(horizontal: false, vertical: true)
     }
 
     private func valueRow(_ title: String, value: String) -> some View {
         LabeledContent {
-            Text(value).font(.body).foregroundStyle(.primary)
+            Text(value).font(.body).foregroundStyle(Color(uiColor: .label))
                 .fixedSize(horizontal: false, vertical: true)
         } label: {
-            Text(title).font(.body).foregroundStyle(.primary)
+            Text(title).font(.body).foregroundStyle(Color(uiColor: .label))
                 .fixedSize(horizontal: false, vertical: true)
         }
     }

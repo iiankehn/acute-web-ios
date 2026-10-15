@@ -199,7 +199,10 @@ struct BrowserToolbar: View {
             browser.showsTabs = true
         } label: {
             Image(systemName: "square.on.square")
-                .overlay { Text("\(browser.tabs.count)").font(.caption2).allowsHitTesting(false) }
+                .overlay {
+                    Text("\(browser.tabs.count)").font(.caption2)
+                        .allowsHitTesting(false).accessibilityHidden(true)
+                }
                 .frame(width: 44, height: rowHeight).contentShape(Rectangle())
         }
         .accessibilityElement(children: .ignore)

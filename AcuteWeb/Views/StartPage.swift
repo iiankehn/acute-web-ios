@@ -143,6 +143,7 @@ struct StartPage: View {
                                             Text(favorite.title).font(.subheadline)
                                                 .fixedSize(horizontal: false, vertical: true)
                                                 .frame(maxWidth: .infinity)
+                                                .accessibilityIdentifier("favoriteTitle_\(favorite.title)")
                                         }
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .padding(12)

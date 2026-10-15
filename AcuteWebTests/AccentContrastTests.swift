@@ -5,6 +5,16 @@ import UIKit
 final class AccentContrastTests: XCTestCase {
     @MainActor
     func testAccentTextHasSufficientContrastOnNativeSurfaces() throws {
+        try checkContrast(for: "AccentColor")
+    }
+
+    @MainActor
+    func testDestructiveTextHasSufficientContrastOnNativeSurfaces() throws {
+        try checkContrast(for: "DestructiveAction")
+    }
+
+    @MainActor
+    private func checkContrast(for colorName: String) throws {
         let styles: [UIUserInterfaceStyle] = [.light, .dark]
         let contrasts: [UIAccessibilityContrast] = [.normal, .high]
         for style in styles {
@@ -13,7 +23,7 @@ final class AccentContrastTests: XCTestCase {
                     UITraitCollection(userInterfaceStyle: style),
                     UITraitCollection(accessibilityContrast: contrast)
                 ])
-                let accent = try XCTUnwrap(UIColor(named: "AccentColor", in: .main, compatibleWith: traits))
+                let accent = try XCTUnwrap(UIColor(named: colorName, in: .main, compatibleWith: traits))
                     .resolvedColor(with: traits)
                 for surface in [UIColor.systemBackground, .secondarySystemBackground,
                                 .systemGroupedBackground, .secondarySystemGroupedBackground,
@@ -24,7 +34,7 @@ final class AccentContrastTests: XCTestCase {
                     let ratio = (max(foregroundLuminance, backgroundLuminance) + 0.05)
                         / (min(foregroundLuminance, backgroundLuminance) + 0.05)
                     XCTAssertGreaterThanOrEqual(ratio, 4.5,
-                        "Accent contrast \(ratio), style \(style.rawValue), contrast \(contrast.rawValue)")
+                        "\(colorName) contrast \(ratio), style \(style.rawValue), contrast \(contrast.rawValue)")
                 }
             }
         }
