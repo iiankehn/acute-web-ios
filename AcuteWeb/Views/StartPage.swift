@@ -140,7 +140,7 @@ struct StartPage: View {
                                                 .foregroundStyle(Color.accentColor)
                                                 .frame(width: 44, height: 44)
                                                 .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
-                                            Text(favorite.title).font(.subheadline)
+                                            Text(favorite.title).font(.body)
                                                 .fixedSize(horizontal: false, vertical: true)
                                                 .frame(maxWidth: .infinity)
                                                 .accessibilityIdentifier("favoriteTitle_\(favorite.title)")

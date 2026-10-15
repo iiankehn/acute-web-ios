@@ -5,14 +5,9 @@ struct SheetDoneButton: View {
     let action: () -> Void
 
     var body: some View {
-        Button(action: action) {
-            Text("Done")
-                .font(.body)
-                .foregroundStyle(Color(uiColor: .label))
-                .padding(.horizontal, 8)
-                .frame(minWidth: 44, minHeight: 44)
-                .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
+        Button("Done", systemImage: "checkmark", action: action)
+            .labelStyle(.iconOnly)
+            .frame(minWidth: 44, minHeight: 44)
+            .accessibilityIdentifier("sheetDone")
     }
 }

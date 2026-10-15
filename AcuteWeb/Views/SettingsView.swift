@@ -223,7 +223,7 @@ struct SettingsView: View {
     }
 
     private func details(_ text: String) -> some View {
-        Text(text).font(.footnote).foregroundStyle(Color(uiColor: .label))
+        Text(text).font(.body).foregroundStyle(Color(uiColor: .label))
             .fixedSize(horizontal: false, vertical: true)
     }
 
