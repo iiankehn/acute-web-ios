@@ -1,5 +1,27 @@
 # 0.2 beta readiness gate
 
+## Active launch baseline — October 16, 2026
+
+The selected launch path is a sideload beta. Use
+[the candidate and device acceptance record](SIDELOAD-BETA.md) and
+[draft release notes](RELEASE-NOTES-0.2-BETA.md) for current launch preparation.
+The material below records the earlier hardening review; its statements that
+Build 83 still needs validation are historical, not current CI status.
+
+Build 85 at `4b24698eba49c574799aeeba37032c31888b2c27` is the restored app
+baseline. Simulator and device compilation, 24 interface tests, iPhone/iPad
+launch checks and unsigned IPA packaging passed. The unit-test job succeeded
+with retries after download/cookie fixture timeouts; do not describe it as a
+clean first-pass run. The original IPA and bundled policy have been rechecked
+without modifying the app.
+
+PRs #5 and #6 were closed and archived at the owner's request. Their later
+accessibility/UI experiments are not included and must not be resumed as part
+of launch preparation. Physical-device acceptance remains pending. No public
+beta has been published and no App Store/TestFlight submission is authorized.
+
+---
+
 Reviewed against Apple's public guidance on October 14, 2026. This is an
 engineering checklist, not certification of compliance or a promise of approval.
 App Review Guidelines are submission requirements; Human Interface Guidelines
