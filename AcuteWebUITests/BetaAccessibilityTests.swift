@@ -142,7 +142,7 @@ final class BetaAccessibilityTests: XCTestCase {
                         // be exposed by the containing native button before this
                         // single Dynamic Type finding can be treated as handled.
                         if element.identifier == "tabCountDecoration",
-                           app.buttons["tabsOverview"].value as? String == "1 open" {
+                           self.app.buttons["tabsOverview"].value as? String == "1 open" {
                             return true
                         }
                     }
