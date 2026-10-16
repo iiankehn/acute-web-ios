@@ -53,9 +53,14 @@ backward data compatibility or guarantee a sideloading tool accepts that update.
 | Automated tests | Unit job succeeded with retries; 24 interface tests passed without failures; six validator tests passed | Download and cookie fixtures timed out in earlier unit executions; not a clean first-pass unit run |
 | Simulator | iPhone/iPad install and launch checks passed | Not physical-device verification |
 | Packaging | Original archive/IPA checksums, ZIP integrity, arm64 Mach-O device platform, version, privacy manifest, bundled policy equality and Release debug-fixture checks verified | IPA is unsigned; no physical install/upgrade result is inferred |
-| Device acceptance | Pending for this exact candidate | Prior on-device builds do not validate Build 85 |
+| Device acceptance | Owner reported Build 85 looks good on iPhone, October 16, 2026 | iPad pending; individual checklist results and exact device/OS were not separately reported |
 
 ## Device acceptance record
+
+October 16, 2026: the owner reported that the Build 85 candidate looks good
+on iPhone. Record this as a positive general device check. The conversation
+does not enumerate individual checks, device model, OS, installation method
+or signing tool; do not infer those results. iPad verification remains pending.
 
 Use an iPhone and an iPad. Record device, OS, version/build, signing tool,
 installation type (fresh/update/downgrade), date and pass/fail with each result.
