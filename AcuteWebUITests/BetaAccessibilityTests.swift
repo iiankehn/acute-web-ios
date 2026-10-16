@@ -25,6 +25,22 @@ final class BetaAccessibilityTests: XCTestCase {
         XCTAssertTrue(overview.waitForExistence(timeout: 10))
         XCTAssertEqual(overview.label, "Tabs")
         XCTAssertEqual(overview.value as? String, "1 open")
+        app.buttons["More"].tap()
+        app.buttons["moreTabsMenu"].tap()
+        app.buttons["New Tab"].tap()
+        let twoOpen = NSPredicate(format: "value == %@", "2 open")
+        expectation(for: twoOpen, evaluatedWith: overview)
+        waitForExpectations(timeout: 5)
+        overview.tap()
+        XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
+        let close = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'closeTab_'"))
+            .firstMatch
+        XCTAssertTrue(close.waitForExistence(timeout: 5))
+        close.tap()
+        app.buttons["sheetDone"].tap()
+        let oneOpen = NSPredicate(format: "value == %@", "1 open")
+        expectation(for: oneOpen, evaluatedWith: overview)
+        waitForExpectations(timeout: 5)
     }
 
     @MainActor

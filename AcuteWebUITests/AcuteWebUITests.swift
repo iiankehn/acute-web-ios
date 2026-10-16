@@ -310,11 +310,19 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertEqual(setting.value as? String, "Brave Search")
         setting.tap()
         XCTAssertTrue(app.navigationBars["Search Engine"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.buttons["searchEngineOption_brave"].value as? String, "Selected")
         let duckDuckGo = app.buttons["searchEngineOption_duckDuckGo"]
         XCTAssertTrue(duckDuckGo.waitForExistence(timeout: 5))
+        XCTAssertEqual(duckDuckGo.value as? String, "Not selected")
         duckDuckGo.tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         XCTAssertEqual(setting.value as? String, "DuckDuckGo")
+        setting.tap()
+        XCTAssertTrue(app.navigationBars["Search Engine"].waitForExistence(timeout: 5))
+        XCTAssertEqual(duckDuckGo.value as? String, "Selected")
+        XCTAssertEqual(app.buttons["searchEngineOption_brave"].value as? String, "Not selected")
+        app.navigationBars["Search Engine"].buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
         app.buttons["Done"].tap()
     }
 
