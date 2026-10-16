@@ -27,6 +27,7 @@ struct SearchEngineSelectionView: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(engine.title)
+            .accessibilityIdentifier("searchEngineOption_\(engine.id)")
             .accessibilityValue(preferences.searchEngine == engine ? "Selected" : "Not selected")
             .accessibilityAddTraits(preferences.searchEngine == engine ? .isSelected : [])
         }

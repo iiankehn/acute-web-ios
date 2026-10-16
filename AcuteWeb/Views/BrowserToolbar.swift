@@ -22,6 +22,11 @@ struct BrowserToolbar: View {
                     tabCapsules.frame(maxWidth: .infinity)
                     if !addressFocused && (row.size.width >= 360 || !tab.canGoForward) {
                         tabsButton.acuteGlass(cornerRadius: rowHeight / 2)
+                            .accessibilityElement(children: .ignore)
+                            .accessibilityAddTraits(.isButton)
+                            .accessibilityLabel("Tabs")
+                            .accessibilityValue("\(browser.tabs.count) open")
+                            .accessibilityIdentifier("tabsOverview")
                     }
                     moreMenu.acuteGlass(cornerRadius: rowHeight / 2)
                 }
@@ -206,8 +211,6 @@ struct BrowserToolbar: View {
             }
             .frame(width: 44, height: rowHeight).contentShape(Rectangle())
         }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel("Tabs").accessibilityValue("\(browser.tabs.count) open")
     }
 
     private var moreMenu: some View {

@@ -189,6 +189,7 @@ struct SettingsView: View {
                     Link("Support & Feedback", destination: PrivacyPolicy.supportURL)
                 } header: { sectionHeading("About") }
             }
+            .modifier(SettingsScrollEdge())
             .navigationTitle("Settings")
             .navigationBarTitleDisplayMode(.inline)
             .alert(deletion?.title ?? "Confirm Deletion", isPresented: Binding(
@@ -235,5 +236,22 @@ struct SettingsView: View {
             Text(title).font(.body).foregroundStyle(Color(uiColor: .label))
                 .fixedSize(horizontal: false, vertical: true)
         }
+    }
+}
+
+/// Use the native hard boundary so Settings text does not fade underneath
+/// the navigation controls. The toolbar keeps its system Liquid Glass.
+private struct SettingsScrollEdge: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+#if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            content.scrollEdgeEffectStyle(.hard, for: .top)
+        } else {
+            content
+        }
+#else
+        content
+#endif
     }
 }

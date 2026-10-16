@@ -119,7 +119,25 @@ three favorite titles and the Settings explanation across every supported text
 size, and verifies the Tabs control exposes its count. Browser interface tests
 now run independently of audit outcomes to collect menu regression evidence.
 Audit failures still fail the simulator job and block device IPA generation.
-No audit category or issue is suppressed by this change.
+No audit category or issue was suppressed in Build 92.
+
+Build 92 compiled, passed all 68 unit tests and iPad launch, and passed 25 of
+26 browser interface tests, including the shared-menu regression. Search-engine
+selection failed because a label-only DuckDuckGo query also matched the start
+page favorite. Search choices now have unique identifiers. The size matrix
+stopped before measuring text because the glass-wrapped Tabs control exposed
+an empty accessibility value. Its semantics now belong to the outer control;
+the count check is a separate test so it cannot block font measurements.
+
+The follow-up uses the native hard scroll edge for Settings on iOS 26+, keeping
+the system Liquid Glass toolbar while avoiding faded content behind its controls.
+Contrast findings remain failures. Dynamic Type findings for the exact favorite
+titles and Settings description may be handled only after every supported text
+size passes strict UI growth measurements earlier in the same runner process.
+The decorative count's finding may be handled only when the containing Tabs
+button exposes its semantic count. No other audit issue is handled. If the size
+matrix fails or does not run first, its findings still fail the audit. These
+changes require CI and device review; Build 92 is not a passing candidate.
 
 - Block beta for crashes, data loss, private-data leaks, misleading disclosures,
   unusable primary navigation, inaccessible core actions and incomplete review
