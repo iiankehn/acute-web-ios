@@ -107,6 +107,20 @@ growth and checks navigation remains usable. The audit remains fully enabled;
 no remaining font report is classified as a framework false positive without
 evidence. Build 88 is not a passing candidate.
 
+Build 91 compiled the native app/test targets, passed unit tests and iPad
+build/install/launch. Its native checkmark confirmation no longer produced the
+previous Done-control findings. Settings contrast and Dynamic Type audits still
+failed; browser interface tests and IPA generation were skipped. It is not a
+passing candidate. Screenshots include text beneath the native navigation blur
+and readable semantic labels; these findings need diagnosis, not blanket ignores.
+
+The next validation separates contrast from Dynamic Type audits, measures all
+three favorite titles and the Settings explanation across every supported text
+size, and verifies the Tabs control exposes its count. Browser interface tests
+now run independently of audit outcomes to collect menu regression evidence.
+Audit failures still fail the simulator job and block device IPA generation.
+No audit category or issue is suppressed by this change.
+
 - Block beta for crashes, data loss, private-data leaks, misleading disclosures,
   unusable primary navigation, inaccessible core actions and incomplete review
   metadata/signing for the selected distribution path.

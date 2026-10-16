@@ -202,6 +202,7 @@ struct BrowserToolbar: View {
                 Image(systemName: "square.on.square")
                 Text("\(browser.tabs.count)").font(.caption2)
                     .allowsHitTesting(false).accessibilityHidden(true)
+                    .accessibilityIdentifier("tabCountDecoration")
             }
             .frame(width: 44, height: rowHeight).contentShape(Rectangle())
         }

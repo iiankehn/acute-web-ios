@@ -91,7 +91,9 @@ jobs:
             -parallel-testing-enabled NO \
             -only-testing:AcuteWebUITests/BetaAccessibilityTests | tee DarkAccessibility.log
       - name: Run browser interface tests
-        if: ${{ !cancelled() && steps.build.outcome == 'success' && steps.lightaudit.outcome == 'success' && steps.darkaudit.outcome == 'success' }}
+        # Collect functional evidence even when an audit fails. The failed audit
+        # still fails this job and blocks the dependent device IPA job.
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -o pipefail
           xcrun simctl ui '${{ steps.simulator.outputs.id }}' appearance light
