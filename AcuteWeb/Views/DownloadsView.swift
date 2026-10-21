@@ -3,6 +3,7 @@ import QuickLook
 
 struct DownloadsView: View {
     @ObservedObject var downloadCenter: DownloadCenter
+    @EnvironmentObject private var browser: BrowserStore
     @State private var previewURL: URL?
     @State private var query = ""
     @State private var searchPresented = false
@@ -39,7 +40,11 @@ struct DownloadsView: View {
                             HStack(spacing: 12) {
                                 ZStack {
                                     if item.state == .downloading {
-                                        ProgressView().tint(.accentColor)
+                                        if let fraction = item.fractionCompleted {
+                                            ProgressView(value: fraction).progressViewStyle(.circular).tint(.accentColor)
+                                        } else {
+                                            ProgressView().tint(.accentColor)
+                                        }
                                     } else {
                                         Image(systemName: symbol(for: item.state))
                                             .foregroundStyle(color(for: item.state))
@@ -52,9 +57,14 @@ struct DownloadsView: View {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(item.filename).font(.body.weight(.medium)).lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
                                         .truncationMode(.middle)
-                                    Text(item.failureReason ?? item.state.rawValue)
+                                    Text(detail(for: item))
                                         .font(.caption).foregroundStyle(.secondary)
                                         .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                                    if item.state == .downloading, let fraction = item.fractionCompleted {
+                                        ProgressView(value: fraction)
+                                            .accessibilityLabel("Download progress")
+                                            .accessibilityValue("\(Int(fraction * 100)) percent")
+                                    }
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                             }
@@ -66,6 +76,13 @@ struct DownloadsView: View {
                                     }
                                     .buttonStyle(.borderless)
                                     .accessibilityLabel("Cancel \(item.filename)")
+                                }
+                                if item.state == .failed && item.canRetry {
+                                    Button { downloadCenter.retry(item, using: browser.selectedTab?.webView) } label: {
+                                        actionLabel("Retry", symbol: "arrow.clockwise")
+                                    }
+                                    .buttonStyle(.borderless)
+                                    .accessibilityLabel("Retry \(item.filename)")
                                 }
                                 if item.state == .finished, let destination = item.destination {
                                     Button {
@@ -97,6 +114,11 @@ struct DownloadsView: View {
                             } else if item.state == .downloading {
                                 Button("Cancel Download", systemImage: "xmark.circle") { downloadCenter.cancel(item) }
                             } else {
+                                if item.canRetry {
+                                    Button("Retry Download", systemImage: "arrow.clockwise") {
+                                        downloadCenter.retry(item, using: browser.selectedTab?.webView)
+                                    }
+                                }
                                 Button("Remove from List", systemImage: "trash") { remove(item) }
                             }
                         }
@@ -152,6 +174,22 @@ struct DownloadsView: View {
         } catch { deletionError = error.localizedDescription }
     }
 
+    private func detail(for item: DownloadItem) -> String {
+        let size = item.byteCount.map { ByteCountFormatter.string(fromByteCount: $0, countStyle: .file) }
+        switch item.state {
+        case .downloading:
+            if let fraction = item.fractionCompleted, let size {
+                return "\(Int(fraction * 100))% of \(size)"
+            }
+            return "Downloading"
+        case .finished:
+            let date = item.date?.formatted(date: .abbreviated, time: .shortened)
+            return [size, date].compactMap { $0 }.joined(separator: " · ").nilIfEmpty ?? item.state.rawValue
+        case .failed:
+            return item.failureReason ?? item.state.rawValue
+        }
+    }
+
     private func symbol(for state: DownloadState) -> String {
         switch state {
         case .downloading: return "arrow.down.circle"
@@ -167,4 +205,8 @@ struct DownloadsView: View {
         case .failed: return .orange
         }
     }
+}
+
+private extension String {
+    var nilIfEmpty: String? { isEmpty ? nil : self }
 }

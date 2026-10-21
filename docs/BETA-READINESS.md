@@ -46,6 +46,48 @@ changes in this audit batch. Their own branch CI must pass before merge.
   and private stores are non-persistent. These are source findings, not proof
   of all runtime privacy behavior.
 
+## October 21 audit batch
+
+A source audit of interface, usability, completeness, security and privacy found
+the issues below. This batch addresses them in code. It was written without a
+local Xcode toolchain, so its branch CI is the first compile and test run; none
+of it is device-verified yet.
+
+- Privacy: the app-switcher cover now applies whenever any private tab exists,
+  because private titles appear in the tab row, sidebar and overview. Site
+  Privacy changes made in private tabs stay in memory and end with private
+  browsing. Private tabs share one non-persistent store, released with the last
+  private tab.
+- Downloads ask first, only for the visible tab in the active window; hidden
+  frames cannot start them. Progress, size, a completion notice, retry/resume
+  and a background-time request were added. Downloads still stop if iOS
+  suspends the app for longer than the granted background time.
+- Website dialogs are limited per tab and can be blocked until the page changes.
+- Connection security is derived from `hasOnlySecureContent` as well as the
+  scheme, plain HTTP shows "Not Secure", and private tabs keep the indicator.
+- WebKit policy interruptions (102/204) no longer replace pages with an error;
+  common failures have plain-language explanations; HTTPS connection failures
+  can retry over HTTP after a warning. Certificate failures never offer this.
+  Whether WebKit permits plain HTTP without an ATS web-content exception still
+  needs a device check; no ATS exception was added.
+- Typing in the address field is no longer overwritten by page changes. Restored
+  background tabs load when first selected; tabs whose content process was
+  reclaimed reload when selected.
+- Tracker rules also cover media, fonts, pings and embedded tracker frames, and
+  a rule-compilation failure is shown in Settings instead of being silent.
+- Added HTTP authentication prompts, website-opened windows that keep
+  `window.opener` and close themselves, always-allow camera/microphone per site,
+  queued permission prompts, a Site Settings review list (with www treated as
+  the same site), back/forward history menus, pull to refresh, local address
+  suggestions, select-all on focus, tab-capsule close buttons, Command-G and
+  Command-1…9, editable favorites, bookmark folders and HTML import/export, and
+  a prompt to clear history when saving is turned off.
+- Accessibility: the tab-count badge and tab capsules scale with Dynamic Type.
+- Release: iPad multiple windows (shared library, separate tabs per window),
+  `ITSAppUsesNonExemptEncryption = NO`, a string catalog for localization
+  (translations are not included), test isolation through injected defaults,
+  and CI no longer retries failed tests.
+
 ## Blocking gates before beta distribution
 
 | Area | Gate / required evidence | Status |

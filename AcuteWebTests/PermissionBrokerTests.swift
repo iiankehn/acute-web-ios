@@ -4,19 +4,39 @@ import WebKit
 
 final class PermissionBrokerTests: XCTestCase {
     @MainActor
-    func testReplacementDeniesOldRequestAndStaleApprovalCannotGrantNewRequest() {
+    func testSecondRequestWaitsAndStaleApprovalCannotGrantTheNextRequest() {
         let broker = PermissionBroker()
         let tab = UUID()
-        var oldDecisions: [WKPermissionDecision] = []
-        var newDecisions: [WKPermissionDecision] = []
-        broker.request(tabID: tab, host: "old.example", kind: .camera) { oldDecisions.append($0) }
-        let oldID = broker.pendingRequest!.id
-        broker.request(tabID: tab, host: "new.example", kind: .microphone) { newDecisions.append($0) }
-        XCTAssertEqual(oldDecisions, [.deny])
-        broker.resolve(.grant, requestID: oldID)
-        XCTAssertTrue(newDecisions.isEmpty)
+        var firstDecisions: [WKPermissionDecision] = []
+        var secondDecisions: [WKPermissionDecision] = []
+        broker.request(tabID: tab, host: "first.example", kind: .camera) { firstDecisions.append($0) }
+        let firstID = broker.pendingRequest!.id
+        broker.request(tabID: tab, host: "second.example", kind: .microphone) { secondDecisions.append($0) }
+        XCTAssertTrue(firstDecisions.isEmpty, "A second prompt must not silently deny the first")
+        XCTAssertEqual(broker.pendingRequest?.host, "first.example")
+        broker.resolve(.deny, requestID: firstID)
+        XCTAssertEqual(firstDecisions, [.deny])
+        XCTAssertEqual(broker.pendingRequest?.host, "second.example")
+        broker.resolve(.grant, requestID: firstID)
+        XCTAssertTrue(secondDecisions.isEmpty)
         broker.resolve(.grant, requestID: broker.pendingRequest!.id)
-        XCTAssertEqual(newDecisions, [.grant])
+        XCTAssertEqual(secondDecisions, [.grant])
+        XCTAssertNil(broker.pendingRequest)
+    }
+
+    @MainActor
+    func testAlwaysAllowIsReportedAndClosingATabDeniesItsQueuedRequests() {
+        let broker = PermissionBroker()
+        let closing = UUID()
+        let other = UUID()
+        var decisions: [SitePermissionDecision] = []
+        var queued: [WKPermissionDecision] = []
+        broker.requestDecision(tabID: other, host: "other.example", kind: .camera) { decisions.append($0) }
+        broker.request(tabID: closing, host: "closing.example", kind: .microphone) { queued.append($0) }
+        broker.cancel(tabID: closing)
+        XCTAssertEqual(queued, [.deny])
+        broker.decide(.alwaysAllow, requestID: broker.pendingRequest!.id)
+        XCTAssertEqual(decisions, [.alwaysAllow])
         XCTAssertNil(broker.pendingRequest)
     }
 

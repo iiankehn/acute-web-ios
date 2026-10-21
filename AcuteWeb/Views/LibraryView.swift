@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct LibraryView: View {
     @EnvironmentObject private var browser: BrowserStore
@@ -11,6 +12,9 @@ struct LibraryView: View {
     @State private var searchPresented = false
     @State private var editingBookmark: SavedSite?
     @State private var confirmsHistoryDeletion = false
+    @State private var exportsBookmarks = false
+    @State private var importsBookmarks = false
+    @State private var importResult: String?
 
     var body: some View {
         NavigationStack {
@@ -43,7 +47,28 @@ struct LibraryView: View {
                         Button("Clear", role: .destructive) { confirmsHistoryDeletion = true }
                     }
                 }
+                if selection == 0 {
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button("Import Bookmarks…", systemImage: "square.and.arrow.down") { importsBookmarks = true }
+                    }
+                    ToolbarItem(placement: .secondaryAction) {
+                        Button("Export Bookmarks…", systemImage: "square.and.arrow.up") { exportsBookmarks = true }
+                            .disabled(bookmarks.items.isEmpty)
+                    }
+                }
             }
+            .fileExporter(isPresented: $exportsBookmarks, document: BookmarksDocument(sites: bookmarks.items),
+                          contentType: .html, defaultFilename: "Acute Bookmarks") { result in
+                if case .failure(let error) = result { importResult = error.localizedDescription }
+            }
+            .fileImporter(isPresented: $importsBookmarks, allowedContentTypes: [.html]) { result in
+                importResult = importBookmarks(result)
+            }
+            .alert("Bookmarks", isPresented: Binding(
+                get: { importResult != nil }, set: { if !$0 { importResult = nil } }
+            )) {
+                Button("OK", role: .cancel) { importResult = nil }
+            } message: { Text(importResult ?? "") }
         }
     }
 
@@ -70,10 +95,20 @@ struct LibraryView: View {
         } else {
             List {
                 Section {
-                    ForEach(filtered(bookmarks.items)) { item in
+                    ForEach(filtered(bookmarks.items).filter { $0.folder == nil }) { item in
                         siteRow(item, isBookmark: true) { bookmarks.remove(item) }
                     }
                 } header: { Text("\(filtered(bookmarks.items).count) saved") }
+                ForEach(bookmarks.folders, id: \.self) { folder in
+                    let items = filtered(bookmarks.items).filter { $0.folder == folder }
+                    if !items.isEmpty {
+                        Section {
+                            ForEach(items) { item in
+                                siteRow(item, isBookmark: true) { bookmarks.remove(item) }
+                            }
+                        } header: { Label(folder, systemImage: "folder") }
+                    }
+                }
             }
             .listStyle(.insetGrouped)
         }
@@ -168,5 +203,40 @@ struct LibraryView: View {
             }
             Button("Delete", systemImage: "trash", role: .destructive, action: remove)
         }
+    }
+
+    private func importBookmarks(_ result: Result<URL, Error>) -> String {
+        do {
+            let url = try result.get()
+            let scoped = url.startAccessingSecurityScopedResource()
+            defer { if scoped { url.stopAccessingSecurityScopedResource() } }
+            let html = try String(contentsOf: url, encoding: .utf8)
+            let sites = BookmarkExchange.importHTML(html)
+            guard !sites.isEmpty else { return "No web bookmarks were found in that file." }
+            let added = bookmarks.importSites(sites)
+            return added == 0 ? "All bookmarks in that file are already saved." : "Imported \(added) bookmark\(added == 1 ? "" : "s")."
+        } catch {
+            return error.localizedDescription
+        }
+    }
+}
+
+struct BookmarksDocument: FileDocument {
+    static var readableContentTypes: [UTType] { [.html] }
+    let sites: [SavedSite]
+
+    init(sites: [SavedSite]) {
+        self.sites = sites
+    }
+
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents, let html = String(data: data, encoding: .utf8) else {
+            throw CocoaError(.fileReadCorruptFile)
+        }
+        sites = BookmarkExchange.importHTML(html)
+    }
+
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: Data(BookmarkExchange.exportHTML(sites).utf8))
     }
 }

@@ -44,6 +44,11 @@ def validate_bundle(app, release=False):
                 "CFBundleShortVersionString", "CFBundleVersion"):
         if not isinstance(info.get(key), str) or not info[key].strip():
             raise ValueError(f"Missing {key}")
+    if info.get("ITSAppUsesNonExemptEncryption") is not False:
+        raise ValueError("Export-compliance answer ITSAppUsesNonExemptEncryption must be declared false")
+    scenes = info.get("UIApplicationSceneManifest", {})
+    if scenes.get("UIApplicationSupportsMultipleScenes") is not True:
+        raise ValueError("iPad multiple-window support must stay declared")
     # No network-security exception has been reviewed for this beta.
     if info.get("NSAppTransportSecurity"):
         raise ValueError("Unreviewed App Transport Security configuration")

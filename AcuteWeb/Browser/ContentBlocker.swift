@@ -10,6 +10,9 @@ final class ContentBlocker {
         var completions: [() -> Void]
     }
     private var pendingWebViews: [ObjectIdentifier: Pending] = [:]
+    /// True when WebKit could not compile the rules, so pages are loading without tracker blocking.
+    private(set) var compilationFailed = false
+    var statusChanged: ((Bool) -> Void)?
 
     func apply(enabled: Bool, to webView: WKWebView, completion: (() -> Void)? = nil) {
         let controller = webView.configuration.userContentController
@@ -32,12 +35,17 @@ final class ContentBlocker {
         guard !isCompiling else { return }
         isCompiling = true
         WKContentRuleListStore.default().compileContentRuleList(
-            forIdentifier: "AcutePrivacyRules-v3", encodedContentRuleList: Self.rules
+            forIdentifier: "AcutePrivacyRules-v4", encodedContentRuleList: Self.rules
         ) { [weak self] ruleList, _ in
             Task { @MainActor in
                 guard let self else { return }
                 self.isCompiling = false
                 self.compiledRuleList = ruleList
+                // A failed compile is retried on the next navigation; report it so the interface stays truthful.
+                if self.compilationFailed != (ruleList == nil) {
+                    self.compilationFailed = ruleList == nil
+                    self.statusChanged?(self.compilationFailed)
+                }
                 let pending = self.pendingWebViews
                 self.pendingWebViews.removeAll()
                 for entry in pending.values {
@@ -62,11 +70,18 @@ final class ContentBlocker {
         "^https?://([a-z0-9-]+\\.)*" + domain.replacingOccurrences(of: ".", with: "\\.") + "(:[0-9]+)?/"
     }
 
+    static let blockedResourceTypes = ["script", "image", "style-sheet", "raw", "media", "font", "ping"]
+
     static var rules: String {
-        let entries: [[String: Any]] = trackerDomains.map { domain in
-            ["trigger": ["url-filter": resourceFilter(for: domain),
-                         "resource-type": ["script", "image", "style-sheet", "raw"]],
-             "action": ["type": "block"]]
+        let entries: [[String: Any]] = trackerDomains.flatMap { domain -> [[String: Any]] in
+            let filter = resourceFilter(for: domain)
+            return [
+                ["trigger": ["url-filter": filter, "resource-type": blockedResourceTypes],
+                 "action": ["type": "block"]],
+                // Embedded tracker frames are blocked; visiting one of these sites directly still works.
+                ["trigger": ["url-filter": filter, "resource-type": ["document"], "load-context": ["child-frame"]],
+                 "action": ["type": "block"]]
+            ]
         }
         return String(data: try! JSONSerialization.data(withJSONObject: entries), encoding: .utf8)!
     }

@@ -43,22 +43,30 @@ final class BrowserStore: ObservableObject {
     @Published var addressDraft = ""
     @Published var addressInputError: String?
     @Published private(set) var addressFocusRequest = UUID()
+    @Published private(set) var addressDismissRequest = UUID()
+    /// True while the person is typing in the address or start-page search field.
+    @Published var isEditingAddress = false
     @Published var findQuery = ""
     @Published private(set) var findStatus = ""
     @Published private(set) var recentlyClosed: [(url: URL?, isPrivate: Bool)] = []
     @Published private(set) var recentSites: [RecentSite] = []
+    @Published private(set) var trackerProtectionUnavailable = false
 
-    let preferences: BrowserPreferences
-    let downloadCenter: DownloadCenter
+    let services: BrowserServices
     let permissionBroker = PermissionBroker()
     let scriptDialogs = ScriptDialogBroker()
-    let bookmarks = BookmarkStore()
-    let history = HistoryStore()
-    let sitePrivacy = SitePrivacyStore()
     private let contentBlocker = ContentBlocker()
     private let sessionStore: BrowserSessionStore
     private var findRequestID = UUID()
     private var tabMetadataSubscriptions: [AnyCancellable] = []
+
+    var preferences: BrowserPreferences { services.preferences }
+    var downloadCenter: DownloadCenter { services.downloadCenter }
+    var bookmarks: BookmarkStore { services.bookmarks }
+    var history: HistoryStore { services.history }
+    var favorites: FavoritesStore { services.favorites }
+    var sitePrivacy: SitePrivacyStore { services.sitePrivacy }
+    var sessionKey: String { sessionStore.defaultsKey }
 
     private func observeTabMetadata() {
         // Search results must follow title/address changes, including background tabs.
@@ -76,19 +84,25 @@ final class BrowserStore: ObservableObject {
     }
 
     init(sessionStore: BrowserSessionStore = BrowserSessionStore(), preferences: BrowserPreferences? = nil,
-         downloadCenter: DownloadCenter? = nil) {
+         downloadCenter: DownloadCenter? = nil, services: BrowserServices? = nil) {
         self.sessionStore = sessionStore
-        self.preferences = preferences ?? BrowserPreferences()
-        self.downloadCenter = downloadCenter ?? DownloadCenter()
+        self.services = services ?? BrowserServices(defaults: sessionStore.defaults, preferences: preferences,
+                                                    downloadCenter: downloadCenter)
+        self.services.register(self)
+        contentBlocker.statusChanged = { [weak self] failed in self?.trackerProtectionUnavailable = failed }
         if !self.preferences.restoresTabs || !restoreSession() {
             newTab()
         }
     }
 
+    private func makeTab(isPrivate: Bool) -> BrowserTab {
+        BrowserTab(isPrivate: isPrivate, dataStore: isPrivate ? services.privateDataStore : .default())
+    }
+
     func newTab(isPrivate: Bool = false) {
         dismissRequestsForSelectedTab()
         closeFindBar()
-        let tab = BrowserTab(isPrivate: isPrivate)
+        let tab = makeTab(isPrivate: isPrivate)
         configureNavigation(for: tab)
         tabs.append(tab)
         selectedTabID = tab.id
@@ -108,6 +122,10 @@ final class BrowserStore: ObservableObject {
         }
     }
 
+    func canPresentDialogs(for tab: BrowserTab) -> Bool {
+        allowsWebsitePrompts && selectedTabID == tab.id
+    }
+
     private func dismissRequestsForSelectedTab() {
         guard let id = selectedTabID else { return }
         scriptDialogs.cancel(tabID: id)
@@ -115,21 +133,7 @@ final class BrowserStore: ObservableObject {
     }
 
     private func configureNavigation(for tab: BrowserTab) {
-        let coordinator = WebView.Coordinator(
-            tab: tab, downloadCenter: downloadCenter,
-            permissionBroker: permissionBroker, sitePrivacy: sitePrivacy,
-            openLink: { [weak self] request, isPrivate in self?.openInNewTab(request, isPrivate: isPrivate) },
-            scriptDialogs: scriptDialogs,
-            canPresentDialogs: { [weak self, weak tab] in
-                guard let self, let tab else { return false }
-                return self.allowsWebsitePrompts && self.selectedTabID == tab.id
-            },
-            prepareNavigation: { [weak self] webView, url, completion in
-                guard let self else { completion(); return }
-                let enabled = self.preferences.blocksTrackers && self.sitePrivacy.policy(for: url?.host).blocksTrackers
-                self.contentBlocker.apply(enabled: enabled, to: webView, completion: completion)
-            }
-        )
+        let coordinator = WebView.Coordinator(tab: tab, browser: self)
         tab.navigationCoordinator = coordinator
         tab.webView.navigationDelegate = coordinator
         tab.webView.uiDelegate = coordinator
@@ -142,6 +146,7 @@ final class BrowserStore: ObservableObject {
         selectedTab?.captureSnapshot()
         selectedTabID = tab.id
         addressInputError = nil
+        tab.loadDeferredContentIfNeeded()
         refreshAddress()
         showsTabs = false
         saveSession()
@@ -151,6 +156,13 @@ final class BrowserStore: ObservableObject {
         guard tabs.count > 1, let index = tabs.firstIndex(where: { $0.id == selectedTabID }) else { return }
         let offset = backwards ? -1 : 1
         select(tabs[(index + offset + tabs.count) % tabs.count])
+    }
+
+    /// Command-1 through Command-8 choose a tab by position; Command-9 chooses the last tab.
+    func selectTab(number: Int) {
+        guard !tabs.isEmpty, number >= 1 else { return }
+        if number >= 9 { select(tabs[tabs.count - 1]) }
+        else if number <= tabs.count { select(tabs[number - 1]) }
     }
 
     func close(_ tab: BrowserTab) {
@@ -167,9 +179,12 @@ final class BrowserStore: ObservableObject {
         if tabs.isEmpty { newTab() }
         if selectedTabID == tab.id {
             closeFindBar()
-            selectedTabID = tabs[min(index, tabs.count - 1)].id
+            let next = tabs[min(index, tabs.count - 1)]
+            selectedTabID = next.id
+            next.loadDeferredContentIfNeeded()
             refreshAddress()
         }
+        if tab.isPrivate { services.privateBrowsingMayHaveEnded() }
         saveSession()
     }
 
@@ -192,8 +207,10 @@ final class BrowserStore: ObservableObject {
         } else if selectedTabID.map({ closedIDs.contains($0) }) == true {
             closeFindBar()
             selectedTabID = tabs[0].id
+            tabs[0].loadDeferredContentIfNeeded()
             refreshAddress()
         }
+        if closing.contains(where: \.isPrivate) { services.privateBrowsingMayHaveEnded() }
         saveSession()
     }
 
@@ -205,7 +222,8 @@ final class BrowserStore: ObservableObject {
             return
         }
         addressInputError = nil
-        tab.navigationError = nil
+        tab.showFailure(nil)
+        tab.awaitsRestoredLoad = false
         tab.lastRequestedURL = url
         tab.webView.load(URLRequest(url: url))
         addressDraft = url.absoluteString
@@ -217,7 +235,7 @@ final class BrowserStore: ObservableObject {
         dismissRequestsForSelectedTab()
         closeFindBar()
         oldTab.webView.stopLoading()
-        let tab = BrowserTab(isPrivate: oldTab.isPrivate)
+        let tab = makeTab(isPrivate: oldTab.isPrivate)
         configureNavigation(for: tab)
         tabs[index] = tab
         selectedTabID = tab.id
@@ -229,10 +247,25 @@ final class BrowserStore: ObservableObject {
 
     func retryNavigation() {
         guard let tab = selectedTab, let url = tab.lastRequestedURL else { return }
-        tab.navigationError = nil
+        tab.showFailure(nil)
+        tab.awaitsRestoredLoad = false
+        tab.reloadsWhenSelected = false
         addressInputError = nil
         addressDraft = url.absoluteString
         tab.webView.load(URLRequest(url: url))
+    }
+
+    /// Offered only after HTTPS failed in a way that suggests the site has no secure version.
+    func retryOverHTTP() {
+        guard let tab = selectedTab, let url = tab.lastRequestedURL,
+              var components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+              components.scheme?.lowercased() == "https" else { return }
+        components.scheme = "http"
+        if components.port == 443 { components.port = nil }
+        guard let insecure = components.url else { return }
+        tab.lastRequestedURL = insecure
+        retryNavigation()
+        saveSession(selectedURLOverride: insecure)
     }
 
     func focusAddress() {
@@ -240,8 +273,29 @@ final class BrowserStore: ObservableObject {
         addressFocusRequest = UUID()
     }
 
+    func endAddressEditing() {
+        addressDismissRequest = UUID()
+    }
+
     func refreshAddress() {
         addressDraft = (selectedTab?.url ?? selectedTab?.lastRequestedURL)?.absoluteString ?? ""
+    }
+
+    /// Follows page address changes without replacing what the person is typing.
+    func syncAddressWithPage() {
+        guard !isEditingAddress else { return }
+        refreshAddress()
+    }
+
+    /// Local bookmark, favorite and history matches for the address field. Nothing is sent over the network.
+    func addressSuggestions(for query: String, limit: Int = 6) -> [SavedSite] {
+        let term = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !term.isEmpty, term != selectedTab?.url?.absoluteString else { return [] }
+        var seen = Set<String>()
+        let matches = (bookmarks.items + favorites.items + history.items).filter { site in
+            site.matchesSearch(term) && seen.insert(site.address).inserted
+        }
+        return Array(matches.prefix(limit))
     }
 
     func duplicate(_ tab: BrowserTab) {
@@ -298,13 +352,31 @@ final class BrowserStore: ObservableObject {
         saveSession(selectedURLOverride: url)
     }
 
+    /// A window opened by a website. WebKit loads the request into the returned web view.
+    func openWebsiteWindow(configuration: WKWebViewConfiguration, request: URLRequest, isPrivate: Bool) -> WKWebView {
+        dismissRequestsForSelectedTab()
+        closeFindBar()
+        let tab = BrowserTab(isPrivate: isPrivate, configuration: configuration)
+        tab.wasOpenedByWebsite = true
+        configureNavigation(for: tab)
+        let webURL = request.url.flatMap { WebAddress.url($0.absoluteString, allowMissingScheme: false) }
+        tab.lastRequestedURL = webURL
+        tabs.append(tab)
+        selectedTabID = tab.id
+        addressDraft = webURL?.absoluteString ?? ""
+        addressInputError = nil
+        saveSession(selectedURLOverride: webURL)
+        return tab.webView
+    }
+
     func open(_ url: URL) {
         addressDraft = url.absoluteString
         navigate()
     }
 
     func prepareNavigation(_ webView: WKWebView, url: URL?, completion: @escaping () -> Void) {
-        let enabled = preferences.blocksTrackers && sitePrivacy.policy(for: url?.host).blocksTrackers
+        let isPrivate = tabs.first { $0.webView === webView }?.isPrivate ?? false
+        let enabled = preferences.blocksTrackers && sitePrivacy.policy(for: url?.host, isPrivate: isPrivate).blocksTrackers
         contentBlocker.apply(enabled: enabled, to: webView, completion: completion)
     }
 
@@ -315,7 +387,7 @@ final class BrowserStore: ObservableObject {
     }
 
     func applyPrivacyPreferences(to tab: BrowserTab) {
-        let policy = sitePrivacy.policy(for: tab.url?.host)
+        let policy = sitePrivacy.policy(for: tab.url?.host, isPrivate: tab.isPrivate)
         contentBlocker.apply(enabled: preferences.blocksTrackers && policy.blocksTrackers, to: tab.webView)
     }
 
@@ -324,6 +396,30 @@ final class BrowserStore: ObservableObject {
               WebAddress.url(url.absoluteString, allowMissingScheme: false) != nil else { return }
         bookmarks.toggle(title: tab.title, url: url)
         objectWillChange.send()
+    }
+
+    func toggleFavorite() {
+        guard let tab = selectedTab, !tab.isPrivate, let url = tab.url,
+              WebAddress.url(url.absoluteString, allowMissingScheme: false) != nil else { return }
+        if let existing = favorites.items.first(where: { $0.address == url.absoluteString }) {
+            favorites.remove(existing)
+        } else {
+            favorites.add(title: tab.title, url: url)
+        }
+        objectWillChange.send()
+    }
+
+    func confirmDownload(_ download: WKDownload, filename: String, completion: @escaping (Bool) -> Void) {
+        guard let tab = tabs.first(where: { $0.webView === download.webView }), canPresentDialogs(for: tab) else {
+            completion(false)
+            return
+        }
+        let source = download.originalRequest?.url?.host ?? tab.url?.host ?? "This website"
+        let warning = tab.isPrivate ? "\n\nDownloaded files stay on this device after private browsing ends." : ""
+        scriptDialogs.request(tabID: tab.id, host: "Download File?",
+                              message: "\(source) wants to download “\(filename)”.\(warning)", kind: .download) { answer in
+            if case .accept = answer { completion(true) } else { completion(false) }
+        }
     }
 
     func clearSiteData(host: String, completion: @escaping () -> Void) {
@@ -385,6 +481,14 @@ final class BrowserStore: ObservableObject {
         saveSession(selectedURLOverride: nil)
     }
 
+    /// Applies the Restore regular tabs setting; turning it off removes every window's saved tabs.
+    func applySessionPreferences() {
+        if !preferences.restoresTabs { services.clearSavedSessions() }
+        saveSession()
+    }
+
+    /// Restored tabs keep their addresses but only the selected one loads, so launch stays fast and
+    /// saved sites are not contacted until they are shown.
     @discardableResult
     private func restoreSession() -> Bool {
         guard let session = sessionStore.load() else { return false }
@@ -392,7 +496,7 @@ final class BrowserStore: ObservableObject {
         let restored = session.tabs.enumerated().compactMap { entry -> (index: Int, tab: BrowserTab, address: String)? in
             let (index, saved) = entry
             guard saved.isStartPage || saved.url != nil else { return nil }
-            let tab = BrowserTab()
+            let tab = makeTab(isPrivate: false)
             configureNavigation(for: tab)
             tab.usesDesktopSite = saved.usesDesktopSite
             tab.setPageZoom(saved.pageZoom)
@@ -400,7 +504,8 @@ final class BrowserStore: ObservableObject {
             contentBlocker.apply(enabled: preferences.blocksTrackers, to: tab.webView)
             if let url = saved.url {
                 tab.lastRequestedURL = url
-                tab.webView.load(URLRequest(url: url))
+                tab.awaitsRestoredLoad = true
+                tab.title = url.host ?? url.absoluteString
             }
             return (index, tab, saved.address)
         }
@@ -412,6 +517,7 @@ final class BrowserStore: ObservableObject {
 
         tabs = restored.map(\.tab)
         selectedTabID = selected.tab.id
+        selected.tab.loadDeferredContentIfNeeded()
         addressDraft = selected.address
         return true
     }

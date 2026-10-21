@@ -6,15 +6,17 @@ struct BookmarkEditor: View {
     @Environment(\.dismiss) private var dismiss
     @State private var title: String
     @State private var address: String
+    @State private var folder: String
     @State private var failedToSave = false
     @FocusState private var focusedField: Field?
-    private enum Field: Hashable { case title, address }
+    private enum Field: Hashable { case title, address, folder }
 
     init(bookmarks: BookmarkStore, item: SavedSite) {
         self.bookmarks = bookmarks
         self.item = item
         _title = State(initialValue: item.title)
         _address = State(initialValue: item.address)
+        _folder = State(initialValue: item.folder ?? "")
     }
 
     var body: some View {
@@ -53,6 +55,20 @@ struct BookmarkEditor: View {
                         Text("Enter an HTTP or HTTPS website address.")
                     }
                 }
+                Section {
+                    TextField("No folder", text: $folder)
+                        .focused($focusedField, equals: .folder)
+                        .accessibilityLabel("Folder")
+                        .accessibilityIdentifier("bookmarkFolder")
+                    if !bookmarks.folders.isEmpty {
+                        Picker("Existing folders", selection: $folder) {
+                            Text("No folder").tag("")
+                            ForEach(bookmarks.folders, id: \.self) { name in Text(name).tag(name) }
+                        }
+                    }
+                } header: { Text("Folder") } footer: {
+                    Text("Type a new folder name or choose an existing folder.")
+                }
             }
             .navigationTitle("Edit Bookmark")
             .navigationBarTitleDisplayMode(.inline)
@@ -60,7 +76,7 @@ struct BookmarkEditor: View {
                 ToolbarItem(placement: .cancellationAction) { Button("Cancel") { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Save") {
-                        if bookmarks.update(item, title: title, address: address) { dismiss() }
+                        if bookmarks.update(item, title: title, address: address, folder: folder) { dismiss() }
                         else { failedToSave = true }
                     }
                     .disabled(BookmarkStore.validatedURL(address) == nil)

@@ -56,23 +56,23 @@ for verification coverage and the remaining device checks.
 - Tab snapshots, duplication, reopening, reordering, and adaptive iPad layouts.
 - Search-engine selection with DuckDuckGo as the default.
 - On-device WebKit content rules matching known tracker resource hosts, applied before main-frame navigation.
-- Native downloads with restart recovery, search, preview, cancellation, sharing, and confirmed file deletion.
+- Native downloads that ask first, with progress, completion notices, retry and resume, restart recovery, search, preview, cancellation, sharing, and confirmed file deletion.
 - Find in page with live results, accessible controls, and per-tab desktop/mobile website switching.
 - Link menus for new regular/private tabs; links opened from private pages retain private browsing.
 - User-activated email, phone, and message links require confirmation before opening another app; private tabs warn that their protection does not extend outside Acute.
 - Invalid or unsupported typed addresses show explicit feedback instead of silently doing nothing.
-- Editable bookmarks and searchable bookmarks/history.
+- Editable bookmarks with folders and HTML import/export, editable start-page favorites, searchable bookmarks/history, and local address suggestions.
 - Keyboard shortcuts for address focus, reopening tabs, navigation, page search, tab switching, zoom, and the start page.
 - Page-load errors and terminated website processes with explicit retry and cancellation of pending website prompts.
 - Native website alert, confirmation, and text-input dialogs with per-tab cancellation.
-- Explicit allow-once prompts for website camera and microphone access, cancelled when their tab closes, navigates, or loses selection.
+- Allow-once or always-allow-per-site prompts for website camera and microphone access, cancelled when their tab closes, navigates, or loses selection.
 - Persistent user-created bookmarks and browsing history that is off by default.
 - Crash-safe restoration for regular pages and start-page tabs, preserving selection and website viewing preferences, with a user-controlled startup toggle.
 - Private tabs excluded from saved sessions, recent sites, browsing history, and closed-tab recovery.
 - Confirmed bulk closing for regular, private, or all tabs, with a start-page fallback if no tabs remain.
 - Confirmed clearing of regular cookies, caches, and website storage without deleting private browsing or saved browser content.
-- Private browsing is covered while the app is inactive for app-switcher snapshots.
-- Per-site controls for tracker blocking, JavaScript, media capture, and local website data.
+- Private browsing is covered while the app is inactive for app-switcher snapshots whenever any private tab is open.
+- Per-site controls for tracker blocking, JavaScript, media capture, and local website data, with a Site Settings review list. Private-tab changes are never saved.
 - A clear privacy settings surface documenting Acute's zero-telemetry behavior.
 - An App Store privacy manifest declaring no tracking or collected data.
 
@@ -84,6 +84,8 @@ for verification coverage and the remaining device checks.
 | Zoom in / out | Command-= / Command-- |
 | Reset zoom | Command-0 |
 | Start page | Command-Shift-H |
+| Find next / previous | Command-G / Command-Shift-G |
+| Go to tab 1–8 / last tab | Command-1…8 / Command-9 |
 
 Page commands follow the selected tab's current navigation and zoom state.
 

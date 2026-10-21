@@ -1,4 +1,5 @@
 import SwiftUI
+import WebKit
 
 struct BrowserToolbar: View {
     @EnvironmentObject private var browser: BrowserStore
@@ -6,7 +7,10 @@ struct BrowserToolbar: View {
     @ObservedObject var preferences: BrowserPreferences
     @FocusState private var addressFocused: Bool
     @ScaledMetric(relativeTo: .body) private var rowHeight: CGFloat = 44
+    @ScaledMetric(relativeTo: .caption2) private var badgeSize: CGFloat = 9
     @State private var controlsExpanded = false
+    @State private var addressSelection: TextSelection?
+    @State private var submittedAddress = false
 
     private var isPhone: Bool { UIDevice.current.userInterfaceIdiom == .phone }
     private var isCondensed: Bool {
@@ -35,8 +39,29 @@ struct BrowserToolbar: View {
             controlsExpanded = true
             addressFocused = true
         }
+        .onChange(of: browser.addressDismissRequest) { _, _ in
+            // A chosen suggestion has already started loading; keep its address.
+            submittedAddress = addressFocused
+            addressFocused = false
+            controlsExpanded = false
+        }
         .onChange(of: addressFocused) { _, focused in
-            if focused { controlsExpanded = true }
+            browser.isEditingAddress = focused
+            if focused {
+                controlsExpanded = true
+                // Select the whole address so typing replaces it, as in other browsers.
+                DispatchQueue.main.async {
+                    let draft = browser.addressDraft
+                    addressSelection = TextSelection(range: draft.startIndex..<draft.endIndex)
+                }
+            } else if submittedAddress {
+                submittedAddress = false
+            } else {
+                browser.syncAddressWithPage()
+            }
+        }
+        .onDisappear {
+            if addressFocused { browser.isEditingAddress = false }
         }
         .alert("Unable to Open Address", isPresented: Binding(
             get: { browser.addressInputError != nil }, set: { if !$0 { browser.addressInputError = nil } }
@@ -91,7 +116,7 @@ struct BrowserToolbar: View {
                     addressFocused = true
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: addressSymbol).font(.caption).accessibilityHidden(true)
+                        securityIndicator
                         VStack(alignment: .leading, spacing: 2) {
                             Text(preferences.showsCompactPageTitle ? tab.title : (tab.url?.host ?? tab.title))
                                 .font(.subheadline.weight(.semibold)).lineLimit(1)
@@ -106,11 +131,14 @@ struct BrowserToolbar: View {
                     .contentShape(Rectangle())
                 }
                 .accessibilityLabel("Edit Address")
-                .accessibilityValue("\(tab.title), \(tab.url?.absoluteString ?? "")")
+                .accessibilityValue("\(tab.title), \(tab.url?.absoluteString ?? ""), \(tab.connectionSecurity.summary)\(tab.isPrivate ? ", private tab" : "")")
                 .accessibilityIdentifier("condensedAddress")
                 .accessibilityAddTraits(.isSelected)
             } else {
-                TextField("Search or enter address", text: $browser.addressDraft)
+                if !addressFocused && tab.url != nil {
+                    securityIndicator.padding(.leading, 12)
+                }
+                TextField("Search or enter address", text: $browser.addressDraft, selection: $addressSelection)
                     .accessibilityLabel("Search or enter address")
                     .accessibilityIdentifier("addressField")
                     .textInputAutocapitalization(.never)
@@ -119,11 +147,12 @@ struct BrowserToolbar: View {
                     .focused($addressFocused)
                     .submitLabel(.go)
                     .onSubmit {
+                        browser.navigate()
+                        submittedAddress = true
                         addressFocused = false
                         controlsExpanded = false
-                        browser.navigate()
                     }
-                    .padding(.leading, 12)
+                    .padding(.leading, !addressFocused && tab.url != nil ? 4 : 12)
                     .frame(maxWidth: .infinity, minHeight: rowHeight)
                 if addressFocused {
                     Button {
@@ -157,26 +186,55 @@ struct BrowserToolbar: View {
         }
     }
 
-    private var addressSymbol: String {
-        if tab.isPrivate { return "hand.raised.fill" }
-        return tab.url?.scheme?.lowercased() == "https" ? "lock.fill" : "globe"
+    /// Connection security stays visible in private tabs; the private mark is shown beside it.
+    private var securityIndicator: some View {
+        HStack(spacing: 3) {
+            if tab.isPrivate {
+                Image(systemName: "hand.raised.fill").font(.caption2)
+            }
+            Image(systemName: tab.connectionSecurity.symbol).font(.caption)
+                .foregroundStyle(tab.connectionSecurity == .secure || tab.connectionSecurity == .none ? Color.secondary : Color.orange)
+            if tab.connectionSecurity == .insecure && isCondensed {
+                Text("Not Secure").font(.caption2.weight(.semibold)).foregroundStyle(.orange)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(tab.connectionSecurity.summary + (tab.isPrivate ? ", private tab" : ""))
+        .accessibilityIdentifier("connectionSecurity")
     }
 
     private var navigationButtons: some View {
         HStack(spacing: 0) {
-            Button { tab.webView.goBack() } label: {
-                Image(systemName: "chevron.backward").frame(width: 44, height: rowHeight)
-                    .contentShape(Rectangle())
+            historyButton(title: "Back", symbol: "chevron.backward", items: Array(tab.webView.backForwardList.backList.reversed())) {
+                tab.webView.goBack()
             }
-            .accessibilityLabel("Back").disabled(!tab.canGoBack)
+            .disabled(!tab.canGoBack)
             if tab.canGoForward {
-                Button { tab.webView.goForward() } label: {
-                    Image(systemName: "chevron.forward").frame(width: 44, height: rowHeight)
-                        .contentShape(Rectangle())
+                historyButton(title: "Forward", symbol: "chevron.forward", items: tab.webView.backForwardList.forwardList) {
+                    tab.webView.goForward()
                 }
-                .accessibilityLabel("Forward")
             }
         }
+    }
+
+    /// Tap to move one page; touch and hold to choose from the tab's history.
+    private func historyButton(title: String, symbol: String, items: [WKBackForwardListItem],
+                               action: @escaping () -> Void) -> some View {
+        Menu {
+            ForEach(Array(items.prefix(15).enumerated()), id: \.offset) { _, item in
+                Button(item.title?.isEmpty == false ? item.title! : (item.url.host ?? item.url.absoluteString)) {
+                    tab.webView.go(to: item)
+                }
+            }
+        } label: {
+            Image(systemName: symbol).frame(width: 44, height: rowHeight)
+                .contentShape(Rectangle())
+        } primaryAction: {
+            action()
+        }
+        .menuIndicator(.hidden)
+        .accessibilityLabel(title)
+        .accessibilityHint("Touch and hold for history")
     }
 
     private var pageLoadButton: some View {
@@ -199,7 +257,12 @@ struct BrowserToolbar: View {
             browser.showsTabs = true
         } label: {
             Image(systemName: "square.on.square")
-                .overlay { Text("\(browser.tabs.count)").font(.system(size: 8, weight: .bold)).allowsHitTesting(false) }
+                .overlay {
+                    Text(browser.tabs.count > 99 ? "∞" : "\(browser.tabs.count)")
+                        .font(.system(size: min(badgeSize, 13), weight: .bold))
+                        .minimumScaleFactor(0.6)
+                        .allowsHitTesting(false)
+                }
                 .frame(width: 44, height: rowHeight).contentShape(Rectangle())
         }
         .accessibilityLabel("Tabs").accessibilityValue("\(browser.tabs.count) open")
@@ -237,6 +300,10 @@ struct BrowserToolbar: View {
             Menu("Saved Content", systemImage: "books.vertical") {
                 Button(browser.bookmarks.contains(tab.url) ? "Remove Bookmark" : "Add Bookmark", systemImage: "bookmark") {
                     browser.toggleBookmark()
+                }
+                .disabled(tab.isPrivate || tab.url.flatMap { WebAddress.url($0.absoluteString, allowMissingScheme: false) } == nil)
+                Button(browser.favorites.contains(tab.url) ? "Remove from Favorites" : "Add to Favorites", systemImage: "star") {
+                    browser.toggleFavorite()
                 }
                 .disabled(tab.isPrivate || tab.url.flatMap { WebAddress.url($0.absoluteString, allowMissingScheme: false) } == nil)
                 Button("Bookmarks and History", systemImage: "books.vertical") { browser.showsLibrary = true }
