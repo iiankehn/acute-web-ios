@@ -46,7 +46,7 @@ final class AcuteWebDuoUITests: XCTestCase {
         XCTAssertTrue(tabs.waitForExistence(timeout: 5))
         XCTAssertEqual(tabs.value as? String, "2 open")
         app.buttons["More"].tap()
-        XCTAssertTrue(app.buttons["Tab Management"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5))
     }
 
     func testWideWindowSidebarShowsTheLibraryNotTabs() throws {

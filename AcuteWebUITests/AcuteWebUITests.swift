@@ -87,7 +87,7 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(app.buttons["Back"].exists)
         finishAddressEditing()
         XCTAssertTrue(condensed.waitForExistence(timeout: 5))
-        chooseMoreAction("New Tab", category: "Tab Management")
+        chooseMoreItem("New Tab")
         XCTAssertTrue(app.textFields["addressField"].waitForExistence(timeout: 5))
         XCTAssertFalse(condensed.exists)
     }
@@ -159,7 +159,8 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(address.isHittable)
         XCTAssertGreaterThan(address.frame.width, 80)
         XCTAssertTrue(app.buttons["More"].isHittable)
-        openMoreCategory("Tab Management", expecting: "New Private Tab")
+        openMoreMenu()
+        XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5))
     }
 
     func testTabSwitcherCreatesPrivateTabsAndClosesLastTab() {
@@ -187,7 +188,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testTabFiltersPreserveSelectedPrivateTab() {
-        chooseMoreAction("New Private Tab", category: "Tab Management")
+        chooseMoreItem("New Private Tab")
         app.buttons["Tabs"].tap()
         XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
         let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
@@ -210,7 +211,7 @@ final class AcuteWebUITests: XCTestCase {
         app.launchArguments += ["-acuteUITestRenderedPage"]
         app.launch()
         XCTAssertTrue(app.buttons["condensedAddress"].waitForExistence(timeout: 15))
-        chooseMoreAction("New Private Tab", category: "Tab Management")
+        chooseMoreItem("New Private Tab")
         app.buttons["Tabs"].tap()
         let search = app.searchFields["Search tabs"]
         XCTAssertTrue(search.waitForExistence(timeout: 5))
@@ -262,7 +263,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testPrivateTabUsesPrivateStartPage() {
-        chooseMoreAction("New Private Tab", category: "Tab Management")
+        chooseMoreItem("New Private Tab")
 
         XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts.matching(NSPredicate(format: "label CONTAINS 'Downloaded files remain on this device'")).firstMatch.exists)
@@ -406,7 +407,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testBulkPrivateTabClosingRequiresConfirmation() {
-        chooseMoreAction("New Private Tab", category: "Tab Management")
+        chooseMoreItem("New Private Tab")
         app.buttons["Tabs"].tap()
         XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 5))
         let cards = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'selectTab_'"))
@@ -466,18 +467,19 @@ final class AcuteWebUITests: XCTestCase {
         let group = app.buttons[category]
         XCTAssertTrue(group.waitForExistence(timeout: 5))
         _ = app.buttons["Settings"].waitForExistence(timeout: 3)
-        // iOS 27 can report the More menu's first row at a stale position, so a tap on it lands outside the menu.
-        // Tab Management sits directly above Page Tools, whose position is reported correctly.
-        let pageTools = app.buttons["Page Tools"]
         for _ in 0..<2 {
-            if category == "Tab Management", pageTools.exists {
-                pageTools.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: -0.5)).tap()
-            } else if group.exists && group.isHittable {
-                group.tap()
-            }
+            if group.exists && group.isHittable { group.tap() }
             if app.buttons[item].waitForExistence(timeout: 3) { return }
         }
-        XCTFail("The \(category) menu did not open (row \(group.frame), Page Tools \(pageTools.frame))")
+        XCTFail("The \(category) menu did not open")
+    }
+
+    /// Chooses an action shown directly in the More menu.
+    private func chooseMoreItem(_ title: String) {
+        openMoreMenu()
+        let item = app.buttons[title]
+        XCTAssertTrue(item.waitForExistence(timeout: 5))
+        item.tap()
     }
 
     private func chooseMoreAction(_ title: String, category: String) {
@@ -519,7 +521,7 @@ final class AcuteWebUITests: XCTestCase {
     }
 
     func testCapsuleRowSwitchesBetweenRegularAndPrivateTabs() {
-        chooseMoreAction("New Private Tab", category: "Tab Management")
+        chooseMoreItem("New Private Tab")
         XCTAssertTrue(app.staticTexts["Private browsing"].waitForExistence(timeout: 5))
         let capsules = app.scrollViews["navigationTabCapsules"]
         let otherTab = app.buttons.matching(NSPredicate(format: "identifier BEGINSWITH 'toolbarSelect_'"))

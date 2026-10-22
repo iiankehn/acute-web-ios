@@ -114,7 +114,7 @@ and asynchronous deletion behavior remain in place.
 
 Back and More remain outside the scrolling tab region. While editing, or on
 very narrow phones with Forward visible, the separate overview button yields
-space to the address; Show All Tabs remains in Tab Management. Page Tools offers
+space to the address; Show All Tabs remains at the top of More. Page Tools offers
 Done Editing. Inactive capsules support duplicate/close via their context menus;
 the full overview retains search, regular/private filters and bulk confirmation.
 Local interface fixtures cover same-row history controls and capsule switching.
