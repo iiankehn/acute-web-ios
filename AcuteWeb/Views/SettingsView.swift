@@ -112,7 +112,16 @@ struct SettingsView: View {
                 } header: {
                     Text("Browsing Layout")
                 } footer: {
-                    Text("Phone controls can sit above the page or within thumb reach. Tabs and navigation share one row. Editing, loading and Find show the address field; successful loading can show the page title instead. iPad keeps navigation at the top.")
+                    Text("Phone controls can sit above the page or within thumb reach. Tabs and navigation share one row. Editing, loading and Find show the address field; successful loading can show the page title instead. Wide windows keep navigation at the top, and iPhone Duo moves navigation buttons to the side where iOS places its controls.")
+                }
+
+                Section {
+                    Toggle("Show tabs in sidebar", isOn: $preferences.showsTabsInSidebar)
+                        .accessibilityIdentifier("showsTabsInSidebar")
+                } header: {
+                    Text("Tabs")
+                } footer: {
+                    Text("Tabs normally stay in the navigation bar, and the sidebar in wide windows on iPad and iPhone Duo shows Bookmarks, History and Downloads. Turn this on to list tabs at the top of the sidebar instead.")
                 }
 
                 Section {

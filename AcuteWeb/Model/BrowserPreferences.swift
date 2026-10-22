@@ -43,6 +43,7 @@ final class BrowserPreferences: ObservableObject {
         static let phoneControlsPosition = "phoneControlsPosition"
         static let condensesPhoneControls = "condensesPhoneControls"
         static let showsCompactPageTitle = "showsCompactPageTitle"
+        static let showsTabsInSidebar = "showsTabsInSidebar"
     }
 
     private let defaults: UserDefaults
@@ -55,6 +56,11 @@ final class BrowserPreferences: ObservableObject {
     }
     @Published var showsCompactPageTitle: Bool {
         didSet { defaults.set(showsCompactPageTitle, forKey: Key.showsCompactPageTitle) }
+    }
+
+    /// Wide windows keep tabs in the navigation bar; the sidebar shows the library unless this is on.
+    @Published var showsTabsInSidebar: Bool {
+        didSet { defaults.set(showsTabsInSidebar, forKey: Key.showsTabsInSidebar) }
     }
 
     @Published var searchEngine: SearchEngine {
@@ -94,6 +100,7 @@ final class BrowserPreferences: ObservableObject {
         phoneControlsPosition = PhoneControlsPosition(rawValue: defaults.string(forKey: Key.phoneControlsPosition) ?? "") ?? .top
         condensesPhoneControls = bool(Key.condensesPhoneControls, fallback: true)
         showsCompactPageTitle = bool(Key.showsCompactPageTitle, fallback: true)
+        showsTabsInSidebar = bool(Key.showsTabsInSidebar, fallback: false)
         blocksTrackers = bool(Key.blocksTrackers, fallback: true)
         savesHistory = bool(Key.savesHistory, fallback: false)
         restoresTabs = bool(Key.restoresTabs, fallback: true)

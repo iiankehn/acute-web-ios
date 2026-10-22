@@ -12,9 +12,11 @@ struct BrowserRootView: View {
 
     var body: some View {
         Group {
-            if UIDevice.current.userInterfaceIdiom == .pad && horizontalSizeClass == .regular {
+            // Wide windows (iPad, iPhone Duo open) get the library sidebar; the size class decides, not the device.
+            if horizontalSizeClass == .regular {
                 NavigationSplitView {
-                    TabSidebar()
+                    BrowserSidebar(preferences: browser.preferences, bookmarks: browser.bookmarks,
+                                   history: browser.history, downloadCenter: browser.downloadCenter)
                         .navigationSplitViewColumnWidth(min: 220, ideal: 280, max: 340)
                 } detail: {
                     browserContent
@@ -72,54 +74,59 @@ private struct BrowserPage: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
     @ObservedObject var preferences: BrowserPreferences
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var navigationHeight: CGFloat = 0
+    @State private var verticalBarEdge: HorizontalEdge?
+    @State private var fold = FoldLayout.none
 
-    private var controlsAtBottom: Bool {
-        UIDevice.current.userInterfaceIdiom == .phone && preferences.phoneControlsPosition == .bottom
+    private var mode: BrowserChromeMode {
+        .resolve(horizontalSizeClass: horizontalSizeClass, verticalBarEdge: verticalBarEdge,
+                 prefersBottomControls: preferences.phoneControlsPosition == .bottom)
+    }
+
+    private var controlsAtBottom: Bool { mode.controlsAtBottom }
+
+    /// With tabs listed in the sidebar, the navigation bar keeps only the current tab.
+    private var showsOtherTabs: Bool {
+        !(preferences.showsTabsInSidebar && horizontalSizeClass == .regular)
+    }
+
+    private var isTabletop: Bool {
+        if case .tabletop = fold { return true }
+        return false
+    }
+
+    /// Moves the capsule row to the trailing side of a vertical fold.
+    private var leadingClearance: CGFloat {
+        guard case .book(_, let trailingStart) = fold else { return 0 }
+        return max(0, trailingStart - (mode.railEdge == .leading ? NavigationRail.width : 0))
     }
 
     var body: some View {
-        ZStack {
-            Color(uiColor: .systemBackground).ignoresSafeArea()
-            // Keep WebKit mounted before the first request so its policy and permission delegates are ready.
-            WebView(tab: tab, browser: browser)
-                .ignoresSafeArea(.container, edges: .bottom)
-            if tab.url == nil && tab.navigationError == nil && !tab.awaitsRestoredLoad {
-                StartPage(preferences: browser.preferences, bookmarks: browser.bookmarks, favorites: browser.favorites)
-                    .safeAreaInset(edge: controlsAtBottom ? .bottom : .top, spacing: 0) {
-                        Color.clear.frame(height: navigationHeight)
-                    }
-            }
-            if let error = tab.navigationError {
-                PageLoadErrorView(tab: tab, message: error)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(uiColor: .systemBackground))
-                .safeAreaInset(edge: controlsAtBottom ? .bottom : .top, spacing: 0) {
-                    Color.clear.frame(height: navigationHeight)
+        Group {
+            if case .tabletop(let topEnd, let bottomStart) = fold {
+                VStack(spacing: 0) {
+                    pageContent
+                        .frame(height: topEnd)
+                        .clipped()
+                    Color.clear.frame(height: max(0, bottomStart - topEnd))
+                        .accessibilityHidden(true)
+                    TabletopControlDeck(tab: tab, preferences: preferences, showsOtherTabs: showsOtherTabs)
+                        .frame(maxHeight: .infinity, alignment: .top)
+                }
+            } else {
+                HStack(spacing: 0) {
+                    if mode.railEdge == .leading { NavigationRail(tab: tab) }
+                    pageWithControls
+                    if mode.railEdge == .trailing { NavigationRail(tab: tab) }
                 }
             }
         }
-        .overlay(alignment: controlsAtBottom ? .bottom : .top) {
-            VStack(spacing: 0) {
-                if controlsAtBottom { pageAccessories }
-                BrowserToolbar(tab: tab, preferences: preferences)
-                if browser.showsFindBar {
-                    FindBar()
-                }
-                if !controlsAtBottom { pageAccessories }
-            }
-            .onGeometryChange(for: CGFloat.self) { proxy in
-                proxy.size.height
-            } action: { height in
-                navigationHeight = height
-            }
-        }
-        .onChange(of: navigationHeight, initial: true) { _, height in
-            updateNavigationInsets(height)
-        }
-        .onChange(of: controlsAtBottom) { _, _ in
-            updateNavigationInsets(navigationHeight)
-        }
+        .readVerticalBarEdge(into: $verticalBarEdge)
+        .readFoldLayout(into: $fold)
+        .onChange(of: navigationHeight, initial: true) { _, _ in updateNavigationInsets() }
+        .onChange(of: mode) { _, _ in updateNavigationInsets() }
+        .onChange(of: fold) { _, _ in updateNavigationInsets() }
         .onChange(of: tab.url) { _, _ in
             browser.closeFindBar()
             browser.syncAddressWithPage()
@@ -128,6 +135,50 @@ private struct BrowserPage: View {
         .onChange(of: tab.title) { _, _ in
             browser.recordCurrentVisit()
         }
+    }
+
+    /// The page, start page or error, with room left for controls drawn over it.
+    private var pageContent: some View {
+        ZStack {
+            Color(uiColor: .systemBackground).ignoresSafeArea()
+            // Keep WebKit mounted before the first request so its policy and permission delegates are ready.
+            WebView(tab: tab, browser: browser)
+                .ignoresSafeArea(.container, edges: .bottom)
+            if tab.url == nil && tab.navigationError == nil && !tab.awaitsRestoredLoad {
+                StartPage(preferences: browser.preferences, bookmarks: browser.bookmarks, favorites: browser.favorites)
+                    .safeAreaInset(edge: controlsAtBottom ? .bottom : .top, spacing: 0) {
+                        Color.clear.frame(height: isTabletop ? 0 : navigationHeight)
+                    }
+            }
+            if let error = tab.navigationError {
+                PageLoadErrorView(tab: tab, message: error)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(uiColor: .systemBackground))
+                .safeAreaInset(edge: controlsAtBottom ? .bottom : .top, spacing: 0) {
+                    Color.clear.frame(height: isTabletop ? 0 : navigationHeight)
+                }
+            }
+        }
+    }
+
+    private var pageWithControls: some View {
+        pageContent
+            .overlay(alignment: controlsAtBottom ? .bottom : .top) {
+                VStack(spacing: 0) {
+                    if controlsAtBottom { pageAccessories }
+                    BrowserToolbar(tab: tab, preferences: preferences, mode: mode,
+                                   showsOtherTabs: showsOtherTabs, leadingClearance: leadingClearance)
+                    if browser.showsFindBar {
+                        FindBar()
+                    }
+                    if !controlsAtBottom { pageAccessories }
+                }
+                .onGeometryChange(for: CGFloat.self) { proxy in
+                    proxy.size.height
+                } action: { height in
+                    navigationHeight = height
+                }
+            }
     }
 
     /// Suggestions and download notices sit next to the controls and are not counted in the page inset.
@@ -142,7 +193,9 @@ private struct BrowserPage: View {
         .frame(height: 0, alignment: controlsAtBottom ? .bottom : .top)
     }
 
-    private func updateNavigationInsets(_ height: CGFloat) {
+    private func updateNavigationInsets() {
+        // In tabletop mode the controls sit below the fold, so nothing covers the page.
+        let height = isTabletop ? 0 : navigationHeight
         BrowserChromeLayout.apply(topInset: controlsAtBottom ? 0 : height,
                                   bottomInset: controlsAtBottom ? height : 0,
                                   to: tab.webView.scrollView)

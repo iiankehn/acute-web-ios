@@ -5,16 +5,25 @@ struct BrowserToolbar: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
     @ObservedObject var preferences: BrowserPreferences
+    /// Rail mode moves Back, Forward, Tabs and More to `NavigationRail`.
+    var mode: BrowserChromeMode = .compactRow(atBottom: false)
+    /// Off when the sidebar lists tabs, so other tabs leave the navigation bar.
+    var showsOtherTabs = true
+    /// Keeps the row on the trailing side of a vertical fold.
+    var leadingClearance: CGFloat = 0
+    /// Set when Back, Forward, Tabs and More are shown elsewhere, such as the tabletop control deck.
+    var hidesNavigationControls = false
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var addressFocused: Bool
     @ScaledMetric(relativeTo: .body) private var rowHeight: CGFloat = 44
-    @ScaledMetric(relativeTo: .caption2) private var badgeSize: CGFloat = 9
     @State private var controlsExpanded = false
     @State private var addressSelection: TextSelection?
     @State private var submittedAddress = false
 
-    private var isPhone: Bool { UIDevice.current.userInterfaceIdiom == .phone }
+    private var isCompactWidth: Bool { horizontalSizeClass != .regular }
+    private var navigationControlsElsewhere: Bool { hidesNavigationControls || mode.railEdge != nil }
     private var isCondensed: Bool {
-        isPhone && preferences.condensesPhoneControls && tab.hasRenderedPage && !tab.isLoading
+        isCompactWidth && preferences.condensesPhoneControls && tab.hasRenderedPage && !tab.isLoading
             && tab.navigationError == nil && !controlsExpanded && !addressFocused && !browser.showsFindBar
     }
 
@@ -22,12 +31,31 @@ struct BrowserToolbar: View {
         AcuteGlassContainer(spacing: 4) {
             GeometryReader { row in
                 HStack(spacing: 6) {
-                    navigationButtons.acuteGlass(cornerRadius: rowHeight / 2)
-                    tabCapsules.frame(maxWidth: .infinity)
-                    if !addressFocused && (row.size.width >= 360 || !tab.canGoForward) {
-                        tabsButton.acuteGlass(cornerRadius: rowHeight / 2)
+                    if !navigationControlsElsewhere {
+                        navigationButtons.acuteGlass(cornerRadius: rowHeight / 2)
                     }
-                    moreMenu.acuteGlass(cornerRadius: rowHeight / 2)
+                    tabCapsules.frame(maxWidth: .infinity)
+                    if navigationControlsElsewhere {
+                        if addressFocused {
+                            Button("Done") {
+                                addressFocused = false
+                                controlsExpanded = false
+                            }
+                            .padding(.horizontal, 14)
+                            .frame(minHeight: rowHeight)
+                            .acuteGlass(cornerRadius: rowHeight / 2)
+                            .accessibilityIdentifier("finishAddressEditing")
+                        }
+                    } else {
+                        if !addressFocused && (row.size.width >= 360 || !tab.canGoForward) {
+                            TabsOverviewButton(tab: tab, height: rowHeight).acuteGlass(cornerRadius: rowHeight / 2)
+                        }
+                        BrowserMoreMenu(tab: tab, height: rowHeight, doneEditing: controlsExpanded ? {
+                            addressFocused = false
+                            controlsExpanded = false
+                        } : nil)
+                        .acuteGlass(cornerRadius: rowHeight / 2)
+                    }
                 }
             }
             .frame(height: max(44, rowHeight))
@@ -72,7 +100,8 @@ struct BrowserToolbar: View {
         }
         .buttonStyle(.plain)
         .font(.body.weight(.medium))
-        .padding(.horizontal, 8)
+        .padding(.leading, 8 + leadingClearance)
+        .padding(.trailing, 8)
         .padding(.vertical, 8)
     }
 
@@ -84,10 +113,10 @@ struct BrowserToolbar: View {
                         ForEach(browser.tabs) { candidate in
                             if candidate.id == tab.id {
                                 currentTabCapsule
-                                    .frame(width: max(100, min(isPhone ? viewport.size.width : 440,
+                                    .frame(width: max(100, min(isCompactWidth ? viewport.size.width : 440,
                                         viewport.size.width - (!addressFocused && browser.tabs.count > 1 ? 18 : 0))))
                                     .id(candidate.id)
-                            } else {
+                            } else if showsOtherTabs {
                                 NavigationTabCapsule(tab: candidate, height: rowHeight).id(candidate.id)
                             }
                         }
@@ -205,36 +234,11 @@ struct BrowserToolbar: View {
 
     private var navigationButtons: some View {
         HStack(spacing: 0) {
-            historyButton(title: "Back", symbol: "chevron.backward", items: Array(tab.webView.backForwardList.backList.reversed())) {
-                tab.webView.goBack()
-            }
-            .disabled(!tab.canGoBack)
+            HistoryButton(tab: tab, direction: .back, height: rowHeight)
             if tab.canGoForward {
-                historyButton(title: "Forward", symbol: "chevron.forward", items: tab.webView.backForwardList.forwardList) {
-                    tab.webView.goForward()
-                }
+                HistoryButton(tab: tab, direction: .forward, height: rowHeight)
             }
         }
-    }
-
-    /// Tap to move one page; touch and hold to choose from the tab's history.
-    private func historyButton(title: String, symbol: String, items: [WKBackForwardListItem],
-                               action: @escaping () -> Void) -> some View {
-        Menu {
-            ForEach(Array(items.prefix(15).enumerated()), id: \.offset) { _, item in
-                Button(item.title?.isEmpty == false ? item.title! : (item.url.host ?? item.url.absoluteString)) {
-                    tab.webView.go(to: item)
-                }
-            }
-        } label: {
-            Image(systemName: symbol).frame(width: 44, height: rowHeight)
-                .contentShape(Rectangle())
-        } primaryAction: {
-            action()
-        }
-        .menuIndicator(.hidden)
-        .accessibilityLabel(title)
-        .accessibilityHint("Touch and hold for history")
     }
 
     private var pageLoadButton: some View {
@@ -251,88 +255,4 @@ struct BrowserToolbar: View {
         .disabled(!tab.isLoading && tab.url == nil && tab.lastRequestedURL == nil)
     }
 
-    private var tabsButton: some View {
-        Button {
-            tab.captureSnapshot()
-            browser.showsTabs = true
-        } label: {
-            Image(systemName: "square.on.square")
-                .overlay {
-                    Text(browser.tabs.count > 99 ? "∞" : "\(browser.tabs.count)")
-                        .font(.system(size: min(badgeSize, 13), weight: .bold))
-                        .minimumScaleFactor(0.6)
-                        .allowsHitTesting(false)
-                }
-                .frame(width: 44, height: rowHeight).contentShape(Rectangle())
-        }
-        .accessibilityLabel("Tabs").accessibilityValue("\(browser.tabs.count) open")
-    }
-
-    private var moreMenu: some View {
-        Menu {
-            Menu("Tab Management", systemImage: "square.on.square") {
-                Button("New Tab", systemImage: "plus") { browser.newTab() }
-                Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
-                Button("Show All Tabs", systemImage: "square.on.square") {
-                    tab.captureSnapshot(); browser.showsTabs = true
-                }
-                Button("Reopen Closed Tab", systemImage: "arrow.uturn.backward") { browser.reopenLastClosedTab() }
-                    .disabled(browser.recentlyClosed.isEmpty)
-            }
-            Menu("Page Tools", systemImage: "doc.text") {
-                if controlsExpanded {
-                    Button("Done Editing", systemImage: "checkmark") {
-                        addressFocused = false
-                        controlsExpanded = false
-                    }
-                    .accessibilityIdentifier("finishAddressEditing")
-                }
-                Button("Start Page", systemImage: "house") { browser.showStartPage() }
-                Button("Reload", systemImage: "arrow.clockwise") { tab.webView.reload() }.disabled(tab.url == nil)
-                Button("Find on Page", systemImage: "text.magnifyingglass") { browser.showsFindBar = true }
-                    .disabled(tab.url == nil)
-                pageZoomMenu
-                Button(tab.usesDesktopSite ? "Request Mobile Site" : "Request Desktop Site", systemImage: "desktopcomputer") {
-                    browser.toggleDesktopSite()
-                }.disabled(tab.url == nil)
-                if let url = tab.url { ShareLink(item: url) }
-            }
-            Menu("Saved Content", systemImage: "books.vertical") {
-                Button(browser.bookmarks.contains(tab.url) ? "Remove Bookmark" : "Add Bookmark", systemImage: "bookmark") {
-                    browser.toggleBookmark()
-                }
-                .disabled(tab.isPrivate || tab.url.flatMap { WebAddress.url($0.absoluteString, allowMissingScheme: false) } == nil)
-                Button(browser.favorites.contains(tab.url) ? "Remove from Favorites" : "Add to Favorites", systemImage: "star") {
-                    browser.toggleFavorite()
-                }
-                .disabled(tab.isPrivate || tab.url.flatMap { WebAddress.url($0.absoluteString, allowMissingScheme: false) } == nil)
-                Button("Bookmarks and History", systemImage: "books.vertical") { browser.showsLibrary = true }
-                Button("Downloads", systemImage: "arrow.down.circle") { browser.showsDownloads = true }
-            }
-            Menu("Privacy", systemImage: "shield.lefthalf.filled") {
-                Button("Site Privacy", systemImage: "shield.lefthalf.filled") { browser.showsSitePrivacy = true }
-                    .disabled(tab.url == nil)
-            }
-            Divider()
-            Button("Settings", systemImage: "gearshape") { browser.showsSettings = true }
-        } label: {
-            Image(systemName: "ellipsis").frame(width: 44, height: rowHeight).contentShape(Rectangle())
-        }
-        .accessibilityLabel("More")
-    }
-
-    private var pageZoomMenu: some View {
-        Menu {
-            ForEach([50, 75, 100, 125, 150, 175, 200], id: \.self) { percent in
-                Button { browser.setPageZoom(Double(percent) / 100) } label: {
-                    if Int((tab.pageZoom * 100).rounded()) == percent {
-                        Label("\(percent)%", systemImage: "checkmark")
-                    } else { Text("\(percent)%") }
-                }
-            }
-        } label: {
-            Label("Page Zoom: \(Int((tab.pageZoom * 100).rounded()))%", systemImage: "textformat.size")
-        }
-        .disabled(tab.url == nil)
-    }
 }

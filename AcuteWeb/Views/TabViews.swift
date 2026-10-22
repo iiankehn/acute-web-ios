@@ -13,13 +13,13 @@ private enum TabBrowseScope: String, CaseIterable, Identifiable {
     }
 }
 
-@MainActor private func matchesTabSearch(_ tab: BrowserTab, query: String) -> Bool {
+@MainActor func matchesTabSearch(_ tab: BrowserTab, query: String) -> Bool {
     let text = query.trimmingCharacters(in: .whitespacesAndNewlines)
     return text.isEmpty || tab.title.localizedStandardContains(text)
         || (tab.url?.absoluteString.localizedStandardContains(text) == true)
 }
 
-private struct EmptyTabSearch: View {
+struct EmptyTabSearch: View {
     @Binding var query: String
     @Binding var searchPresented: Bool
 
@@ -41,66 +41,7 @@ private struct EmptyTabSearch: View {
     }
 }
 
-struct TabSidebar: View {
-    @EnvironmentObject private var browser: BrowserStore
-    @State private var closingScope: TabCloseScope?
-    @State private var query = ""
-    @State private var searchPresented = false
-
-    private var visibleTabs: [BrowserTab] {
-        browser.tabs.filter { matchesTabSearch($0, query: query) }
-    }
-
-    var body: some View {
-        List {
-            ForEach(visibleTabs) { tab in
-                SidebarTabRow(tab: tab)
-                    .listRowBackground(browser.selectedTabID == tab.id ? Color.accentColor.opacity(0.12) : Color.clear)
-                    .swipeActions {
-                        Button(role: .destructive) { browser.close(tab) } label: {
-                            Label("Close", systemImage: "xmark")
-                        }
-                    }
-                    .contextMenu {
-                        Button("Duplicate", systemImage: "plus.square.on.square") { browser.duplicate(tab) }
-                        Button("Close", systemImage: "xmark", role: .destructive) { browser.close(tab) }
-                    }
-            }
-            .onMove(perform: browser.moveTabs)
-            .moveDisabled(!query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-        }
-        .listStyle(.sidebar)
-        .navigationTitle("Acute Web")
-        .searchable(text: $query, isPresented: $searchPresented, prompt: "Search tabs")
-        .overlay {
-            if visibleTabs.isEmpty {
-                EmptyTabSearch(query: $query, searchPresented: $searchPresented)
-            }
-        }
-        .modifier(TabClosingConfirmation(scope: $closingScope))
-        .toolbar {
-            ToolbarItemGroup(placement: .bottomBar) {
-                Button { browser.showsLibrary = true } label: {
-                    Label("Library", systemImage: "books.vertical")
-                }
-                Spacer()
-                Button { browser.showsDownloads = true } label: {
-                    Label("Downloads", systemImage: "arrow.down.circle")
-                }
-            }
-            ToolbarItem(placement: .primaryAction) { TabManagementMenu(scope: $closingScope) }
-            ToolbarItem(placement: .primaryAction) {
-                Menu {
-                    Button("New Tab", systemImage: "plus") { browser.newTab() }
-                    Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
-                } label: { Image(systemName: "plus") }
-                .accessibilityLabel("New Tab Options")
-            }
-        }
-    }
-}
-
-private struct SidebarTabRow: View {
+struct SidebarTabRow: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var tab: BrowserTab
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -237,7 +178,7 @@ struct TabGrid: View {
     }
 }
 
-private struct TabManagementMenu: View {
+struct TabManagementMenu: View {
     @EnvironmentObject private var browser: BrowserStore
     @Binding var scope: TabCloseScope?
 
@@ -254,7 +195,7 @@ private struct TabManagementMenu: View {
     }
 }
 
-private struct TabClosingConfirmation: ViewModifier {
+struct TabClosingConfirmation: ViewModifier {
     @EnvironmentObject private var browser: BrowserStore
     @Binding var scope: TabCloseScope?
 

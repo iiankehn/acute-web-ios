@@ -39,8 +39,12 @@ available in Settings and bundled for offline reading.
 
 The current development build begins the [0.2 UI stage](docs/UI-0.2.md):
 navigation uses a single row of tab/address capsules with persistent Back,
-conditional Forward, and Refresh/Stop inside the selected tab. Wide iPad
-windows retain a sidebar and use native menu-bar commands. Custom
+conditional Forward, and Refresh/Stop inside the selected tab. Wide windows on
+iPad and an open iPhone Duo add a Library sidebar (Bookmarks, History, Downloads);
+tabs stay in the navigation bar unless Settings › Tabs › Show tabs in sidebar is
+on. Where iOS places bars on the side (iPhone Duo's outer display and open
+landscape), Back, Forward, Tabs and More move to a side rail, and controls stay
+clear of the fold. Layout follows size classes, not the device model. Custom
 navigation uses grouped Liquid Glass on iOS 26 with system-material fallbacks.
 
 ## Version 0.1 foundation
@@ -114,7 +118,8 @@ Acute on iPhone and iPad simulators, and retains the test result bundles.
 Visual review uses physical-device testing; routine screenshots are not captured.
 The XCUITest suite
 also covers privacy settings, private browsing, history, rotation, tab management,
-and start-page customization. CI uses Xcode 26.3 and an iOS 26.2 simulator so Liquid Glass code is
-compiled and exercised. Device and TestFlight builds require Apple Developer signing
-credentials. Failed unit tests get one retry in a fresh test process;
-both attempts remain in the test result bundle.
+and start-page customization. CI uses Xcode 27.1 on GitHub's Xcode 27 preview image with iOS 27.1
+simulators, including an iPhone Duo job; building locally also needs Xcode 27.1.
+The minimum supported system stays iOS 18. Device and TestFlight builds require
+Apple Developer signing credentials. Failed tests are not retried; unit tests run
+twice and both runs must pass.

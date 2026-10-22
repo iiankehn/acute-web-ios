@@ -7,7 +7,8 @@ final class AcuteWebUITests: XCTestCase {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO", "-showsStartFavorites", "YES",
-                               "-phoneControlsPosition", "top", "-condensesPhoneControls", "YES", "-showsCompactPageTitle", "YES"]
+                               "-phoneControlsPosition", "top", "-condensesPhoneControls", "YES", "-showsCompactPageTitle", "YES",
+                               "-showsTabsInSidebar", "NO"]
         app.launch()
     }
 
@@ -249,6 +250,16 @@ final class AcuteWebUITests: XCTestCase {
         let historySwitch = app.switches["Save browsing history"]
         XCTAssertTrue(historySwitch.exists)
         XCTAssertEqual(historySwitch.value as? String, "0")
+    }
+
+    func testTabsInSidebarSettingIsOffByDefault() {
+        openMoreMenu()
+        app.buttons["Settings"].tap()
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 5))
+        let toggle = app.switches["showsTabsInSidebar"]
+        scrollTo(toggle)
+        XCTAssertEqual(toggle.label, "Show tabs in sidebar")
+        XCTAssertEqual(toggle.value as? String, "0")
     }
 
     func testPrivateTabUsesPrivateStartPage() {
