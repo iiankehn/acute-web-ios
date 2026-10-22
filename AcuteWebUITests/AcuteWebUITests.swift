@@ -466,12 +466,18 @@ final class AcuteWebUITests: XCTestCase {
         let group = app.buttons[category]
         XCTAssertTrue(group.waitForExistence(timeout: 5))
         _ = app.buttons["Settings"].waitForExistence(timeout: 3)
+        // iOS 27 can report the More menu's first row at a stale position, so a tap on it lands outside the menu.
+        // Tab Management sits directly above Page Tools, whose position is reported correctly.
+        let pageTools = app.buttons["Page Tools"]
         for _ in 0..<2 {
-            // iOS 27 can ignore an element tap on a submenu row while the menu settles; a coordinate tap is not.
-            if group.exists && group.isHittable { group.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
+            if category == "Tab Management", pageTools.exists {
+                pageTools.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: -0.5)).tap()
+            } else if group.exists && group.isHittable {
+                group.tap()
+            }
             if app.buttons[item].waitForExistence(timeout: 3) { return }
         }
-        XCTFail("The \(category) menu did not open")
+        XCTFail("The \(category) menu did not open (row \(group.frame), Page Tools \(pageTools.frame))")
     }
 
     private func chooseMoreAction(_ title: String, category: String) {
