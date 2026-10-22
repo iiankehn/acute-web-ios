@@ -14,15 +14,17 @@ concurrency:
 
 jobs:
   simulator:
-    runs-on: macos-15
+    # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
+    runs-on: xcode-27
     # A cold iOS runtime can spend ~10 minutes installing/starting the test host
-    # before the suite runs. Keep assertion timeouts unchanged and allow the
+    # before the suite runs. iPhone and iPad use the image's iOS 27.0 runtime because the
+    # iOS 27.1 simulator runtime supports only iPhone Duo. Keep assertion timeouts unchanged and allow the
     # full unit + UI suites and artifact upload to finish on a slow runner.
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 26.3
-        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Select Xcode 27.1
+        run: scripts/select_xcode.sh 27.1
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
@@ -32,7 +34,7 @@ jobs:
       - name: Select and boot iPhone
         id: simulator
         run: |
-          DEVICE_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; data=json.load(sys.stdin); devices=[d for runtime, values in data["devices"].items() if "iOS-26-2" in runtime for d in values if d.get("isAvailable") and d["name"] == "iPhone 17 Pro"]; print(devices[0]["udid"])')
+          DEVICE_ID=$(python3 scripts/select_simulator.py iphone --minimum 27.0)
           echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
@@ -96,12 +98,13 @@ jobs:
           if-no-files-found: ignore
 
   ipad-smoke:
-    runs-on: macos-15
+    # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
+    runs-on: xcode-27
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 26.3
-        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Select Xcode 27.1
+        run: scripts/select_xcode.sh 27.1
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
@@ -109,7 +112,7 @@ jobs:
       - name: Select and boot iPad
         id: ipad
         run: |
-          IPAD_ID=$(xcrun simctl list devices available --json | python3 -c 'import json,sys; data=json.load(sys.stdin); devices=[d for runtime, values in data["devices"].items() if "iOS-26-2" in runtime for d in values if d.get("isAvailable") and d["name"].startswith("iPad Pro")]; print(devices[0]["udid"])')
+          IPAD_ID=$(python3 scripts/select_simulator.py ipad --minimum 27.0)
           echo "id=$IPAD_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$IPAD_ID" || true
           xcrun simctl bootstatus "$IPAD_ID" -b
@@ -125,14 +128,84 @@ jobs:
           xcrun simctl install '${{ steps.ipad.outputs.id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.ipad.outputs.id }}' com.acuteweb.browser.ios
 
+  iphone-duo:
+    runs-on: xcode-27
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v5
+      - name: Select Xcode 27.1 and its iOS simulator runtime
+        run: scripts/select_xcode.sh 27.1 --ios-runtime
+      - name: Install XcodeGen
+        run: brew install xcodegen
+      - name: Generate project
+        run: xcodegen generate
+      # The iOS 27.1 simulator runtime is the iPhone Duo release; the job downloads it when missing.
+      - name: Select and boot iPhone Duo
+        id: duo
+        run: |
+          DUO_ID=$(python3 scripts/select_simulator.py duo --minimum 27.1)
+          echo "id=$DUO_ID" >> "$GITHUB_OUTPUT"
+          xcrun simctl boot "$DUO_ID" || true
+          xcrun simctl bootstatus "$DUO_ID" -b
+      - name: Build app and test targets
+        id: build
+        run: |
+          set -o pipefail
+          xcodebuild build-for-testing \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.duo.outputs.id }}' \
+            -destination-timeout 120 \
+            -derivedDataPath "$PWD/DuoDerivedData" \
+            -parallel-testing-enabled NO
+      - name: Run unit tests on iPhone Duo
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.duo.outputs.id }}' \
+            -derivedDataPath "$PWD/DuoDerivedData" \
+            -resultBundlePath DuoUnitResults.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:AcuteWebTests | tee DuoUnitTests.log
+      - name: Run iPhone Duo interface tests
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        env:
+          TEST_RUNNER_ACUTE_IPHONE_DUO: "1"
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.duo.outputs.id }}' \
+            -derivedDataPath "$PWD/DuoDerivedData" \
+            -resultBundlePath DuoInterfaceResults.xcresult \
+            -parallel-testing-enabled NO \
+            -only-testing:AcuteWebUITests/AcuteWebDuoUITests | tee DuoInterfaceTests.log
+      - name: Validate keyboard registration logs
+        run: python3 scripts/validate_release.py "$PWD/DuoDerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app" --command-log DuoUnitTests.log --command-log DuoInterfaceTests.log
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: acute-web-iphone-duo-results
+          path: |
+            DuoUnitResults.xcresult
+            DuoInterfaceResults.xcresult
+            DuoUnitTests.log
+            DuoInterfaceTests.log
+          if-no-files-found: ignore
+
   device-ipa:
-    needs: [simulator, ipad-smoke]
-    runs-on: macos-15
+    needs: [simulator, ipad-smoke, iphone-duo]
+    # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
+    runs-on: xcode-27
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 26.3
-        run: sudo xcode-select -s /Applications/Xcode_26.3.app/Contents/Developer
+      - name: Select Xcode 27.1
+        run: scripts/select_xcode.sh 27.1
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project

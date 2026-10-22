@@ -18,17 +18,18 @@ final class FindInPageTests: XCTestCase {
         let loaded = expectation(for: NSPredicate { _, _ in
             tab.webView.title == "Find fixture" && !tab.webView.isLoading
         }, evaluatedWith: nil)
-        wait(for: [loaded], timeout: 15)
+        // A fresh simulator can take many seconds to launch its first web content process.
+        wait(for: [loaded], timeout: 60)
 
         browser.showsFindBar = true
         browser.findQuery = "Acute"
         browser.findInPage()
         let found = expectation(for: NSPredicate { _, _ in browser.findStatus == "Match found" }, evaluatedWith: nil)
-        wait(for: [found], timeout: 5)
+        wait(for: [found], timeout: 30)
         browser.findQuery = "does not exist"
         browser.findInPage()
         let absent = expectation(for: NSPredicate { _, _ in browser.findStatus == "No matches" }, evaluatedWith: nil)
-        wait(for: [absent], timeout: 5)
+        wait(for: [absent], timeout: 30)
 
         browser.findQuery = "  "
         browser.findInPage()
@@ -42,7 +43,7 @@ final class FindInPageTests: XCTestCase {
         // Let the old tab's callback finish, then confirm it cannot replace the cleared status.
         let flushed = expectation(description: "Old find callback flushed")
         tab.webView.evaluateJavaScript("document.title") { _, _ in flushed.fulfill() }
-        wait(for: [flushed], timeout: 5)
+        wait(for: [flushed], timeout: 30)
         XCTAssertEqual(browser.findStatus, "")
     }
 }

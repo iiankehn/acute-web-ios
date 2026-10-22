@@ -27,17 +27,23 @@ is enforced before presenting the allow-once permission broker.
 
 ## Platform behavior
 
-The application uses a compact tab grid on iPhone and a native split-view tab
-sidebar on iPad. SwiftUI materials provide the compatibility appearance on
-older systems; Xcode 26 builds adopt Liquid Glass for the custom address field.
+`BrowserChromeMode` chooses the controls from size classes and the system's
+vertical-bar edge: a compact capsule row, a wide row, or a side rail.
+`FoldLayout` turns iPhone Duo's reserved fold regions into book or tabletop
+layouts. Regular-width windows use a split view whose sidebar is the Library
+(with an optional Tabs section). SwiftUI materials provide the compatibility
+appearance on older systems; Liquid Glass is used for the custom controls.
 WebKit provides native find, download, and preferred-content-mode behavior;
 downloads remain in the app's local Documents container.
 
 ## Build model
 
 `project.yml` is the source of truth for the Xcode project. GitHub Actions uses
-XcodeGen and available iPhone/iPad simulators. The iPhone job runs unit and
-interface tests; both simulator jobs launch the app. Visual review uses the
+XcodeGen, Xcode 27.1, iOS 27.0 iPhone and iPad simulators and an iOS 27.1 iPhone Duo
+simulator, chosen by
+`scripts/select_simulator.py`. The iPhone job runs unit and interface tests, the
+iPhone Duo job runs unit tests and pose-aware interface tests, and the iPad job
+launches the app. Visual review uses the
 physical device without routine screenshot capture. Only after those jobs pass does CI package an unsigned arm64 IPA
 from a Release device build. Device signing and installation are separate.
 

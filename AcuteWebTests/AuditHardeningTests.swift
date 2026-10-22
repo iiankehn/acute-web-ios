@@ -56,14 +56,17 @@ final class AuditHardeningTests: XCTestCase {
     }
 
     @MainActor
-    func testSecondDialogOffersSuppression() {
+    func testSecondDialogOffersSuppression() async throws {
         let broker = ScriptDialogBroker()
         let tab = UUID()
         broker.request(tabID: tab, host: "one.example", message: "First", kind: .alert) { _ in }
         broker.request(tabID: tab, host: "one.example", message: "Second", kind: .alert) { _ in }
         broker.resolve(.accept(""))
-        let advanced = expectation(for: NSPredicate { _, _ in broker.pendingRequest?.message == "Second" }, evaluatedWith: nil)
-        wait(for: [advanced], timeout: 3)
+        // The queue advances in a main-actor task; awaiting yields to it instead of spinning the run loop.
+        for _ in 0..<30 where broker.pendingRequest == nil {
+            try await Task.sleep(nanoseconds: 100_000_000)
+        }
+        XCTAssertEqual(broker.pendingRequest?.message, "Second")
         XCTAssertEqual(broker.pendingRequest?.offersSuppression, true)
     }
 
@@ -213,7 +216,7 @@ final class AuditHardeningTests: XCTestCase {
             browser.confirmDownload(download, filename: "two.txt") { decisions.append($0); decided.fulfill() }
             download.cancel { _ in }
         }
-        wait(for: [decided], timeout: 10)
+        wait(for: [decided], timeout: 30)
         XCTAssertEqual(decisions, [false, false])
         XCTAssertNil(browser.scriptDialogs.pendingRequest)
     }

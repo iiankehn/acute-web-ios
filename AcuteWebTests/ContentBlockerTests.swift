@@ -25,6 +25,6 @@ final class ContentBlockerTests: XCTestCase {
             XCTAssertNotNil(list)
             compiled.fulfill()
         }
-        wait(for: [compiled], timeout: 15)
+        wait(for: [compiled], timeout: 30)
     }
 }

@@ -6,7 +6,8 @@ App Review Guidelines are submission requirements; Human Interface Guidelines
 guide the design and accessibility review. Recheck both before submission.
 
 The direction is now release hardening. Freeze feature scope: no Android parity,
-new engines, accounts, extension systems or iPhone duo-specific work for this beta.
+new engines, accounts or extension systems for this beta. iPhone Duo support was
+added to scope on October 22 because the device ships October 23 (see below).
 Keep Acute's identity while using native platform conventions and Liquid Glass
 for controls/navigation, not decorative glass on every content surface.
 
@@ -88,6 +89,19 @@ of it is device-verified yet.
   (translations are not included), test isolation through injected defaults,
   and CI no longer retries failed tests.
 
+## October 22 iPhone Duo batch
+
+iPhone Duo work moved into scope. Following Apple's Duo guidance, the app now
+chooses layouts from size classes and the system's vertical-bar edge instead of
+the device model. Where iOS places bars on the side, navigation buttons move to a
+side rail that avoids the outer camera. Controls stay clear of the fold, and
+tabletop posture uses a control deck below the fold. The wide-window sidebar is
+now the Library on both iPad and iPhone Duo, with an opt-in Tabs section. CI
+moved to Xcode 27.1 on GitHub's Xcode 27 preview image. iPhone and iPad run on the
+iOS 27.0 simulator because the iOS 27.1 simulator runtime supports only iPhone Duo;
+a new iPhone Duo job downloads that runtime. Rail-edge choice and fold behavior still need checking in Device
+Hub and on a device; the CI simulator boots in a single pose.
+
 ## Blocking gates before beta distribution
 
 | Area | Gate / required evidence | Status |
@@ -98,6 +112,7 @@ of it is device-verified yet.
 | Native utility / identity (4.1, 4.2) | Preserve original cat-fox branding and useful browser features; no Safari impersonation or unsupported marketing claims | Source reviewed; device review pending |
 | Design / accessibility | Readable light/dark and Increase Contrast; Reduce Transparency/Motion; Dynamic Type through accessibility sizes; VoiceOver/Voice Control; keyboard focus; no hidden critical navigation or clipped controls | Physical-device audit pending |
 | iPhone / iPad | Portrait/landscape, top/bottom phone controls, safe areas, keyboard appearance, iPad narrow windows/Split View, pointer and menu/shortcut behavior | Real iPad interactions unverified |
+| iPhone Duo | Closed and open in both orientations, half-open book and tabletop, rail edge and camera clearance, fold avoidance, Library sidebar and Show tabs in sidebar, Split View on the inner display | Device Hub and device checks pending |
 | Supported OS | Exercise the oldest supported iOS 18 and currently shipping iOS/iPadOS on available devices/simulators; SDK compilation and iOS 26.2 CI alone do not establish compatibility | Pending |
 | Browsing | Real HTTPS sites, redirects, history navigation, slow/offline recovery, IPv6-only network (2.5.5), login, file uploads, media and downloads | Device matrix pending |
 | Consent / isolation | Camera/mic allow/deny/revoke, cancellation, inactive-tab handling, private/regular isolation, app-switcher shield with sheets, data clearing and relaunch | Automated core coverage; device validation pending |

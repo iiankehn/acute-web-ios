@@ -6,9 +6,10 @@ struct NavigationTabCapsule: View {
     let height: CGFloat
     @ScaledMetric(relativeTo: .subheadline) private var phoneWidth: CGFloat = 160
     @ScaledMetric(relativeTo: .subheadline) private var padWidth: CGFloat = 196
+    @Environment(\.horizontalSizeClass) private var horizontalSizeClass
 
     private var width: CGFloat {
-        min(UIDevice.current.userInterfaceIdiom == .phone ? phoneWidth : padWidth, 320)
+        min(horizontalSizeClass == .regular ? padWidth : phoneWidth, 320)
     }
 
     var body: some View {

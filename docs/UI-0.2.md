@@ -8,13 +8,20 @@ The next phase is [beta hardening](BETA-READINESS.md), not feature expansion.
   Back stays visible; Forward appears when available. The selected capsule has
   Refresh/Stop and shows its address field during loading/editing or its title
   after rendering. Other tabs are separate capsules in the same horizontal row.
-- iPad: the same single row stays at the top, with a sidebar in wide windows.
+- iPad and iPhone Duo (open): the same single row stays at the top, with a Library
+  sidebar (Bookmarks, History, Downloads) in wide windows. Tabs stay in the row
+  unless Settings › Tabs › Show tabs in sidebar is on.
   Native SwiftUI commands organize the iPadOS menu bar into Tabs, Navigate, Page
   and Library, retaining keyboard shortcuts on earlier supported systems.
 - Group custom navigation glass with `GlassEffectContainer` on iOS 26; retain
   system material fallbacks on iOS 18/19. Respect Reduce Motion.
 - Keep the clear cat-fox branding and an Acute layout distinct from Safari.
-- Defer iPhone duo-specific optimization.
+- iPhone Duo: where iOS places bars vertically (outer display, open landscape),
+  Back, Forward, New Tab, Tabs and More move to a side rail that follows
+  `toolbarVerticalEdge` and avoids the outer camera. The capsule row stays clear
+  of the fold in book posture; in tabletop posture the page fills the top half and
+  a control deck sits below the fold. Layout uses size classes, never the device
+  model.
 
 ## Verification
 
@@ -107,7 +114,7 @@ and asynchronous deletion behavior remain in place.
 
 Back and More remain outside the scrolling tab region. While editing, or on
 very narrow phones with Forward visible, the separate overview button yields
-space to the address; Show All Tabs remains in Tab Management. Page Tools offers
+space to the address; Show All Tabs remains at the top of More. Page Tools offers
 Done Editing. Inactive capsules support duplicate/close via their context menus;
 the full overview retains search, regular/private filters and bulk confirmation.
 Local interface fixtures cover same-row history controls and capsule switching.
