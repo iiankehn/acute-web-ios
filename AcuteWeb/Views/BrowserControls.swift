@@ -68,7 +68,8 @@ struct BrowserMoreMenu: View {
 
     var body: some View {
         Menu {
-            Section {
+            // The heading keeps tab actions off the menu's first row, which iOS 27 can leave unresponsive to taps.
+            Section("Tabs") {
                 Button("New Tab", systemImage: "plus") { browser.newTab() }
                 Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
                 Button("Show All Tabs", systemImage: "square.on.square") {

@@ -474,8 +474,8 @@ final class AcuteWebUITests: XCTestCase {
         XCTFail("The \(category) menu did not open")
     }
 
-    /// Chooses an action shown directly in the More menu. On iOS 27 a tap on the menu's first row,
-    /// next to the More button, can be lost, so tap away from the button and retry while the menu stays open.
+    /// Chooses an action shown directly in the More menu, retrying while the menu stays open
+    /// because iOS 27 can drop a tap while the menu grows out of the button.
     private func chooseMoreItem(_ title: String) {
         openMoreMenu()
         let item = app.buttons[title]
