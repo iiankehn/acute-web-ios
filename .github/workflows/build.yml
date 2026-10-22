@@ -20,7 +20,7 @@ jobs:
     # before the suite runs. iPhone and iPad use the image's iOS 27.0 runtime because the
     # iOS 27.1 simulator runtime supports only iPhone Duo. Keep assertion timeouts unchanged and allow the
     # full unit + UI suites and artifact upload to finish on a slow runner.
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
       - name: Select Xcode 27.1

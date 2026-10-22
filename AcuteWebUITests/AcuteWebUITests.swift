@@ -5,6 +5,8 @@ final class AcuteWebUITests: XCTestCase {
 
     override func setUpWithError() throws {
         continueAfterFailure = false
+        // A failed rotation test must not leave later tests in landscape.
+        XCUIDevice.shared.orientation = .portrait
         app = XCUIApplication()
         app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO", "-showsStartFavorites", "YES",
                                "-phoneControlsPosition", "top", "-condensesPhoneControls", "YES", "-showsCompactPageTitle", "YES",
@@ -129,8 +131,7 @@ final class AcuteWebUITests: XCTestCase {
         app.launch()
         let condensed = app.buttons["condensedAddress"]
         XCTAssertTrue(condensed.waitForExistence(timeout: 15))
-        openMoreMenu()
-        app.buttons["Page Tools"].tap()
+        openMoreCategory("Page Tools", expecting: "Find on Page")
         app.buttons["Find on Page"].tap()
         let field = app.textFields["findField"]
         XCTAssertTrue(field.waitForExistence(timeout: 5))
@@ -158,9 +159,7 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(address.isHittable)
         XCTAssertGreaterThan(address.frame.width, 80)
         XCTAssertTrue(app.buttons["More"].isHittable)
-        openMoreMenu()
-        app.buttons["Tab Management"].tap()
-        XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5))
+        openMoreCategory("Tab Management", expecting: "New Private Tab")
     }
 
     func testTabSwitcherCreatesPrivateTabsAndClosesLastTab() {
@@ -332,8 +331,7 @@ final class AcuteWebUITests: XCTestCase {
         app.launchArguments += ["-acuteUITestRenderedPage"]
         app.launch()
         XCTAssertTrue(app.buttons["condensedAddress"].waitForExistence(timeout: 15))
-        openMoreMenu()
-        app.buttons["Saved Content"].tap()
+        openMoreCategory("Saved Content", expecting: "Bookmarks and History")
         // The test may run against an existing bookmark from an earlier run.
         if app.buttons["Add Bookmark"].exists {
             app.buttons["Add Bookmark"].tap()
@@ -459,14 +457,23 @@ final class AcuteWebUITests: XCTestCase {
         more.tap()
     }
 
-    private func chooseMoreAction(_ title: String, category: String) {
+    /// Opens a submenu of More. iOS 27 grows the menu out of the button, and a tap on an item
+    /// near the button during that animation is lost, so wait for the menu to settle and retry once.
+    private func openMoreCategory(_ category: String, expecting item: String) {
         openMoreMenu()
         let group = app.buttons[category]
         XCTAssertTrue(group.waitForExistence(timeout: 5))
-        group.tap()
-        let action = app.buttons[title]
-        XCTAssertTrue(action.waitForExistence(timeout: 5))
-        action.tap()
+        _ = app.buttons["Settings"].waitForExistence(timeout: 3)
+        for _ in 0..<2 {
+            if group.exists && group.isHittable { group.tap() }
+            if app.buttons[item].waitForExistence(timeout: 3) { return }
+        }
+        XCTFail("The \(category) menu did not open")
+    }
+
+    private func chooseMoreAction(_ title: String, category: String) {
+        openMoreCategory(category, expecting: title)
+        app.buttons[title].tap()
     }
 
     private func finishAddressEditing() {
