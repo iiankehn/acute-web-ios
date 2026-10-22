@@ -1,6 +1,7 @@
 name: AcuteWeb
 options:
   bundleIdPrefix: com.acuteweb
+  developmentLanguage: en
   deploymentTarget:
     iOS: "18.0"
 settings:
@@ -13,7 +14,7 @@ targets:
     platform: iOS
     sources:
       - path: AcuteWeb
-        excludes: [AppIcon.icon]
+        excludes: [AppIcon.icon, Info.plist]
       - path: AcuteWeb/AppIcon.icon
         type: file
         buildPhase: resources
@@ -24,7 +25,11 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.acuteweb.browser.ios
         GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_FILE: AcuteWeb/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Acute Web
+        INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        LOCALIZATION_PREFERS_STRING_CATALOGS: YES
+        SWIFT_EMIT_LOC_STRINGS: YES
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
         INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents: YES
         INFOPLIST_KEY_UIFileSharingEnabled: YES

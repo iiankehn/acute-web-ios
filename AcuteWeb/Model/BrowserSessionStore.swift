@@ -35,10 +35,11 @@ struct BrowserSession: Codable, Equatable {
 }
 
 final class BrowserSessionStore {
-    private let defaults: UserDefaults
-    private let defaultsKey: String
+    static let primaryKey = "browserSession"
+    let defaults: UserDefaults
+    let defaultsKey: String
 
-    init(defaults: UserDefaults = .standard, defaultsKey: String = "browserSession") {
+    init(defaults: UserDefaults = .standard, defaultsKey: String = BrowserSessionStore.primaryKey) {
         self.defaults = defaults
         self.defaultsKey = defaultsKey
     }

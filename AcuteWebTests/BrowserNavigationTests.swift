@@ -51,6 +51,10 @@ final class BrowserNavigationTests: XCTestCase {
         let loaded = expectation(for: NSPredicate { _, _ in tab.webView.title == "Download fixture" && !tab.webView.isLoading }, evaluatedWith: nil)
         wait(for: [loaded], timeout: 20)
         tab.webView.evaluateJavaScript("const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob(['Acute download fixture'],{type:'text/plain'})); link.download='acute-fixture.txt'; document.body.appendChild(link); link.click();")
+        let asked = expectation(for: NSPredicate { _, _ in browser.scriptDialogs.pendingRequest?.kind == .download }, evaluatedWith: nil)
+        wait(for: [asked], timeout: 25)
+        XCTAssertTrue(center.items.isEmpty, "Nothing is saved before the person approves the download")
+        browser.scriptDialogs.resolve(.accept(""))
         let completed = expectation(for: NSPredicate { _, _ in
             center.items.first.map { $0.state != .downloading } == true
         }, evaluatedWith: nil)

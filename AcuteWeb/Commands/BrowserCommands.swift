@@ -1,43 +1,61 @@
 import SwiftUI
 
+/// Menu-bar and keyboard commands act on the browser window that has focus.
 struct BrowserCommands: Commands {
-    @ObservedObject var browser: BrowserStore
+    @FocusedObject private var browser: BrowserStore?
 
     var body: some Commands {
         CommandGroup(replacing: .appSettings) {
-            Button("Settings…") { browser.showsSettings = true }
+            Button("Settings…") { browser?.showsSettings = true }
                 .keyboardShortcut(",", modifiers: .command)
+                .disabled(browser == nil)
         }
         CommandMenu("Tabs") {
-            Button("New Tab") { browser.newTab() }.keyboardShortcut("t", modifiers: .command)
-            Button("New Private Tab") { browser.newTab(isPrivate: true) }
-                .keyboardShortcut("n", modifiers: [.command, .shift])
-            Button("Close Tab") {
-                if let tab = browser.selectedTab { browser.close(tab) }
-            }
-            .keyboardShortcut("w", modifiers: .command)
-            Button("Show All Tabs") { browser.selectedTab?.captureSnapshot(); browser.showsTabs = true }
-            Divider()
-            Button("Reopen Closed Tab") { browser.reopenLastClosedTab() }
-                .keyboardShortcut("t", modifiers: [.command, .shift])
-                .disabled(browser.recentlyClosed.isEmpty)
-            Button("Next Tab") { browser.selectAdjacentTab() }
-                .keyboardShortcut(.tab, modifiers: .control).disabled(browser.tabs.count < 2)
-            Button("Previous Tab") { browser.selectAdjacentTab(backwards: true) }
-                .keyboardShortcut(.tab, modifiers: [.control, .shift]).disabled(browser.tabs.count < 2)
+            if let browser { TabCommands(browser: browser) }
         }
         CommandMenu("Navigate") {
-            Button("Focus Address") { browser.focusAddress() }.keyboardShortcut("l", modifiers: .command)
-            if let tab = browser.selectedTab { NavigationCommands(browser: browser, tab: tab) }
+            if let browser {
+                Button("Focus Address") { browser.focusAddress() }.keyboardShortcut("l", modifiers: .command)
+                if let tab = browser.selectedTab { NavigationCommands(browser: browser, tab: tab) }
+            }
         }
         CommandMenu("Page") {
-            if let tab = browser.selectedTab { PageCommands(browser: browser, tab: tab) }
+            if let browser, let tab = browser.selectedTab { PageCommands(browser: browser, tab: tab) }
         }
         CommandMenu("Library") {
-            Button("Bookmarks and History") { browser.showsLibrary = true }
-            Button("Downloads") { browser.showsDownloads = true }
+            Button("Bookmarks and History") { browser?.showsLibrary = true }.disabled(browser == nil)
+            Button("Downloads") { browser?.showsDownloads = true }.disabled(browser == nil)
             Divider()
-            Button("Settings") { browser.showsSettings = true }
+            Button("Settings") { browser?.showsSettings = true }.disabled(browser == nil)
+        }
+    }
+}
+
+private struct TabCommands: View {
+    @ObservedObject var browser: BrowserStore
+
+    var body: some View {
+        Button("New Tab") { browser.newTab() }.keyboardShortcut("t", modifiers: .command)
+        Button("New Private Tab") { browser.newTab(isPrivate: true) }
+            .keyboardShortcut("n", modifiers: [.command, .shift])
+        Button("Close Tab") {
+            if let tab = browser.selectedTab { browser.close(tab) }
+        }
+        .keyboardShortcut("w", modifiers: .command)
+        Button("Show All Tabs") { browser.selectedTab?.captureSnapshot(); browser.showsTabs = true }
+        Divider()
+        Button("Reopen Closed Tab") { browser.reopenLastClosedTab() }
+            .keyboardShortcut("t", modifiers: [.command, .shift])
+            .disabled(browser.recentlyClosed.isEmpty)
+        Button("Next Tab") { browser.selectAdjacentTab() }
+            .keyboardShortcut(.tab, modifiers: .control).disabled(browser.tabs.count < 2)
+        Button("Previous Tab") { browser.selectAdjacentTab(backwards: true) }
+            .keyboardShortcut(.tab, modifiers: [.control, .shift]).disabled(browser.tabs.count < 2)
+        Divider()
+        ForEach(1...9, id: \.self) { number in
+            Button(number == 9 ? "Last Tab" : "Tab \(number)") { browser.selectTab(number: number) }
+                .keyboardShortcut(KeyEquivalent(Character(String(number))), modifiers: .command)
+                .disabled(number < 9 && number > browser.tabs.count)
         }
     }
 }
@@ -69,6 +87,18 @@ private struct PageCommands: View {
     var body: some View {
         Button("Find on Page") { browser.showsFindBar = true }
             .keyboardShortcut("f", modifiers: .command).disabled(tab.url == nil)
+        Button("Find Next") {
+            browser.showsFindBar = true
+            browser.findInPage()
+        }
+        .keyboardShortcut("g", modifiers: .command)
+        .disabled(tab.url == nil || browser.findQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+        Button("Find Previous") {
+            browser.showsFindBar = true
+            browser.findInPage(backwards: true)
+        }
+        .keyboardShortcut("g", modifiers: [.command, .shift])
+        .disabled(tab.url == nil || browser.findQuery.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
         Button(tab.usesDesktopSite ? "Request Mobile Site" : "Request Desktop Site") { browser.toggleDesktopSite() }
             .disabled(tab.url == nil)
         Button("Site Privacy") { browser.showsSitePrivacy = true }.disabled(tab.url == nil)

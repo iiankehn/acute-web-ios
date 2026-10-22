@@ -57,7 +57,6 @@ jobs:
             -derivedDataPath "$PWD/DerivedData" \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
-            -retry-tests-on-failure \
             -test-iterations 2 \
             -test-repetition-relaunch-enabled YES \
             -only-testing:AcuteWebTests | tee UnitTests.log

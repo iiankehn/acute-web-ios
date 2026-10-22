@@ -9,8 +9,10 @@ struct SitePrivacyView: View {
     @State private var isClearingData = false
     @State private var confirmsClearing = false
 
-    private var host: String { browser.selectedTab?.url?.host ?? "This Website" }
-    private var policy: SitePrivacyPolicy { sitePrivacy.policy(for: host) }
+    private var siteHost: String? { browser.selectedTab?.url?.host }
+    private var host: String { siteHost ?? "This Website" }
+    private var isPrivate: Bool { browser.selectedTab?.isPrivate == true }
+    private var policy: SitePrivacyPolicy { sitePrivacy.policy(for: siteHost, isPrivate: isPrivate) }
     private var connectionLayout: AnyLayout {
         dynamicTypeSize.isAccessibilitySize
         ? AnyLayout(VStackLayout(alignment: .leading, spacing: 12))
@@ -22,8 +24,8 @@ struct SitePrivacyView: View {
             Form {
                 Section("Connection") {
                     connectionLayout {
-                        Image(systemName: browser.selectedTab?.url?.scheme == "https" ? "lock" : "globe")
-                            .foregroundStyle(Color.accentColor)
+                        Image(systemName: browser.selectedTab?.connectionSecurity.symbol ?? "globe")
+                            .foregroundStyle(browser.selectedTab?.connectionSecurity == .secure ? Color.accentColor : Color.orange)
                             .frame(width: 40, height: 40)
                             .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
                             .accessibilityHidden(true)
@@ -36,19 +38,32 @@ struct SitePrivacyView: View {
                     }
                     .padding(.vertical, 4)
                     LabeledContent("Protocol", value: browser.selectedTab?.url?.scheme?.uppercased() ?? "Unknown")
+                    LabeledContent("Security", value: browser.selectedTab?.connectionSecurity.summary ?? "Unknown")
+                        .accessibilityIdentifier("siteConnectionSecurity")
                 }
                 Section {
                     Toggle("Block known trackers", isOn: binding(\.blocksTrackers))
                     Toggle("Allow JavaScript", isOn: binding(\.allowsJavaScript))
-                    Toggle("Always block camera and microphone", isOn: binding(\.blocksMediaCapture))
+                    Picker("Camera and microphone", selection: Binding(
+                        get: { policy.mediaCapture },
+                        set: { value in
+                            guard let siteHost else { return }
+                            sitePrivacy.update(host: siteHost, isPrivate: isPrivate) { $0.mediaCapture = value }
+                        }
+                    )) {
+                        ForEach(MediaCapturePolicy.allCases) { option in Text(option.title).tag(option) }
+                    }
                 } header: {
                     Text("Site Controls")
                 } footer: {
-                    Text("Changes are stored only on this device. Reload the page to apply JavaScript changes.")
+                    Text(isPrivate
+                         ? "Changes in a private tab are kept only until every private tab is closed. Reload the page to apply JavaScript changes."
+                         : "Changes are stored only on this device and also apply to this site’s www address. Reload the page to apply JavaScript changes.")
                     if !browser.preferences.blocksTrackers {
                         Text("Tracker blocking is off in Settings. Turn it on there to use this site's blocking preference.")
                     }
                 }
+                .disabled(siteHost == nil)
 
                 Section("Website Data") {
                     Button(role: .destructive) {
@@ -71,10 +86,11 @@ struct SitePrivacyView: View {
                         dismiss()
                     }
                     Button("Reset Site Settings") {
-                        sitePrivacy.reset(host: host)
+                        sitePrivacy.reset(host: host, isPrivate: isPrivate)
                         browser.applyPrivacyPreferences()
                     }
                 }
+                .disabled(siteHost == nil)
             }
             .navigationTitle("Site Privacy")
             .navigationBarTitleDisplayMode(.inline)
@@ -101,7 +117,8 @@ struct SitePrivacyView: View {
         Binding(
             get: { policy[keyPath: keyPath] },
             set: { value in
-                sitePrivacy.update(host: host) { $0[keyPath: keyPath] = value }
+                guard let siteHost else { return }
+                sitePrivacy.update(host: siteHost, isPrivate: isPrivate) { $0[keyPath: keyPath] = value }
                 browser.applyPrivacyPreferences()
             }
         )

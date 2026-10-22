@@ -4,6 +4,7 @@ struct StartPage: View {
     @EnvironmentObject private var browser: BrowserStore
     @ObservedObject var preferences: BrowserPreferences
     @ObservedObject var bookmarks: BookmarkStore
+    @ObservedObject var favorites: FavoritesStore
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var searchFocused: Bool
@@ -19,18 +20,16 @@ struct StartPage: View {
         [GridItem(.adaptive(minimum: dynamicTypeSize.isAccessibilitySize ? 220 : 96), spacing: 12)]
     }
 
-    private struct FavoriteSite: Identifiable {
-        let title: String
-        let address: String
-        let symbol: String
-        var id: String { address }
-    }
-
-    private let favorites: [FavoriteSite] = [
-    FavoriteSite(title: "Wikipedia", address: "https://wikipedia.org", symbol: "book.closed"),
-    FavoriteSite(title: "GitHub", address: "https://github.com", symbol: "chevron.left.forwardslash.chevron.right"),
-    FavoriteSite(title: "DuckDuckGo", address: "https://duckduckgo.com", symbol: "magnifyingglass")
+    private static let knownSymbols = [
+        "wikipedia.org": "book.closed",
+        "github.com": "chevron.left.forwardslash.chevron.right",
+        "duckduckgo.com": "magnifyingglass"
     ]
+
+    private func symbol(for site: SavedSite) -> String {
+        guard let host = site.url?.host?.lowercased() else { return "globe" }
+        return Self.knownSymbols[SitePrivacyStore.key(for: host)] ?? "star"
+    }
 
     var body: some View {
         ScrollView {
@@ -63,6 +62,7 @@ struct StartPage: View {
                     TextField("Search with \(preferences.searchEngine.title)", text: $browser.addressDraft)
                     .accessibilityLabel("Search with \(preferences.searchEngine.title)")
                     .focused($searchFocused)
+                    .onChange(of: searchFocused) { _, focused in browser.isEditingAddress = focused }
                     .textInputAutocapitalization(.never)
                     .autocorrectionDisabled()
                     .keyboardType(.webSearch)
@@ -126,16 +126,16 @@ struct StartPage: View {
                         }
                     }
 
-                    if preferences.showsStartFavorites {
+                    if preferences.showsStartFavorites && !favorites.items.isEmpty {
                         VStack(alignment: .leading, spacing: 12) {
                             sectionTitle("Favorites")
                             LazyVGrid(columns: tileColumns, spacing: 12) {
-                                ForEach(favorites) { favorite in
+                                ForEach(favorites.items) { favorite in
                                     Button {
-                                        if let url = URL(string: favorite.address) { browser.open(url) }
+                                        if let url = favorite.url { browser.open(url) }
                                     } label: {
                                         VStack(spacing: 12) {
-                                            Image(systemName: favorite.symbol)
+                                            Image(systemName: symbol(for: favorite))
                                                 .font(.title3.weight(.medium))
                                                 .foregroundStyle(Color.accentColor)
                                                 .frame(width: 44, height: 44)
@@ -148,6 +148,11 @@ struct StartPage: View {
                                         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
                                     }
                                     .buttonStyle(.plain)
+                                    .contextMenu {
+                                        Button("Remove from Favorites", systemImage: "star.slash", role: .destructive) {
+                                            favorites.remove(favorite)
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -182,7 +187,7 @@ struct StartPage: View {
                         }
                     }
                 } else {
-                    Label("Private tabs stay out of history and are not restored when you reopen Acute. Downloaded files remain on this device until you delete them.", systemImage: "hand.raised.fill")
+                    Label("Private tabs stay out of history and are not restored when you reopen Acute. Private tabs share sign-ins until all of them are closed. Downloaded files remain on this device until you delete them.", systemImage: "hand.raised.fill")
                     .font(.callout)
                     .foregroundStyle(.secondary)
                     .padding()

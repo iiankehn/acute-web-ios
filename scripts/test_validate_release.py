@@ -60,7 +60,9 @@ class ReleaseValidationTests(unittest.TestCase):
             info = {"CFBundleExecutable": "AcuteWeb", "CFBundleVersion": "1",
                     "CFBundleShortVersionString": "0.2.0",
                     "NSCameraUsageDescription": "Website camera access",
-                    "NSMicrophoneUsageDescription": "Website microphone access"}
+                    "NSMicrophoneUsageDescription": "Website microphone access",
+                    "ITSAppUsesNonExemptEncryption": False,
+                    "UIApplicationSceneManifest": {"UIApplicationSupportsMultipleScenes": True}}
             (app / "Info.plist").write_bytes(plistlib.dumps(info))
             (app / "AcuteWeb").write_bytes(b"release executable fixture")
             validate_bundle(app, release=True)
@@ -68,6 +70,11 @@ class ReleaseValidationTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 validate_bundle(app, release=True)
             validate_bundle(app, release=False)
+            for key, value in [("ITSAppUsesNonExemptEncryption", True), ("UIApplicationSceneManifest", {})]:
+                changed = dict(info, **{key: value})
+                (app / "Info.plist").write_bytes(plistlib.dumps(changed))
+                with self.subTest(key=key), self.assertRaises(ValueError):
+                    validate_bundle(app)
             info["NSAppTransportSecurity"] = {"NSAllowsArbitraryLoads": True}
             (app / "Info.plist").write_bytes(plistlib.dumps(info))
             with self.assertRaises(ValueError):
