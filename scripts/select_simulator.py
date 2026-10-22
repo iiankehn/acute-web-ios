@@ -4,6 +4,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 
 FAMILIES = {
     # Preferred device names first; any available device of the family is the fallback.
@@ -39,6 +40,12 @@ def choose(devices, family, minimum):
 
 def creatable(devicetypes, runtimes, family, minimum):
     """Returns (device type, runtime) identifiers to create a missing device, or None."""
+    candidates = creatable_all(devicetypes, runtimes, family, minimum)
+    return candidates[0] if candidates else None
+
+
+def creatable_all(devicetypes, runtimes, family, minimum):
+    """Every (device type, runtime) pair worth trying, best first."""
     preferred, matches = FAMILIES[family]
     kinds = sorted((t for t in devicetypes if matches(t["name"])),
                    key=lambda t: preferred.index(t["name"]) if t["name"] in preferred else len(preferred))
@@ -47,9 +54,7 @@ def creatable(devicetypes, runtimes, family, minimum):
          if r.get("isAvailable") and (version := runtime_version(r["identifier"])) and version >= minimum),
         reverse=True,
     )
-    if not kinds or not ios:
-        return None
-    return kinds[0]["identifier"], ios[0][1]
+    return [(kind["identifier"], ios[0][1]) for kind in kinds] if ios else []
 
 
 def simctl(*arguments):
@@ -66,13 +71,27 @@ def main():
     minimum += (0,) * (3 - len(minimum))
     udid = choose(simctl("devices", "available")["devices"], args.family, minimum)
     if udid is None:
-        listing = simctl()
-        pair = creatable(listing["devicetypes"], listing["runtimes"], args.family, minimum)
-        if pair is None:
-            sys.exit(f"No {args.family} simulator or device type with iOS {args.minimum} or later is installed.")
-        udid = subprocess.run(["xcrun", "simctl", "create", f"Acute CI {args.family}", *pair],
-                              check=True, capture_output=True, text=True).stdout.strip()
+        udid = create(args.family, minimum, args.minimum)
     print(udid)
+
+
+def create(family, minimum, label):
+    """Creates a device, retrying while a just-installed runtime finishes registering."""
+    errors = []
+    for attempt in range(6):
+        listing = simctl()
+        pairs = creatable_all(listing["devicetypes"], listing["runtimes"], family, minimum)
+        if not pairs:
+            sys.exit(f"No {family} simulator or device type with iOS {label} or later is installed.")
+        for pair in pairs[:3]:
+            result = subprocess.run(["xcrun", "simctl", "create", f"Acute CI {family}", *pair],
+                                    capture_output=True, text=True)
+            if result.returncode == 0:
+                return result.stdout.strip()
+            errors.append(f"{' '.join(pair)}: exit {result.returncode}: {result.stderr.strip()}")
+        time.sleep(15)
+    print("\n".join(errors), file=sys.stderr)
+    sys.exit(f"Could not create a {family} simulator with iOS {label} or later.")
 
 
 if __name__ == "__main__":

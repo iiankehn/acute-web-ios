@@ -17,6 +17,8 @@ if [ "${2:-}" = "--ios-runtime" ]; then
   if ! xcrun simctl list runtimes | grep -q "$runtime"; then
     echo "Installing the iOS $want simulator runtime for this Xcode"
     xcodebuild -downloadPlatform iOS
+    # Restart the simulator service so it can create devices on the new runtime.
+    killall -9 com.apple.CoreSimulator.CoreSimulatorService 2>/dev/null || true
   fi
 fi
 xcrun simctl list runtimes
