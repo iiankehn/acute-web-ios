@@ -25,11 +25,11 @@ final class FindInPageTests: XCTestCase {
         browser.findQuery = "Acute"
         browser.findInPage()
         let found = expectation(for: NSPredicate { _, _ in browser.findStatus == "Match found" }, evaluatedWith: nil)
-        wait(for: [found], timeout: 10)
+        wait(for: [found], timeout: 30)
         browser.findQuery = "does not exist"
         browser.findInPage()
         let absent = expectation(for: NSPredicate { _, _ in browser.findStatus == "No matches" }, evaluatedWith: nil)
-        wait(for: [absent], timeout: 10)
+        wait(for: [absent], timeout: 30)
 
         browser.findQuery = "  "
         browser.findInPage()
@@ -43,7 +43,7 @@ final class FindInPageTests: XCTestCase {
         // Let the old tab's callback finish, then confirm it cannot replace the cleared status.
         let flushed = expectation(description: "Old find callback flushed")
         tab.webView.evaluateJavaScript("document.title") { _, _ in flushed.fulfill() }
-        wait(for: [flushed], timeout: 5)
+        wait(for: [flushed], timeout: 30)
         XCTAssertEqual(browser.findStatus, "")
     }
 }

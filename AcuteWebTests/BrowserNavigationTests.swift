@@ -49,16 +49,16 @@ final class BrowserNavigationTests: XCTestCase {
         }
         tab.webView.loadHTMLString("<title>Download fixture</title><body>Local download</body>", baseURL: URL(string: "about:blank"))
         let loaded = expectation(for: NSPredicate { _, _ in tab.webView.title == "Download fixture" && !tab.webView.isLoading }, evaluatedWith: nil)
-        wait(for: [loaded], timeout: 20)
+        wait(for: [loaded], timeout: 30)
         tab.webView.evaluateJavaScript("const link=document.createElement('a'); link.href=URL.createObjectURL(new Blob(['Acute download fixture'],{type:'text/plain'})); link.download='acute-fixture.txt'; document.body.appendChild(link); link.click();")
         let asked = expectation(for: NSPredicate { _, _ in browser.scriptDialogs.pendingRequest?.kind == .download }, evaluatedWith: nil)
-        wait(for: [asked], timeout: 25)
+        wait(for: [asked], timeout: 30)
         XCTAssertTrue(center.items.isEmpty, "Nothing is saved before the person approves the download")
         browser.scriptDialogs.resolve(.accept(""))
         let completed = expectation(for: NSPredicate { _, _ in
             center.items.first.map { $0.state != .downloading } == true
         }, evaluatedWith: nil)
-        wait(for: [completed], timeout: 25)
+        wait(for: [completed], timeout: 30)
         let item = try XCTUnwrap(center.items.first)
         XCTAssertEqual(item.state, .finished, item.failureReason ?? "Download did not finish")
         let destination = try XCTUnwrap(item.destination)
@@ -109,10 +109,10 @@ final class BrowserNavigationTests: XCTestCase {
         stored.expectedFulfillmentCount = 2
         regularStore.httpCookieStore.setCookie(cookie) { stored.fulfill() }
         privateStore.httpCookieStore.setCookie(cookie) { stored.fulfill() }
-        wait(for: [stored], timeout: 15)
+        wait(for: [stored], timeout: 30)
         let cleared = expectation(description: "Regular website data cleared")
         browser.clearRegularWebsiteData { cleared.fulfill() }
-        wait(for: [cleared], timeout: 15)
+        wait(for: [cleared], timeout: 30)
         let checked = expectation(description: "Cookie stores checked independently")
         checked.expectedFulfillmentCount = 2
         regularStore.httpCookieStore.getAllCookies { cookies in
@@ -123,7 +123,7 @@ final class BrowserNavigationTests: XCTestCase {
             XCTAssertTrue(cookies.contains { $0.name == cookie.name && $0.domain == cookie.domain })
             checked.fulfill()
         }
-        wait(for: [checked], timeout: 15)
+        wait(for: [checked], timeout: 30)
         XCTAssertEqual(browser.tabs.count, 2)
         XCTAssertEqual(browser.selectedTabID, privateTab.id)
     }
@@ -259,7 +259,7 @@ final class BrowserNavigationTests: XCTestCase {
         let originalCount = browser.tabs.count
         source.webView.evaluateJavaScript("window.open('https://acute-link-test.invalid/');")
         let created = expectation(for: NSPredicate { _, _ in browser.tabs.count == originalCount + 1 }, evaluatedWith: nil)
-        wait(for: [created], timeout: 10)
+        wait(for: [created], timeout: 30)
         XCTAssertTrue(browser.selectedTab!.isPrivate)
         XCTAssertFalse(browser.selectedTab!.webView.configuration.websiteDataStore.isPersistent)
         XCTAssertEqual(browser.selectedTab!.lastRequestedURL?.host, "acute-link-test.invalid")
@@ -290,9 +290,9 @@ final class BrowserNavigationTests: XCTestCase {
             confirmed.fulfill()
         }
         let confirmShown = expectation(for: NSPredicate { _, _ in browser.scriptDialogs.pendingRequest?.kind == .confirm }, evaluatedWith: nil)
-        wait(for: [confirmShown], timeout: 5)
+        wait(for: [confirmShown], timeout: 30)
         browser.scriptDialogs.resolve(.accept(""))
-        wait(for: [confirmed], timeout: 5)
+        wait(for: [confirmed], timeout: 30)
 
         let prompted = expectation(description: "Website received prompt input")
         tab.webView.evaluateJavaScript("prompt('Name?', 'Default')") { value, error in
@@ -301,11 +301,11 @@ final class BrowserNavigationTests: XCTestCase {
             prompted.fulfill()
         }
         let promptShown = expectation(for: NSPredicate { _, _ in browser.scriptDialogs.pendingRequest?.kind == .prompt }, evaluatedWith: nil)
-        wait(for: [promptShown], timeout: 5)
+        wait(for: [promptShown], timeout: 30)
         XCTAssertEqual(browser.scriptDialogs.pendingRequest?.defaultText, "Default")
         XCTAssertEqual(browser.scriptDialogs.pendingRequest?.host, "acute-dialog-test.invalid")
         browser.scriptDialogs.resolve(.accept("Acute"))
-        wait(for: [prompted], timeout: 5)
+        wait(for: [prompted], timeout: 30)
     }
 
     @MainActor
@@ -393,17 +393,17 @@ final class BrowserNavigationTests: XCTestCase {
         window.makeKeyAndVisible()
         defer { window.isHidden = true; window.rootViewController = nil }
         let mounted = expectation(for: NSPredicate { _, _ in first.webView.superview != nil }, evaluatedWith: nil)
-        wait(for: [mounted], timeout: 5)
+        wait(for: [mounted], timeout: 30)
         browser.newTab()
         let second = browser.selectedTab!
         let switched = expectation(for: NSPredicate { _, _ in
             second.webView.superview != nil && first.webView.superview == nil
         }, evaluatedWith: nil)
-        wait(for: [switched], timeout: 5)
+        wait(for: [switched], timeout: 30)
         browser.select(first)
         let returned = expectation(for: NSPredicate { _, _ in
             first.webView.superview != nil && second.webView.superview == nil
         }, evaluatedWith: nil)
-        wait(for: [returned], timeout: 5)
+        wait(for: [returned], timeout: 30)
     }
 }

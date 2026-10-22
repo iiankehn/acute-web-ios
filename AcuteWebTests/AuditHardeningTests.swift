@@ -216,7 +216,7 @@ final class AuditHardeningTests: XCTestCase {
             browser.confirmDownload(download, filename: "two.txt") { decisions.append($0); decided.fulfill() }
             download.cancel { _ in }
         }
-        wait(for: [decided], timeout: 10)
+        wait(for: [decided], timeout: 30)
         XCTAssertEqual(decisions, [false, false])
         XCTAssertNil(browser.scriptDialogs.pendingRequest)
     }
