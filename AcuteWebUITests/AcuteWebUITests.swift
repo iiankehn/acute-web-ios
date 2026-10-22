@@ -347,12 +347,14 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertFalse(app.buttons["Save"].isEnabled)
         XCTAssertTrue(app.staticTexts["Enter an HTTP or HTTPS website address."].exists)
         let address = app.textFields["bookmarkAddress"]
+        address.tap()
         address.typeText("https://acute-fixture.invalid/")
         XCTAssertTrue(app.buttons["Save"].isEnabled)
         app.buttons["Save"].tap()
         XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
         edit.tap()
         app.buttons["clearBookmarkAddress"].tap()
+        address.tap()
         address.typeText("https://cancelled-edit.invalid/")
         app.buttons["Cancel"].tap()
         XCTAssertTrue(app.navigationBars["Library"].waitForExistence(timeout: 5))
@@ -465,7 +467,8 @@ final class AcuteWebUITests: XCTestCase {
         XCTAssertTrue(group.waitForExistence(timeout: 5))
         _ = app.buttons["Settings"].waitForExistence(timeout: 3)
         for _ in 0..<2 {
-            if group.exists && group.isHittable { group.tap() }
+            // iOS 27 can ignore an element tap on a submenu row while the menu settles; a coordinate tap is not.
+            if group.exists && group.isHittable { group.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap() }
             if app.buttons[item].waitForExistence(timeout: 3) { return }
         }
         XCTFail("The \(category) menu did not open")

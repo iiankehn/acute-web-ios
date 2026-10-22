@@ -68,7 +68,7 @@ struct BrowserMoreMenu: View {
 
     var body: some View {
         Menu {
-            Menu("Tab Management", systemImage: "square.on.square") {
+            Menu("Tab Management", systemImage: "rectangle.stack") {
                 Button("New Tab", systemImage: "plus") { browser.newTab() }
                 Button("New Private Tab", systemImage: "hand.raised.fill") { browser.newTab(isPrivate: true) }
                 Button("Show All Tabs", systemImage: "square.on.square") {
