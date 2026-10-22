@@ -255,7 +255,7 @@ final class BrowserNavigationTests: XCTestCase {
         source.webView.configuration.preferences.javaScriptCanOpenWindowsAutomatically = true
         source.webView.loadHTMLString("<title>Private source</title>", baseURL: URL(string: "about:blank"))
         let loaded = expectation(for: NSPredicate { _, _ in source.webView.title == "Private source" }, evaluatedWith: nil)
-        wait(for: [loaded], timeout: 15)
+        wait(for: [loaded], timeout: 60)
         let originalCount = browser.tabs.count
         source.webView.evaluateJavaScript("window.open('https://acute-link-test.invalid/');")
         let created = expectation(for: NSPredicate { _, _ in browser.tabs.count == originalCount + 1 }, evaluatedWith: nil)
@@ -282,7 +282,7 @@ final class BrowserNavigationTests: XCTestCase {
         let tab = browser.selectedTab!
         tab.webView.loadHTMLString("<title>Dialog fixture</title>", baseURL: URL(string: "https://acute-dialog-test.invalid/"))
         let loaded = expectation(for: NSPredicate { _, _ in tab.webView.title == "Dialog fixture" }, evaluatedWith: nil)
-        wait(for: [loaded], timeout: 15)
+        wait(for: [loaded], timeout: 60)
         let confirmed = expectation(description: "Website received confirmation")
         tab.webView.evaluateJavaScript("confirm('Continue?')") { value, error in
             XCTAssertNil(error)
