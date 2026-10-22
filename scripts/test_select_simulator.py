@@ -44,6 +44,12 @@ class SelectSimulatorTests(unittest.TestCase):
                          ("duo-type", "com.apple.CoreSimulator.SimRuntime.iOS-27-1"))
         self.assertIsNone(creatable(devicetypes[:1], runtimes, "duo", (27, 1, 0)))
 
+    def test_created_iphone_prefers_the_usual_model(self):
+        devicetypes = [{"name": "iPhone 11", "identifier": "old-type"},
+                       {"name": "iPhone 17 Pro", "identifier": "pro-type"}]
+        runtimes = [{"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-1", "isAvailable": True}]
+        self.assertEqual(creatable(devicetypes, runtimes, "iphone", (27, 1, 0))[0], "pro-type")
+
 
 if __name__ == "__main__":
     unittest.main()

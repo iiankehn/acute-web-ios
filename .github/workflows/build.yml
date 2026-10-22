@@ -17,13 +17,13 @@ jobs:
     # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
     runs-on: xcode-27
     # A cold iOS runtime can spend ~10 minutes installing/starting the test host
-    # before the suite runs. Keep assertion timeouts unchanged and allow the
+    # before the suite runs, after downloading the iOS 27.1 runtime when the image lacks it. Keep assertion timeouts unchanged and allow the
     # full unit + UI suites and artifact upload to finish on a slow runner.
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 27.1
-        run: scripts/select_xcode.sh 27.1
+      - name: Select Xcode 27.1 and its iOS simulator runtime
+        run: scripts/select_xcode.sh 27.1 --ios-runtime
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
@@ -99,11 +99,11 @@ jobs:
   ipad-smoke:
     # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
     runs-on: xcode-27
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 27.1
-        run: scripts/select_xcode.sh 27.1
+      - name: Select Xcode 27.1 and its iOS simulator runtime
+        run: scripts/select_xcode.sh 27.1 --ios-runtime
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
@@ -129,11 +129,11 @@ jobs:
 
   iphone-duo:
     runs-on: xcode-27
-    timeout-minutes: 35
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 27.1
-        run: scripts/select_xcode.sh 27.1
+      - name: Select Xcode 27.1 and its iOS simulator runtime
+        run: scripts/select_xcode.sh 27.1 --ios-runtime
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project

@@ -39,8 +39,9 @@ def choose(devices, family, minimum):
 
 def creatable(devicetypes, runtimes, family, minimum):
     """Returns (device type, runtime) identifiers to create a missing device, or None."""
-    _, matches = FAMILIES[family]
-    kinds = [t for t in devicetypes if matches(t["name"])]
+    preferred, matches = FAMILIES[family]
+    kinds = sorted((t for t in devicetypes if matches(t["name"])),
+                   key=lambda t: preferred.index(t["name"]) if t["name"] in preferred else len(preferred))
     ios = sorted(
         ((version, r["identifier"]) for r in runtimes
          if r.get("isAvailable") and (version := runtime_version(r["identifier"])) and version >= minimum),
