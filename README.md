@@ -118,8 +118,10 @@ Acute on iPhone and iPad simulators, and retains the test result bundles.
 Visual review uses physical-device testing; routine screenshots are not captured.
 The XCUITest suite
 also covers privacy settings, private browsing, history, rotation, tab management,
-and start-page customization. CI uses Xcode 27.1 on GitHub's Xcode 27 preview image with iOS 27.1
-simulators, including an iPhone Duo job; building locally also needs Xcode 27.1.
+and start-page customization. CI uses Xcode 27.1 on GitHub's Xcode 27 preview image: iPhone and iPad tests run
+on the iOS 27.0 simulator, and an iPhone Duo job runs on the iOS 27.1 simulator
+(the Duo's launch release, which supports only that device). Building locally
+also needs Xcode 27.1.
 The minimum supported system stays iOS 18. Device and TestFlight builds require
 Apple Developer signing credentials. Failed tests are not retried; unit tests run
 twice and both runs must pass.

@@ -97,8 +97,9 @@ the device model. Where iOS places bars on the side, navigation buttons move to 
 side rail that avoids the outer camera. Controls stay clear of the fold, and
 tabletop posture uses a control deck below the fold. The wide-window sidebar is
 now the Library on both iPad and iPhone Duo, with an opt-in Tabs section. CI
-moved to Xcode 27.1 on GitHub's Xcode 27 preview image and adds an iPhone Duo
-simulator job. Rail-edge choice and fold behavior still need checking in Device
+moved to Xcode 27.1 on GitHub's Xcode 27 preview image. iPhone and iPad run on the
+iOS 27.0 simulator because the iOS 27.1 simulator runtime supports only iPhone Duo;
+a new iPhone Duo job downloads that runtime. Rail-edge choice and fold behavior still need checking in Device
 Hub and on a device; the CI simulator boots in a single pose.
 
 ## Blocking gates before beta distribution

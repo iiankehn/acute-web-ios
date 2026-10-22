@@ -17,13 +17,14 @@ jobs:
     # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
     runs-on: xcode-27
     # A cold iOS runtime can spend ~10 minutes installing/starting the test host
-    # before the suite runs, after downloading the iOS 27.1 runtime when the image lacks it. Keep assertion timeouts unchanged and allow the
+    # before the suite runs. iPhone and iPad use the image's iOS 27.0 runtime because the
+    # iOS 27.1 simulator runtime supports only iPhone Duo. Keep assertion timeouts unchanged and allow the
     # full unit + UI suites and artifact upload to finish on a slow runner.
-    timeout-minutes: 45
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 27.1 and its iOS simulator runtime
-        run: scripts/select_xcode.sh 27.1 --ios-runtime
+      - name: Select Xcode 27.1
+        run: scripts/select_xcode.sh 27.1
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
@@ -33,7 +34,7 @@ jobs:
       - name: Select and boot iPhone
         id: simulator
         run: |
-          DEVICE_ID=$(python3 scripts/select_simulator.py iphone --minimum 27.1)
+          DEVICE_ID=$(python3 scripts/select_simulator.py iphone --minimum 27.0)
           echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$DEVICE_ID" || true
           xcrun simctl bootstatus "$DEVICE_ID" -b
@@ -99,11 +100,11 @@ jobs:
   ipad-smoke:
     # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
     runs-on: xcode-27
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v5
-      - name: Select Xcode 27.1 and its iOS simulator runtime
-        run: scripts/select_xcode.sh 27.1 --ios-runtime
+      - name: Select Xcode 27.1
+        run: scripts/select_xcode.sh 27.1
       - name: Install XcodeGen
         run: brew install xcodegen
       - name: Generate project
@@ -111,7 +112,7 @@ jobs:
       - name: Select and boot iPad
         id: ipad
         run: |
-          IPAD_ID=$(python3 scripts/select_simulator.py ipad --minimum 27.1)
+          IPAD_ID=$(python3 scripts/select_simulator.py ipad --minimum 27.0)
           echo "id=$IPAD_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$IPAD_ID" || true
           xcrun simctl bootstatus "$IPAD_ID" -b
@@ -138,6 +139,7 @@ jobs:
         run: brew install xcodegen
       - name: Generate project
         run: xcodegen generate
+      # The iOS 27.1 simulator runtime is the iPhone Duo release; the job downloads it when missing.
       - name: Select and boot iPhone Duo
         id: duo
         run: |

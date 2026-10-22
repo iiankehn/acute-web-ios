@@ -39,7 +39,8 @@ downloads remain in the app's local Documents container.
 ## Build model
 
 `project.yml` is the source of truth for the Xcode project. GitHub Actions uses
-XcodeGen, Xcode 27.1 and iOS 27.1 iPhone, iPad and iPhone Duo simulators chosen by
+XcodeGen, Xcode 27.1, iOS 27.0 iPhone and iPad simulators and an iOS 27.1 iPhone Duo
+simulator, chosen by
 `scripts/select_simulator.py`. The iPhone job runs unit and interface tests, the
 iPhone Duo job runs unit tests and pose-aware interface tests, and the iPad job
 launches the app. Visual review uses the
