@@ -101,7 +101,9 @@ After the iPhone, iPad and iPhone Duo simulator jobs pass, GitHub Actions builds
 iPhones and iPads and uploads `acute-web-unsigned-ipa`. The artifact contains
 `AcuteWeb-unsigned.ipa`, its SHA-256 checksum, the source commit/build number and
 the release notes. The IPA must be signed with your Apple Account (Xcode or a
-sideloading tool) before installation; see [the release notes](RELEASE-NOTES.md). It is a
+sideloading tool) before installation; see [the release notes](RELEASE-NOTES.md).
+Pushing a version tag such as `v0.5.0` that matches `MARKETING_VERSION` publishes the same
+files as a GitHub pre-release on the [Releases page](https://github.com/iiankehn/acute-web-ios/releases). It is a
 device build; the separate simulator artifacts cannot be installed on a phone.
 
 ## Generate and build
@@ -118,15 +120,18 @@ xcodebuild -project AcuteWeb.xcodeproj -scheme AcuteWeb \
 GitHub Actions regenerates the project, compiles the app and full XCUITest target,
 runs the unit and full interface suites, validates the bundled privacy manifest, installs and launches
 Acute on iPhone and iPad simulators, runs portrait and landscape layout tests on
-iPad and iPhone Duo, and retains the test result bundles.
+iPad and iPhone Duo, runs accessibility audits in light and dark mode, repeats the
+unit and interface suites on an iOS 18 simulator, and retains the test result bundles.
 Visual review uses physical-device testing; routine screenshots are not captured.
 The XCUITest suite
 also covers privacy settings, private browsing, history, rotation, tab management,
 and start-page customization. CI uses Xcode 27.1 on GitHub's Xcode 27 preview image: iPhone and iPad tests run
 on the iOS 27.0 simulator, and an iPhone Duo job runs on the iOS 27.1 simulator
-(the Duo's launch release, which supports only that device). Building locally
+(the Duo's launch release, which supports only that device). A separate job runs
+the unit and interface suites on an iOS 18 iPhone simulator. Building locally
 also needs Xcode 27.1.
-The minimum supported system stays iOS 18. CI does not sign builds; TestFlight
+The minimum supported system stays iOS 18; no iOS 18–26 device is tested, so
+testers use those versions at their own risk. CI does not sign builds; TestFlight
 would need a paid Apple Developer Program membership, which the project does not
 use yet. Failed tests are not retried; unit tests run
 twice and both runs must pass.

@@ -15,13 +15,17 @@ You need:
 - Tools to sign and install the app. Either a Mac with Xcode, or a sideloading
   tool that signs apps with your Apple Account (for example, AltStore or
   Sideloadly). Acute does not make or endorse these tools.
-- An iPhone or iPad running iOS or iPadOS 18 or later.
+- An iPhone or iPad running iOS or iPadOS 18 or later. Acute is developed and
+  tested on iOS 27. On iOS and iPadOS 18 through 26 it is tested only in a
+  simulator, never on a device, so use those versions at your own risk.
 
 ### Install
 
-1. Download `acute-web-unsigned-ipa` from a passing run of the **Build** workflow
-   in this repository's GitHub Actions. You need to be signed in to GitHub, and
-   each download is kept for 14 days.
+1. Download `AcuteWeb-unsigned.ipa` and `SHA256SUMS.txt` from the Acute Web 0.5.0
+   beta on this repository's [Releases page](https://github.com/iiankehn/acute-web-ios/releases).
+   Builds of unreleased changes are also available as `acute-web-unsigned-ipa` from
+   passing runs of the **Build** workflow in GitHub Actions; those need a GitHub
+   sign-in and are kept for 14 days.
 2. Check the download against `SHA256SUMS.txt`, for example with
    `shasum -a 256 -c SHA256SUMS.txt`.
 3. Sign and install `AcuteWeb-unsigned.ipa` with your tool and your Apple Account.
@@ -80,8 +84,10 @@ You need:
 
 ## Known limitations
 
-- This is a beta. It has passed automated tests on the iOS 27.0 and 27.1
-  simulators but has not yet been fully tested on physical devices.
+- This is a beta. It has passed automated tests on the iOS 18, 27.0 and 27.1
+  simulators, including accessibility audits in light and dark mode, but has not
+  yet been fully tested on physical devices.
+- iOS and iPadOS 18 through 26 are not tested on devices. Use them at your own risk.
 - iPhone Duo layouts are tested only in the simulator, not on a real iPhone Duo.
   If something looks wrong on yours, please report it.
 - Downloads stop if iOS suspends Acute for longer than its allowed background time.

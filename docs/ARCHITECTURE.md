@@ -44,7 +44,10 @@ simulator, chosen by
 `scripts/select_simulator.py`. The iPhone job runs unit and interface tests, the
 iPhone Duo job runs unit tests and the layout interface tests, and the iPad job
 runs the layout interface tests and launches the app. The layout tests
-(`AcuteWebLayoutUITests`) check portrait and landscape. Visual review uses the
+(`AcuteWebLayoutUITests`) check portrait and landscape. `AcuteWebAppearanceUITests` runs
+accessibility audits in light and dark mode and checks the largest text size. An iOS 18
+job repeats the unit and interface suites on the oldest supported system, and version
+tags publish the IPA as a GitHub pre-release. Visual review uses the
 physical device without routine screenshot capture. Only after those jobs pass does CI package an unsigned arm64 IPA
 from a Release device build. Device signing and installation are separate.
 
