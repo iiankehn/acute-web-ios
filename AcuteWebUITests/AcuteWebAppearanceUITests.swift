@@ -34,6 +34,14 @@ final class AcuteWebAppearanceUITests: XCTestCase {
             XCTAssertTrue(control.isHittable, "\(control.description) is not reachable at the largest text size")
             XCTAssertTrue(window.frame.contains(control.frame), "\(control.description) is clipped at the largest text size")
         }
+        // No control in the navigation row may overlap another.
+        let row = [app.buttons["Back"], address, app.buttons["pageLoadControl"], app.buttons["Tabs"], app.buttons["More"]]
+        for (index, control) in row.enumerated() {
+            for other in row[(index + 1)...] {
+                XCTAssertFalse(control.frame.insetBy(dx: 1, dy: 1).intersects(other.frame.insetBy(dx: 1, dy: 1)),
+                               "\(control.description) overlaps \(other.description) at the largest text size")
+            }
+        }
         openSettings()
         let tabsSetting = app.switches["showsTabsInSidebar"]
         for _ in 0..<12 where !tabsSetting.isHittable {

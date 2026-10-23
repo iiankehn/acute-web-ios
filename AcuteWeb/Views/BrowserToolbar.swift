@@ -14,6 +14,7 @@ struct BrowserToolbar: View {
     /// Set when Back, Forward, Tabs and More are shown elsewhere, such as the tabletop control deck.
     var hidesNavigationControls = false
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     @FocusState private var addressFocused: Bool
     @ScaledMetric(relativeTo: .body) private var rowHeight: CGFloat = 44
     @State private var controlsExpanded = false
@@ -102,6 +103,9 @@ struct BrowserToolbar: View {
         }
         .buttonStyle(.plain)
         .font(.body.weight(.medium))
+        // Like system bars, the row stops growing at the largest standard size so its buttons never
+        // overlap; touch and hold a button to see it in the large content viewer.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .padding(.leading, 8 + leadingClearance)
         .padding(.trailing, 8)
         .padding(.vertical, 8)
@@ -169,7 +173,9 @@ struct BrowserToolbar: View {
                 if !addressFocused && tab.url != nil {
                     securityIndicator.padding(.leading, 12)
                 }
-                TextField("Search or enter address", text: $browser.addressDraft, selection: $addressSelection)
+                // The full prompt does not fit beside the buttons at accessibility sizes.
+                TextField(dynamicTypeSize.isAccessibilitySize ? "Search" : "Search or enter address",
+                          text: $browser.addressDraft, selection: $addressSelection)
                     .accessibilityLabel("Search or enter address")
                     .accessibilityIdentifier("addressField")
                     .textInputAutocapitalization(.never)
@@ -195,6 +201,7 @@ struct BrowserToolbar: View {
                             .frame(width: 44, height: rowHeight).contentShape(Rectangle())
                     }
                     .accessibilityLabel("Clear Address")
+                    .accessibilityShowsLargeContentViewer()
                     .accessibilityIdentifier("clearAddress")
                     .disabled(browser.addressDraft.isEmpty)
                 }
@@ -253,6 +260,7 @@ struct BrowserToolbar: View {
                 .frame(width: 44, height: rowHeight).contentShape(Rectangle())
         }
         .accessibilityLabel(tab.isLoading ? "Stop" : "Reload")
+        .accessibilityShowsLargeContentViewer()
         .accessibilityIdentifier("pageLoadControl")
         .disabled(!tab.isLoading && tab.url == nil && tab.lastRequestedURL == nil)
     }

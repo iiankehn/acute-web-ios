@@ -102,8 +102,10 @@ iPhones and iPads and uploads `acute-web-unsigned-ipa`. The artifact contains
 `AcuteWeb-unsigned.ipa`, its SHA-256 checksum, the source commit/build number and
 the release notes. The IPA must be signed with your Apple Account (Xcode or a
 sideloading tool) before installation; see [the release notes](RELEASE-NOTES.md).
-Pushing a version tag such as `v0.5.0` that matches `MARKETING_VERSION` publishes the same
-files as a GitHub pre-release on the [Releases page](https://github.com/iiankehn/acute-web-ios/releases). It is a
+Running the **Build** workflow on `main` from the Actions tab (Run workflow), or pushing a
+version tag such as `v0.5.0` that matches `MARKETING_VERSION`, publishes the same files as a
+GitHub pre-release on the [Releases page](https://github.com/iiankehn/acute-web-ios/releases)
+once every job passes. A manual run creates the `v` + `MARKETING_VERSION` tag itself. It is a
 device build; the separate simulator artifacts cannot be installed on a phone.
 
 ## Generate and build
