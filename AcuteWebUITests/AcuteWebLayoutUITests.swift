@@ -104,11 +104,15 @@ final class AcuteWebLayoutUITests: XCTestCase {
 
     private func rotate(to orientation: UIDeviceOrientation) {
         XCUIDevice.shared.orientation = orientation
-        XCTAssertTrue(app.buttons["More"].waitForExistence(timeout: 10))
-        // Wait for the rotation to settle before reading frames.
-        let settled = XCTNSPredicateExpectation(predicate: NSPredicate(format: "isHittable == true"),
-                                                object: app.buttons["More"])
-        _ = XCTWaiter.wait(for: [settled], timeout: 5)
+        let more = app.buttons["More"]
+        XCTAssertTrue(more.waitForExistence(timeout: 10))
+        // Wait for the rotation to settle before reading frames. Asking for hittability mid-rotation, while
+        // the button has no valid activation point, records a failure, so wait for a real frame instead.
+        let window = app.windows.firstMatch
+        let settled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in
+            more.exists && !more.frame.isEmpty && window.frame.contains(more.frame)
+        }, object: nil)
+        _ = XCTWaiter.wait(for: [settled], timeout: 10)
     }
 
     /// Landscape gives wide windows room for the sidebar; skips where the window stays compact.

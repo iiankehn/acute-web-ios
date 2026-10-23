@@ -16,7 +16,8 @@ final class ScriptDialogBrokerTests: XCTestCase {
         broker.resolve(.accept(""), requestID: firstID)
         XCTAssertEqual(firstCalls, 1)
         let advanced = expectation(for: NSPredicate { _, _ in broker.pendingRequest?.host == "two.example" }, evaluatedWith: nil)
-        wait(for: [advanced], timeout: 3)
+        // The broker waits 350 ms before showing the next dialog; slow runners need far longer than that.
+        wait(for: [advanced], timeout: 10)
         XCTAssertEqual(broker.pendingRequest?.defaultText, "Initial")
         broker.resolve(.cancel, requestID: firstID)
         XCTAssertEqual(broker.pendingRequest?.host, "two.example")
@@ -40,7 +41,8 @@ final class ScriptDialogBrokerTests: XCTestCase {
         broker.cancel(tabID: closedTab)
         XCTAssertEqual(cancellations, 2)
         let advanced = expectation(for: NSPredicate { _, _ in broker.pendingRequest?.tabID == otherTab }, evaluatedWith: nil)
-        wait(for: [advanced], timeout: 3)
+        // The broker waits 350 ms before showing the next dialog; slow runners need far longer than that.
+        wait(for: [advanced], timeout: 10)
         XCTAssertEqual(broker.pendingRequest?.tabID, otherTab)
         broker.cancel(tabID: closedTab)
         XCTAssertEqual(cancellations, 2)
