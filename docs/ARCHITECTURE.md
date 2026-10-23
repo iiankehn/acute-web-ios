@@ -45,9 +45,8 @@ simulator, chosen by
 iPhone Duo job runs unit tests and the layout interface tests, and the iPad job
 runs the layout interface tests and launches the app. The layout tests
 (`AcuteWebLayoutUITests`) check portrait and landscape. `AcuteWebAppearanceUITests` runs
-accessibility audits in light and dark mode and checks the largest text size. An iOS 18
-job repeats the unit and interface suites on the oldest supported system, and version
-tags publish the IPA as a GitHub pre-release. Visual review uses the
+accessibility audits in light and dark mode and checks the largest text size. Version tags publish the IPA as a GitHub pre-release.
+Nothing runs below iOS 27: Xcode 27.1 cannot download older simulator runtimes. Visual review uses the
 physical device without routine screenshot capture. Only after those jobs pass does CI package an unsigned arm64 IPA
 from a Release device build. Device signing and installation are separate.
 

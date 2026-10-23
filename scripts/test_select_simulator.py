@@ -50,21 +50,6 @@ class SelectSimulatorTests(unittest.TestCase):
         runtimes = [{"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-1", "isAvailable": True}]
         self.assertEqual(creatable(devicetypes, runtimes, "iphone", (27, 1, 0))[0], "pro-type")
 
-    def test_maximum_keeps_older_runtimes_and_prefer_picks_a_compatible_model(self):
-        devices = dict(DEVICES)
-        devices["com.apple.CoreSimulator.SimRuntime.iOS-18-6"] = [
-            {"name": "iPhone 16", "udid": "sixteen", "isAvailable": True},
-            {"name": "iPhone 16 Pro", "udid": "sixteen-pro", "isAvailable": True},
-        ]
-        self.assertEqual(choose(devices, "iphone", (18, 0, 0), (18, 99, 99), ["iPhone 16 Pro"]), "sixteen-pro")
-        self.assertEqual(choose(devices, "iphone", (18, 0, 0)), "pro")
-        devicetypes = [{"name": "iPhone 17 Pro", "identifier": "pro-type"},
-                       {"name": "iPhone 16 Pro", "identifier": "sixteen-type"}]
-        runtimes = [{"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-18-6", "isAvailable": True},
-                    {"identifier": "com.apple.CoreSimulator.SimRuntime.iOS-27-0", "isAvailable": True}]
-        self.assertEqual(creatable(devicetypes, runtimes, "iphone", (18, 0, 0), (18, 99, 99), ["iPhone 16 Pro"]),
-                         ("sixteen-type", "com.apple.CoreSimulator.SimRuntime.iOS-18-6"))
-
 
 if __name__ == "__main__":
     unittest.main()

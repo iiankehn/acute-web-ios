@@ -236,80 +236,8 @@ jobs:
             DuoInterfaceTests.log
           if-no-files-found: ignore
 
-  iphone-ios18:
-    # iOS 18 is the oldest supported system. No iOS 18 device is available, so this simulator
-    # run is the only iOS 18 evidence; the runtime is downloaded because the image lacks it.
-    runs-on: xcode-27
-    timeout-minutes: 75
-    steps:
-      - uses: actions/checkout@v5
-      - name: Select Xcode 27.1
-        run: scripts/select_xcode.sh 27.1
-      - name: Install XcodeGen
-        run: brew install xcodegen
-      - name: Generate project
-        run: xcodegen generate
-      - name: Install an iOS 18 simulator runtime
-        run: scripts/install_ios_runtime.sh 18
-      - name: Select and boot an iOS 18 iPhone
-        id: ios18
-        run: |
-          DEVICE_ID=$(python3 scripts/select_simulator.py iphone --minimum 18.0 --maximum 18.99 --prefer "iPhone 16 Pro")
-          echo "id=$DEVICE_ID" >> "$GITHUB_OUTPUT"
-          xcrun simctl boot "$DEVICE_ID" || true
-          xcrun simctl bootstatus "$DEVICE_ID" -b
-      - name: Build app and test targets
-        id: build
-        run: |
-          set -o pipefail
-          xcodebuild build-for-testing \
-            -project AcuteWeb.xcodeproj \
-            -scheme AcuteWeb \
-            -destination 'platform=iOS Simulator,id=${{ steps.ios18.outputs.id }}' \
-            -destination-timeout 120 \
-            -derivedDataPath "$PWD/iOS18DerivedData" \
-            -parallel-testing-enabled NO
-      - name: Run unit tests on iOS 18
-        run: |
-          set -o pipefail
-          xcodebuild test-without-building \
-            -project AcuteWeb.xcodeproj \
-            -scheme AcuteWeb \
-            -destination 'platform=iOS Simulator,id=${{ steps.ios18.outputs.id }}' \
-            -derivedDataPath "$PWD/iOS18DerivedData" \
-            -resultBundlePath iOS18UnitResults.xcresult \
-            -parallel-testing-enabled NO \
-            -collect-test-diagnostics never \
-            -only-testing:AcuteWebTests | tee iOS18UnitTests.log
-      - name: Run interface tests on iOS 18
-        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
-        run: |
-          set -o pipefail
-          xcodebuild test-without-building \
-            -project AcuteWeb.xcodeproj \
-            -scheme AcuteWeb \
-            -destination 'platform=iOS Simulator,id=${{ steps.ios18.outputs.id }}' \
-            -derivedDataPath "$PWD/iOS18DerivedData" \
-            -resultBundlePath iOS18InterfaceResults.xcresult \
-            -parallel-testing-enabled NO \
-            -collect-test-diagnostics never \
-            -only-testing:AcuteWebUITests | tee iOS18InterfaceTests.log
-      - name: Validate keyboard and SwiftUI logs
-        run: python3 scripts/validate_release.py "$PWD/iOS18DerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app" --command-log iOS18UnitTests.log --command-log iOS18InterfaceTests.log
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v7
-        with:
-          name: acute-web-ios18-results
-          path: |
-            iOS18UnitResults.xcresult
-            iOS18InterfaceResults.xcresult
-            iOS18UnitTests.log
-            iOS18InterfaceTests.log
-          if-no-files-found: ignore
-
   device-ipa:
-    needs: [simulator, ipad-smoke, iphone-duo, iphone-ios18]
+    needs: [simulator, ipad-smoke, iphone-duo]
     # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
     runs-on: xcode-27
     timeout-minutes: 15

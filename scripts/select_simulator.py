@@ -19,17 +19,12 @@ def runtime_version(identifier):
     return tuple(int(part or 0) for part in match.groups()) if match else None
 
 
-def in_range(version, minimum, maximum):
-    return version is not None and version >= minimum and (maximum is None or version <= maximum)
-
-
-def choose(devices, family, minimum, maximum=None, prefer=()):
-    """Returns the UDID of the best available device on the newest iOS runtime in [minimum, maximum]."""
+def choose(devices, family, minimum):
+    """Returns the UDID of the best available device on the newest iOS runtime at or above `minimum`."""
     preferred, matches = FAMILIES[family]
-    preferred = list(prefer) + preferred
     runtimes = sorted(
         ((version, identifier) for identifier in devices
-         if in_range(version := runtime_version(identifier), minimum, maximum)),
+         if (version := runtime_version(identifier)) and version >= minimum),
         reverse=True,
     )
     for _, identifier in runtimes:
@@ -43,21 +38,20 @@ def choose(devices, family, minimum, maximum=None, prefer=()):
     return None
 
 
-def creatable(devicetypes, runtimes, family, minimum, maximum=None, prefer=()):
+def creatable(devicetypes, runtimes, family, minimum):
     """Returns (device type, runtime) identifiers to create a missing device, or None."""
-    candidates = creatable_all(devicetypes, runtimes, family, minimum, maximum, prefer)
+    candidates = creatable_all(devicetypes, runtimes, family, minimum)
     return candidates[0] if candidates else None
 
 
-def creatable_all(devicetypes, runtimes, family, minimum, maximum=None, prefer=()):
+def creatable_all(devicetypes, runtimes, family, minimum):
     """Every (device type, runtime) pair worth trying, best first."""
     preferred, matches = FAMILIES[family]
-    preferred = list(prefer) + preferred
     kinds = sorted((t for t in devicetypes if matches(t["name"])),
                    key=lambda t: preferred.index(t["name"]) if t["name"] in preferred else len(preferred))
     ios = sorted(
         ((version, r["identifier"]) for r in runtimes
-         if r.get("isAvailable") and in_range(version := runtime_version(r["identifier"]), minimum, maximum)),
+         if r.get("isAvailable") and (version := runtime_version(r["identifier"])) and version >= minimum),
         reverse=True,
     )
     return [(kind["identifier"], ios[0][1]) for kind in kinds] if ios else []
@@ -72,28 +66,21 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("family", choices=sorted(FAMILIES))
     parser.add_argument("--minimum", default="27.1", help="lowest iOS runtime, for example 27.1")
-    parser.add_argument("--maximum", help="highest iOS runtime, for example 18.99")
-    parser.add_argument("--prefer", action="append", default=[], help="device name to try first")
     args = parser.parse_args()
-    minimum = parse_version(args.minimum)
-    maximum = parse_version(args.maximum, fill=99) if args.maximum else None
-    udid = choose(simctl("devices", "available")["devices"], args.family, minimum, maximum, args.prefer)
+    minimum = tuple(int(part) for part in args.minimum.split("."))
+    minimum += (0,) * (3 - len(minimum))
+    udid = choose(simctl("devices", "available")["devices"], args.family, minimum)
     if udid is None:
-        udid = create(args.family, minimum, maximum, args.prefer, args.minimum)
+        udid = create(args.family, minimum, args.minimum)
     print(udid)
 
 
-def parse_version(text, fill=0):
-    version = tuple(int(part) for part in text.split("."))
-    return version + (fill,) * (3 - len(version))
-
-
-def create(family, minimum, maximum, prefer, label):
+def create(family, minimum, label):
     """Creates a device, retrying while a just-installed runtime finishes registering."""
     errors = []
     for attempt in range(6):
         listing = simctl()
-        pairs = creatable_all(listing["devicetypes"], listing["runtimes"], family, minimum, maximum, prefer)
+        pairs = creatable_all(listing["devicetypes"], listing["runtimes"], family, minimum)
         if not pairs:
             sys.exit(f"No {family} simulator or device type with iOS {label} or later is installed.")
         for pair in pairs[:3]:

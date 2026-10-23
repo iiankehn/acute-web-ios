@@ -16,8 +16,8 @@ You need:
   tool that signs apps with your Apple Account (for example, AltStore or
   Sideloadly). Acute does not make or endorse these tools.
 - An iPhone or iPad running iOS or iPadOS 18 or later. Acute is developed and
-  tested on iOS 27. On iOS and iPadOS 18 through 26 it is tested only in a
-  simulator, never on a device, so use those versions at your own risk.
+  tested on iOS 27. It has not been tested on iOS or iPadOS 18 through 26, on a
+  device or in a simulator, so use those versions at your own risk.
 
 ### Install
 
@@ -84,10 +84,10 @@ You need:
 
 ## Known limitations
 
-- This is a beta. It has passed automated tests on the iOS 18, 27.0 and 27.1
+- This is a beta. It has passed automated tests on the iOS 27.0 and 27.1
   simulators, including accessibility audits in light and dark mode, but has not
   yet been fully tested on physical devices.
-- iOS and iPadOS 18 through 26 are not tested on devices. Use them at your own risk.
+- iOS and iPadOS 18 through 26 are not tested at all. Use them at your own risk.
 - iPhone Duo layouts are tested only in the simulator, not on a real iPhone Duo.
   If something looks wrong on yours, please report it.
 - Downloads stop if iOS suspends Acute for longer than its allowed background time.
