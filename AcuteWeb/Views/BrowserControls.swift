@@ -52,10 +52,15 @@ struct TabsOverviewButton: View {
                         .font(.system(size: min(badgeSize, 13), weight: .bold))
                         .minimumScaleFactor(0.6)
                         .allowsHitTesting(false)
+                        // The count stays small to fit inside the symbol; the button's value reads it out.
+                        .accessibilityIdentifier("tabCountBadge")
                 }
                 .frame(width: 44, height: height).contentShape(Rectangle())
         }
         .accessibilityLabel("Tabs").accessibilityValue("\(browser.tabs.count) open")
+        .accessibilityShowsLargeContentViewer {
+            Label("\(browser.tabs.count) tabs", systemImage: "square.on.square")
+        }
     }
 }
 

@@ -36,6 +36,14 @@ struct SettingsView: View {
     @State private var isClearingWebsiteData = false
     @State private var websiteDataCleared = false
 
+    private var searchEnginePicker: some View {
+        Picker("Search engine", selection: $preferences.searchEngine) {
+            ForEach(SearchEngine.allCases) { engine in
+                Text(engine.title).tag(engine)
+            }
+        }
+    }
+
     private var appVersion: String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "0.5.0"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "1"
@@ -57,10 +65,11 @@ struct SettingsView: View {
                     .padding(.vertical, 6)
                 }
                 Section("Search") {
-                    Picker("Search engine", selection: $preferences.searchEngine) {
-                        ForEach(SearchEngine.allCases) { engine in
-                            Text(engine.title).tag(engine)
-                        }
+                    // Large text cuts off the chosen engine beside the label, so list the engines instead.
+                    if dynamicTypeSize.isAccessibilitySize {
+                        searchEnginePicker.pickerStyle(.inline)
+                    } else {
+                        searchEnginePicker
                     }
                 }
 
