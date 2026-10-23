@@ -92,7 +92,9 @@ struct BrowserToolbar: View {
             if addressFocused { browser.isEditingAddress = false }
         }
         .alert("Unable to Open Address", isPresented: Binding(
-            get: { browser.addressInputError != nil }, set: { if !$0 { browser.addressInputError = nil } }
+            get: { browser.addressInputError != nil },
+            // SwiftUI sets this while updating views as the alert closes, so publish the change afterwards.
+            set: { presented in if !presented { DispatchQueue.main.async { browser.addressInputError = nil } } }
         )) {
             Button("OK") { browser.addressInputError = nil }
         } message: {

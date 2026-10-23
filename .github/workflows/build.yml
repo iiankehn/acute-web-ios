@@ -49,6 +49,8 @@ jobs:
             -destination-timeout 120 \
             -derivedDataPath "$PWD/DerivedData" \
             -parallel-testing-enabled NO
+      # Test steps skip simulator diagnostics collection, which spent 10 minutes timing out after failures;
+      # the result bundles still keep failures, logs and screen recordings.
       - name: Run unit tests
         run: |
           set -o pipefail
@@ -59,6 +61,7 @@ jobs:
             -derivedDataPath "$PWD/DerivedData" \
             -resultBundlePath TestResults.xcresult \
             -parallel-testing-enabled NO \
+            -collect-test-diagnostics never \
             -test-iterations 2 \
             -test-repetition-relaunch-enabled YES \
             -only-testing:AcuteWebTests | tee UnitTests.log
@@ -73,6 +76,7 @@ jobs:
             -derivedDataPath "$PWD/DerivedData" \
             -resultBundlePath InterfaceResults.xcresult \
             -parallel-testing-enabled NO \
+            -collect-test-diagnostics never \
             -only-testing:AcuteWebUITests | tee InterfaceTests.log
       - name: Validate bundled privacy manifest
         run: |
@@ -87,7 +91,7 @@ jobs:
           xcrun simctl launch --terminate-running-process '${{ steps.simulator.outputs.id }}' com.acuteweb.browser.ios
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: acute-web-test-results
           path: |
@@ -100,7 +104,7 @@ jobs:
   ipad-smoke:
     # iPhone Duo needs the Xcode 27.1 SDK, available on the Xcode 27 preview image.
     runs-on: xcode-27
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v5
       - name: Select Xcode 27.1
@@ -116,17 +120,48 @@ jobs:
           echo "id=$IPAD_ID" >> "$GITHUB_OUTPUT"
           xcrun simctl boot "$IPAD_ID" || true
           xcrun simctl bootstatus "$IPAD_ID" -b
-      - name: Build, install, and launch app on iPad
+      - name: Build app and test targets
+        id: build
         run: |
-          xcodebuild build \
+          set -o pipefail
+          xcodebuild build-for-testing \
             -project AcuteWeb.xcodeproj \
             -scheme AcuteWeb \
             -destination 'platform=iOS Simulator,id=${{ steps.ipad.outputs.id }}' \
             -destination-timeout 120 \
-            -derivedDataPath "$PWD/iPadDerivedData"
+            -derivedDataPath "$PWD/iPadDerivedData" \
+            -parallel-testing-enabled NO
+      - name: Run iPad layout interface tests
+        env:
+          TEST_RUNNER_ACUTE_LAYOUT_TESTS: "1"
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project AcuteWeb.xcodeproj \
+            -scheme AcuteWeb \
+            -destination 'platform=iOS Simulator,id=${{ steps.ipad.outputs.id }}' \
+            -derivedDataPath "$PWD/iPadDerivedData" \
+            -resultBundlePath iPadInterfaceResults.xcresult \
+            -parallel-testing-enabled NO \
+            -collect-test-diagnostics never \
+            -only-testing:AcuteWebUITests/AcuteWebLayoutUITests | tee iPadInterfaceTests.log
+      - name: Install and launch app on iPad
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
           APP_PATH="$PWD/iPadDerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app"
           xcrun simctl install '${{ steps.ipad.outputs.id }}' "$APP_PATH"
           xcrun simctl launch --terminate-running-process '${{ steps.ipad.outputs.id }}' com.acuteweb.browser.ios
+      - name: Validate keyboard and SwiftUI logs
+        run: python3 scripts/validate_release.py "$PWD/iPadDerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app" --command-log iPadInterfaceTests.log
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: acute-web-ipad-results
+          path: |
+            iPadInterfaceResults.xcresult
+            iPadInterfaceTests.log
+          if-no-files-found: ignore
 
   iphone-duo:
     runs-on: xcode-27
@@ -168,11 +203,12 @@ jobs:
             -derivedDataPath "$PWD/DuoDerivedData" \
             -resultBundlePath DuoUnitResults.xcresult \
             -parallel-testing-enabled NO \
+            -collect-test-diagnostics never \
             -only-testing:AcuteWebTests | tee DuoUnitTests.log
       - name: Run iPhone Duo interface tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         env:
-          TEST_RUNNER_ACUTE_IPHONE_DUO: "1"
+          TEST_RUNNER_ACUTE_LAYOUT_TESTS: "1"
         run: |
           set -o pipefail
           xcodebuild test-without-building \
@@ -182,12 +218,13 @@ jobs:
             -derivedDataPath "$PWD/DuoDerivedData" \
             -resultBundlePath DuoInterfaceResults.xcresult \
             -parallel-testing-enabled NO \
-            -only-testing:AcuteWebUITests/AcuteWebDuoUITests | tee DuoInterfaceTests.log
-      - name: Validate keyboard registration logs
+            -collect-test-diagnostics never \
+            -only-testing:AcuteWebUITests/AcuteWebLayoutUITests | tee DuoInterfaceTests.log
+      - name: Validate keyboard and SwiftUI logs
         run: python3 scripts/validate_release.py "$PWD/DuoDerivedData/Build/Products/Debug-iphonesimulator/AcuteWeb.app" --command-log DuoUnitTests.log --command-log DuoInterfaceTests.log
       - name: Upload test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: acute-web-iphone-duo-results
           path: |
@@ -250,12 +287,13 @@ jobs:
               "build": os.environ["BUILD_NUMBER"],
               "platform": "iOS device (arm64)",
               "signed": False,
-              "installation": "Sign this IPA with your chosen sideloading tool before installing."
+              "installation": "Sideloading only: sign this IPA with your Apple Account using Xcode or a sideloading tool. See RELEASE-NOTES.md."
           }, indent=2) + "\n")
           PYTHON
+          cp ../RELEASE-NOTES.md .
           rm -rf Payload
       - name: Upload unsigned device IPA
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: acute-web-unsigned-ipa
           path: DeviceArtifacts/*

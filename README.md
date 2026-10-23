@@ -29,15 +29,17 @@ legacy `BETA` asset is not the primary icon for current development builds.
   Glass where available.
 - No third-party runtime dependencies.
 
-## Version 0.2 interface work
+## Version 0.5 beta
 
-Work is moving into beta hardening. The [beta readiness gate](docs/BETA-READINESS.md)
+Acute Web 0.5 is a sideload-only beta: there is no App Store or TestFlight build.
+The [release notes](RELEASE-NOTES.md) explain how to install it with a free Apple
+Developer account and what changed. Work is in beta hardening. The [beta readiness gate](docs/BETA-READINESS.md)
 tracks App Review requirements, design/accessibility checks, device evidence and
 submission blockers separately. Passing CI is not App Store approval or a claim
 that physical iPad validation is complete. [The privacy policy](PRIVACY.md) is
 available in Settings and bundled for offline reading.
 
-The current development build begins the [0.2 UI stage](docs/UI-0.2.md):
+The interface builds on the [0.2 UI stage](docs/UI-0.2.md):
 navigation uses a single row of tab/address capsules with persistent Back,
 conditional Forward, and Refresh/Stop inside the selected tab. Wide windows on
 iPad and an open iPhone Duo add a Library sidebar (Bookmarks, History, Downloads);
@@ -95,10 +97,11 @@ Page commands follow the selected tab's current navigation and zoom state.
 
 ## Device testing artifact
 
-After both simulator jobs pass, GitHub Actions builds the Release app for arm64
+After the iPhone, iPad and iPhone Duo simulator jobs pass, GitHub Actions builds the Release app for arm64
 iPhones and iPads and uploads `acute-web-unsigned-ipa`. The artifact contains
-`AcuteWeb-unsigned.ipa`, its SHA-256 checksum, and the source commit/build number.
-The IPA must be signed by your sideloading tool before installation. It is a
+`AcuteWeb-unsigned.ipa`, its SHA-256 checksum, the source commit/build number and
+the release notes. The IPA must be signed with your Apple Account (Xcode or a
+sideloading tool) before installation; see [the release notes](RELEASE-NOTES.md). It is a
 device build; the separate simulator artifacts cannot be installed on a phone.
 
 ## Generate and build
@@ -114,7 +117,8 @@ xcodebuild -project AcuteWeb.xcodeproj -scheme AcuteWeb \
 
 GitHub Actions regenerates the project, compiles the app and full XCUITest target,
 runs the unit and full interface suites, validates the bundled privacy manifest, installs and launches
-Acute on iPhone and iPad simulators, and retains the test result bundles.
+Acute on iPhone and iPad simulators, runs portrait and landscape layout tests on
+iPad and iPhone Duo, and retains the test result bundles.
 Visual review uses physical-device testing; routine screenshots are not captured.
 The XCUITest suite
 also covers privacy settings, private browsing, history, rotation, tab management,
@@ -122,6 +126,7 @@ and start-page customization. CI uses Xcode 27.1 on GitHub's Xcode 27 preview im
 on the iOS 27.0 simulator, and an iPhone Duo job runs on the iOS 27.1 simulator
 (the Duo's launch release, which supports only that device). Building locally
 also needs Xcode 27.1.
-The minimum supported system stays iOS 18. Device and TestFlight builds require
-Apple Developer signing credentials. Failed tests are not retried; unit tests run
+The minimum supported system stays iOS 18. CI does not sign builds; TestFlight
+would need a paid Apple Developer Program membership, which the project does not
+use yet. Failed tests are not retried; unit tests run
 twice and both runs must pass.

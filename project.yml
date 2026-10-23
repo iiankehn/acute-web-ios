@@ -28,6 +28,9 @@ targets:
         INFOPLIST_FILE: AcuteWeb/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: Acute Web
         INFOPLIST_KEY_ITSAppUsesNonExemptEncryption: NO
+        # iOS warns that apps must support every orientation; the layout adapts to each.
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
+        INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         LOCALIZATION_PREFERS_STRING_CATALOGS: YES
         SWIFT_EMIT_LOC_STRINGS: YES
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.utilities
@@ -42,7 +45,7 @@ targets:
         ALWAYS_EMBED_SWIFT_STANDARD_LIBRARIES: YES
         CODE_SIGN_STYLE: Automatic
         CURRENT_PROJECT_VERSION: 1
-        MARKETING_VERSION: 0.2.0
+        MARKETING_VERSION: 0.5.0
     scheme:
       testTargets: [AcuteWebTests, AcuteWebUITests]
   AcuteWebTests:
