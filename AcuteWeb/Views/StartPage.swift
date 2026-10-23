@@ -139,10 +139,11 @@ struct StartPage: View {
                                             Image(systemName: symbol(for: favorite))
                                                 .font(.title3.weight(.medium))
                                                 .foregroundStyle(Color.accentColor)
-                                                .frame(width: min(tileIconSize, 88), height: min(tileIconSize, 88))
+                                                .frame(minWidth: min(tileIconSize, 88), minHeight: min(tileIconSize, 88))
                                                 .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
                                             Text(favorite.title).font(.subheadline.weight(.medium))
-                                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                                                .multilineTextAlignment(.center)
+                                                .fixedSize(horizontal: false, vertical: true)
                                         }
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .padding(12)

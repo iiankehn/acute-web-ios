@@ -65,12 +65,8 @@ struct SettingsView: View {
                     .padding(.vertical, 6)
                 }
                 Section("Search") {
-                    // Large text cuts off the chosen engine beside the label, so list the engines instead.
-                    if dynamicTypeSize.isAccessibilitySize {
-                        searchEnginePicker.pickerStyle(.inline)
-                    } else {
-                        searchEnginePicker
-                    }
+                    // A separate list keeps the engine names readable at every text size.
+                    searchEnginePicker.pickerStyle(.navigationLink)
                 }
 
                 Section {

@@ -127,18 +127,12 @@ struct TabGrid: View {
                 } else {
                     scopePicker
                 }
-                // Stack the counts when large text no longer fits them on one line.
-                ViewThatFits(in: .horizontal) {
-                    HStack {
-                        tabCount
-                        Spacer()
-                        privateCount
-                    }
-                    VStack(alignment: .leading, spacing: 4) {
-                        tabCount
-                        privateCount
-                    }
+                // One count per line, so neither is cut off as text grows.
+                VStack(alignment: .leading, spacing: 4) {
+                    tabCount
+                    privateCount
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.readableSecondary)
                 if visibleTabs.isEmpty {
@@ -286,7 +280,7 @@ private struct TabCard: View {
                     }
                     Text(tab.url?.host ?? (tab.isPrivate ? "Private Tab" : "New Tab"))
                         .font(.caption).foregroundStyle(.readableSecondary)
-                        .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 1)
+                        .lineLimit(dynamicTypeSize > .large ? nil : 1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)

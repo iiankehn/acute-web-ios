@@ -80,7 +80,7 @@ final class AcuteWebAppearanceUITests: XCTestCase {
                 // The tab count stays small to fit inside its symbol; the Tabs button reads the count
                 // out and shows it in the large content viewer.
                 if element.identifier == "tabCountBadge" && issue.auditType == .dynamicType { return true }
-                XCTFail("\(screen): \(issue.compactDescription) (\(issue.auditType.rawValue)) on '\(element.label)' id '\(element.identifier)'")
+                XCTFail("\(screen): \(issue.compactDescription) on '\(element.label)' id '\(element.identifier)' \(element.frame): \(issue.detailedDescription)")
                 return true
             }
         } catch {
@@ -96,8 +96,14 @@ final class AcuteWebAppearanceUITests: XCTestCase {
         // At large text sizes the menu fills the screen and Settings starts below it.
         let settings = app.buttons["Settings"]
         for _ in 0..<6 where !(settings.exists && settings.isHittable) {
-            let menu = app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.75))
-            menu.press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.3)))
+            // Drag inside the menu: a drag that starts below it closes the menu instead.
+            let menu = app.collectionViews.firstMatch
+            if menu.exists {
+                menu.swipeUp()
+            } else {
+                app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.5))
+                    .press(forDuration: 0.05, thenDragTo: app.coordinate(withNormalizedOffset: CGVector(dx: 0.3, dy: 0.15)))
+            }
         }
         XCTAssertTrue(settings.waitForExistence(timeout: 5))
         settings.tap()
