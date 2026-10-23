@@ -59,7 +59,10 @@ final class AcuteWebAppearanceUITests: XCTestCase {
         app.buttons["Done"].tap()
 
         app.buttons["Tabs"].tap()
-        XCTAssertTrue(app.navigationBars["Tabs"].waitForExistence(timeout: 10))
+        let tabsBar = app.navigationBars["Tabs"]
+        XCTAssertTrue(tabsBar.waitForExistence(timeout: 10))
+        // The overview opens as a half-height sheet whose lower content scrolls; audit it at full height.
+        tabsBar.swipeUp()
         audit("\(appearance) tab overview")
         app.buttons["Done"].tap()
 

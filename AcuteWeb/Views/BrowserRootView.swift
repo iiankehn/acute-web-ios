@@ -4,6 +4,7 @@ struct BrowserRootView: View {
     @EnvironmentObject private var browser: BrowserStore
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
 
     /// Any private tab can appear in the tab row, sidebar or tab overview, so all of them keep the app-switcher cover on.
     private var coversForPrivacy: Bool {
@@ -28,7 +29,8 @@ struct BrowserRootView: View {
         }
         .sheet(isPresented: $browser.showsTabs) {
             NavigationStack { TabGrid() }
-                .presentationDetents([.medium, .large])
+                // Accessibility text sizes need the full height, so skip the half-height sheet.
+                .presentationDetents(dynamicTypeSize.isAccessibilitySize ? [.large] : [.medium, .large])
         }
         .sheet(isPresented: $browser.showsSettings) {
             SettingsView(preferences: browser.preferences, history: browser.history, sitePrivacy: browser.sitePrivacy,
