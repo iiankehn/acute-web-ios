@@ -25,6 +25,11 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_command_log("Keyboard Shortcut (duplicate modifierFlags: command, input: ,):")
 
+    def test_missing_orientation_support_fails(self):
+        with self.assertRaises(ValueError):
+            validate_command_log("<unknown>:0: warning: -[AcuteWebLayoutUITests testRailActionsStayUsable] : "
+                                 "Update the Info.plist: Support for all orientations will soon be required.")
+
     def test_state_published_during_view_update_fails(self):
         with self.assertRaises(ValueError):
             validate_command_log("<unknown>:0: warning: -[AcuteWebUITests testUnsupportedTypedAddressShowsClearFeedback] : "

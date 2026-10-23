@@ -64,6 +64,8 @@ def validate_bundle(app, release=False):
 def validate_command_log(log):
     if "Keyboard Shortcut (duplicate modifierFlags:" in log:
         raise ValueError("Duplicate keyboard shortcuts reported by UIKit menu registration")
+    if "Support for all orientations will soon be required" in log:
+        raise ValueError("The app does not declare support for every interface orientation")
     if "Publishing changes from within view updates is not allowed" in log:
         raise ValueError("SwiftUI reported a state change published during a view update")
 
