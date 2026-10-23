@@ -55,20 +55,29 @@ jobs:
             -parallel-testing-enabled NO
       # Test steps skip simulator diagnostics collection, which spent 10 minutes timing out after failures;
       # the result bundles still keep failures, logs and screen recordings.
+      # The unit tests run twice and must pass both times. The simulator restarts between passes: WebKit
+      # processes the first pass could not terminate otherwise stalled website and download tests in the second.
       - name: Run unit tests
         run: |
           set -o pipefail
-          xcodebuild test-without-building \
-            -project AcuteWeb.xcodeproj \
-            -scheme AcuteWeb \
-            -destination 'platform=iOS Simulator,id=${{ steps.simulator.outputs.id }}' \
-            -derivedDataPath "$PWD/DerivedData" \
-            -resultBundlePath TestResults.xcresult \
-            -parallel-testing-enabled NO \
-            -collect-test-diagnostics never \
-            -test-iterations 2 \
-            -test-repetition-relaunch-enabled YES \
-            -only-testing:AcuteWebTests | tee UnitTests.log
+          DEVICE_ID='${{ steps.simulator.outputs.id }}'
+          : > UnitTests.log
+          for PASS in 1 2; do
+            if [ "$PASS" = 2 ]; then
+              xcrun simctl shutdown "$DEVICE_ID"
+              xcrun simctl boot "$DEVICE_ID"
+              xcrun simctl bootstatus "$DEVICE_ID" -b
+            fi
+            xcodebuild test-without-building \
+              -project AcuteWeb.xcodeproj \
+              -scheme AcuteWeb \
+              -destination "platform=iOS Simulator,id=$DEVICE_ID" \
+              -derivedDataPath "$PWD/DerivedData" \
+              -resultBundlePath "TestResults-$PASS.xcresult" \
+              -parallel-testing-enabled NO \
+              -collect-test-diagnostics never \
+              -only-testing:AcuteWebTests | tee -a UnitTests.log
+          done
       - name: Run browser interface tests
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
@@ -99,7 +108,8 @@ jobs:
         with:
           name: acute-web-test-results
           path: |
-            TestResults.xcresult
+            TestResults-1.xcresult
+            TestResults-2.xcresult
             InterfaceResults.xcresult
             UnitTests.log
             InterfaceTests.log

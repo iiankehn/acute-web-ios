@@ -135,4 +135,4 @@ cannot download older simulator runtimes and no such device is available), so
 testers use those versions at their own risk. CI does not sign builds; TestFlight
 would need a paid Apple Developer Program membership, which the project does not
 use yet. Failed tests are not retried; unit tests run
-twice and both runs must pass.
+twice, with the simulator restarted between runs, and both runs must pass.
