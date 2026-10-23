@@ -49,16 +49,20 @@ final class AcuteWebLayoutUITests: XCTestCase {
         }
     }
 
-    func testMoreMenuOffersTabActionsInEveryOrientation() {
-        for orientation in orientations {
+    func testMoreMenuTabActionsWorkInEveryOrientation() {
+        for (index, orientation) in orientations.enumerated() {
             rotate(to: orientation)
             app.buttons["More"].tap()
-            XCTAssertTrue(app.buttons["New Private Tab"].waitForExistence(timeout: 5),
+            let privateTab = app.buttons["New Private Tab"]
+            XCTAssertTrue(privateTab.waitForExistence(timeout: 10),
                           "More has no tab actions in \(orientation.rawValue)")
-            XCTAssertTrue(app.buttons["Settings"].exists)
-            // Tap the page area to close the menu without choosing anything.
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85)).tap()
-            XCTAssertTrue(app.buttons["Settings"].waitForNonExistence(timeout: 5))
+            // Choosing an action closes the menu, which an outside tap did not do reliably.
+            privateTab.tap()
+            XCTAssertTrue(app.buttons["Settings"].waitForNonExistence(timeout: 10))
+            let opened = NSPredicate(format: "value == %@", "\(index + 2) open")
+            let tabs = XCTNSPredicateExpectation(predicate: opened, object: app.buttons["Tabs"])
+            XCTAssertEqual(XCTWaiter.wait(for: [tabs], timeout: 10), .completed,
+                           "New Private Tab did not open a tab in \(orientation.rawValue)")
         }
     }
 
