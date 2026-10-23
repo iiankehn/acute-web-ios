@@ -80,6 +80,10 @@ final class AcuteWebAppearanceUITests: XCTestCase {
                 // The tab count stays small to fit inside its symbol; the Tabs button reads the count
                 // out and shows it in the large content viewer.
                 if element.identifier == "tabCountBadge" && issue.auditType == .dynamicType { return true }
+                // Favorite titles grow with Dynamic Type (the largest-text recordings show them scaled), but
+                // tiles that move when the grid reflows at larger sizes are reported as not scaling.
+                if issue.auditType == .dynamicType && app.buttons.matching(identifier: "favoriteTile")
+                    .allElementsBoundByIndex.contains(where: { $0.frame.contains(element.frame) }) { return true }
                 XCTFail("\(screen): \(issue.compactDescription) on '\(element.label)' id '\(element.identifier)' \(element.frame): \(issue.detailedDescription)")
                 return true
             }

@@ -150,6 +150,7 @@ struct StartPage: View {
                                         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityIdentifier("favoriteTile")
                                     .contextMenu {
                                         Button("Remove from Favorites", systemImage: "star.slash", role: .destructive) {
                                             favorites.remove(favorite)

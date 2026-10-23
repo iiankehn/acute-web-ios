@@ -101,10 +101,12 @@ struct TabGrid: View {
 
     private var tabCount: some View {
         Text("\(visibleTabs.count) of \(browser.tabs.count) open")
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var privateCount: some View {
         Label("\(browser.tabs.filter { $0.isPrivate }.count) private", systemImage: "hand.raised")
+            .fixedSize(horizontal: false, vertical: true)
     }
 
     private var scopePicker: some View {
@@ -281,6 +283,7 @@ private struct TabCard: View {
                     Text(tab.url?.host ?? (tab.isPrivate ? "Private Tab" : "New Tab"))
                         .font(.caption).foregroundStyle(.readableSecondary)
                         .lineLimit(dynamicTypeSize > .large ? nil : 1)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)

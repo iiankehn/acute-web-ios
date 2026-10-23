@@ -516,9 +516,10 @@ final class AcuteWebUITests: XCTestCase {
         let next = app.webViews.links["Next fixture page"]
         XCTAssertTrue(next.waitForExistence(timeout: 5))
         next.tap()
-        XCTAssertTrue(app.webViews.staticTexts["Second fixture page"].waitForExistence(timeout: 5))
+        // A slow runner took over 15 seconds to load the second page and enable Back.
+        XCTAssertTrue(app.webViews.staticTexts["Second fixture page"].waitForExistence(timeout: 15))
         let enabled = XCTNSPredicateExpectation(predicate: NSPredicate { _, _ in back.isEnabled }, object: nil)
-        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 5), .completed)
+        XCTAssertEqual(XCTWaiter.wait(for: [enabled], timeout: 15), .completed)
         XCTAssertTrue(back.isHittable)
         back.tap()
         let forward = app.buttons["Forward"]
