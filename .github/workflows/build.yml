@@ -6,6 +6,8 @@ on:
     # A version tag such as v0.5.0 also publishes a GitHub release after every job passes.
     tags: ['v*']
   pull_request:
+  # Running the workflow on main by hand publishes the release for MARKETING_VERSION and creates its tag.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -303,8 +305,8 @@ jobs:
           retention-days: 14
 
   release:
-    # Runs only for version tags, after the IPA job (and so every test job) has passed.
-    if: startsWith(github.ref, 'refs/tags/v')
+    # Runs for version tags, or a manual run on main, after the IPA job (and so every test job) has passed.
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main')
     needs: device-ipa
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -312,10 +314,17 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v5
-      - name: Check that the tag matches the app version
+      - name: Choose the release tag
+        id: tag
         run: |
           version=$(sed -n 's/^ *MARKETING_VERSION: *//p' project.yml)
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            echo "name=v$version" >> "$GITHUB_OUTPUT"
+            echo "source=--target $GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          elif [ "v$version" = "$GITHUB_REF_NAME" ]; then
+            echo "name=$GITHUB_REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "source=--verify-tag" >> "$GITHUB_OUTPUT"
+          else
             echo "::error::Tag $GITHUB_REF_NAME does not match MARKETING_VERSION $version in project.yml."
             exit 1
           fi
@@ -326,10 +335,13 @@ jobs:
       - name: Publish the GitHub release
         env:
           GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.tag.outputs.name }}
+          TAG_SOURCE: ${{ steps.tag.outputs.source }}
         run: |
-          gh release create "$GITHUB_REF_NAME" \
+          # TAG_SOURCE is --verify-tag for a pushed tag, or --target <commit> to create the tag on a manual run.
+          gh release create "$TAG" \
             release/AcuteWeb-unsigned.ipa release/SHA256SUMS.txt release/build.json \
-            --title "Acute Web ${GITHUB_REF_NAME#v} beta" \
+            --title "Acute Web ${TAG#v} beta" \
             --notes-file RELEASE-NOTES.md \
             --prerelease \
-            --verify-tag
+            $TAG_SOURCE

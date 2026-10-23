@@ -31,6 +31,7 @@ struct HistoryButton: View {
         .disabled(direction == .back ? !tab.canGoBack : !tab.canGoForward)
         .accessibilityLabel(direction == .back ? "Back" : "Forward")
         .accessibilityHint("Touch and hold for history")
+        .accessibilityShowsLargeContentViewer()
     }
 }
 
@@ -120,6 +121,7 @@ struct BrowserMoreMenu: View {
             Image(systemName: "ellipsis").frame(width: 44, height: height).contentShape(Rectangle())
         }
         .accessibilityLabel("More")
+        .accessibilityShowsLargeContentViewer()
     }
 
     private var pageZoomMenu: some View {
@@ -163,6 +165,7 @@ struct NavigationRail: View {
                         Image(systemName: "plus").frame(width: 44, height: buttonSize).contentShape(Rectangle())
                     }
                     .accessibilityLabel("New Tab")
+                    .accessibilityShowsLargeContentViewer()
                     TabsOverviewButton(tab: tab, height: buttonSize)
                     BrowserMoreMenu(tab: tab, height: buttonSize)
                 }
@@ -173,6 +176,8 @@ struct NavigationRail: View {
         }
         .buttonStyle(.plain)
         .font(.body.weight(.medium))
+        // The rail keeps a fixed width, so it stops growing at the largest standard size like the toolbar.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .padding(.vertical, 8)
         .padding(.horizontal, 6)
         .avoidingOcclusions()
