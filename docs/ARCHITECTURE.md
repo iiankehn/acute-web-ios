@@ -42,8 +42,9 @@ downloads remain in the app's local Documents container.
 XcodeGen, Xcode 27.1, iOS 27.0 iPhone and iPad simulators and an iOS 27.1 iPhone Duo
 simulator, chosen by
 `scripts/select_simulator.py`. The iPhone job runs unit and interface tests, the
-iPhone Duo job runs unit tests and pose-aware interface tests, and the iPad job
-launches the app. Visual review uses the
+iPhone Duo job runs unit tests and the layout interface tests, and the iPad job
+runs the layout interface tests and launches the app. The layout tests
+(`AcuteWebLayoutUITests`) check portrait and landscape. Visual review uses the
 physical device without routine screenshot capture. Only after those jobs pass does CI package an unsigned arm64 IPA
 from a Release device build. Device signing and installation are separate.
 

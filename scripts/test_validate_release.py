@@ -25,6 +25,11 @@ class ReleaseValidationTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             validate_command_log("Keyboard Shortcut (duplicate modifierFlags: command, input: ,):")
 
+    def test_state_published_during_view_update_fails(self):
+        with self.assertRaises(ValueError):
+            validate_command_log("<unknown>:0: warning: -[AcuteWebUITests testUnsupportedTypedAddressShowsClearFeedback] : "
+                                 "Publishing changes from within view updates is not allowed, this will cause undefined behavior.")
+
     def test_current_manifest_passes(self):
         validate_manifest(manifest())
 
@@ -58,7 +63,7 @@ class ReleaseValidationTests(unittest.TestCase):
             (app / "PrivacyInfo.xcprivacy").write_bytes(plistlib.dumps(manifest()))
             (app / "PRIVACY.md").write_text("Retention and deletion; GitHub Issues", encoding="utf-8")
             info = {"CFBundleExecutable": "AcuteWeb", "CFBundleVersion": "1",
-                    "CFBundleShortVersionString": "0.2.0",
+                    "CFBundleShortVersionString": "0.5.0",
                     "NSCameraUsageDescription": "Website camera access",
                     "NSMicrophoneUsageDescription": "Website microphone access",
                     "ITSAppUsesNonExemptEncryption": False,
