@@ -82,10 +82,14 @@ You need:
 
 - This is a beta. It has passed automated tests on the iOS 27.0 and 27.1
   simulators but has not yet been fully tested on physical devices.
-- iPhone Duo rail placement and fold layouts have not been checked on a device.
+- iPhone Duo layouts are tested only in the simulator, not on a real iPhone Duo.
+  If something looks wrong on yours, please report it.
 - Downloads stop if iOS suspends Acute for longer than its allowed background time.
 - The interface is in English only.
 - Acute cannot be set as the default browser.
+
+Report problems through [GitHub Issues](https://github.com/iiankehn/acute-web-ios/issues).
+Issues are public, so do not include browsing history or other private details.
 
 Acute collects no telemetry or analytics. See [the privacy policy](PRIVACY.md),
 which is also in Settings.

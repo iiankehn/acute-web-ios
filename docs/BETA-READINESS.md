@@ -113,7 +113,8 @@ tests too, and those tests check portrait and landscape. Test runs skip the
 simulator diagnostics collection that added 10 minutes to failed runs, and
 artifact uploads use the Node 24 action. On iOS 27 the More menu's first row
 ignored taps in every interface run, so it is now a Tabs heading; whether real
-taps are affected needs a device check.
+taps are affected needs a device check on another iOS 27 iPhone. No iPhone Duo is
+available for testing, so Duo layouts rely on simulator tests and tester feedback.
 
 ## Blocking gates before beta distribution
 
@@ -125,7 +126,7 @@ taps are affected needs a device check.
 | Native utility / identity (4.1, 4.2) | Preserve original cat-fox branding and useful browser features; no Safari impersonation or unsupported marketing claims | Source reviewed; device review pending |
 | Design / accessibility | Readable light/dark and Increase Contrast; Reduce Transparency/Motion; Dynamic Type through accessibility sizes; VoiceOver/Voice Control; keyboard focus; no hidden critical navigation or clipped controls | Physical-device audit pending |
 | iPhone / iPad | Portrait/landscape, top/bottom phone controls, safe areas, keyboard appearance, iPad narrow windows/Split View, pointer and menu/shortcut behavior | Real iPad interactions unverified |
-| iPhone Duo | Closed and open in both orientations, half-open book and tabletop, rail edge and camera clearance, fold avoidance, Library sidebar and Show tabs in sidebar, Split View on the inner display, real taps on the More menu's first row | Simulator portrait/landscape checks in CI; Device Hub and device checks pending |
+| iPhone Duo | Closed and open in both orientations, half-open book and tabletop, rail edge and camera clearance, fold avoidance, Library sidebar and Show tabs in sidebar, Split View on the inner display, real taps on the More menu's first row | Simulator portrait/landscape checks in CI. No iPhone Duo is available, so there will be no device check; Duo layouts ship on simulator evidence and are revisited on tester reports |
 | Supported OS | Exercise the oldest supported iOS 18 and currently shipping iOS/iPadOS on available devices/simulators. CI covers only the iOS 27.0 (iPhone, iPad) and 27.1 (iPhone Duo) simulators; nothing runs on iOS 18 yet | Pending |
 | Browsing | Real HTTPS sites, redirects, history navigation, slow/offline recovery, IPv6-only network (2.5.5), login, file uploads, media and downloads | Device matrix pending |
 | Consent / isolation | Camera/mic allow/deny/revoke, cancellation, inactive-tab handling, private/regular isolation, app-switcher shield with sheets, data clearing and relaunch | Automated core coverage; device validation pending |
