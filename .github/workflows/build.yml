@@ -55,8 +55,9 @@ jobs:
             -parallel-testing-enabled NO
       # Test steps skip simulator diagnostics collection, which spent 10 minutes timing out after failures;
       # the result bundles still keep failures, logs and screen recordings.
-      # The unit tests run twice and must pass both times. The simulator restarts between passes: WebKit
-      # processes the first pass could not terminate otherwise stalled website and download tests in the second.
+      # The unit tests run twice and must pass both times. The simulator restarts between passes, and again
+      # before the interface tests: WebKit processes an earlier run could not terminate otherwise stalled
+      # website and download tests in the next.
       - name: Run unit tests
         run: |
           set -o pipefail
@@ -82,6 +83,10 @@ jobs:
         if: ${{ !cancelled() && steps.build.outcome == 'success' }}
         run: |
           set -o pipefail
+          # Start from a fresh simulator here too: a fixture page once never rendered after the unit tests.
+          xcrun simctl shutdown '${{ steps.simulator.outputs.id }}' || true
+          xcrun simctl boot '${{ steps.simulator.outputs.id }}'
+          xcrun simctl bootstatus '${{ steps.simulator.outputs.id }}' -b
           xcodebuild test-without-building \
             -project AcuteWeb.xcodeproj \
             -scheme AcuteWeb \
