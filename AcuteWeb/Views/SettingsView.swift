@@ -59,7 +59,7 @@ struct SettingsView: View {
                             .frame(width: 48, height: 48).accessibilityHidden(true)
                         VStack(alignment: .leading, spacing: 4) {
                             Text("Acute Web").font(.title3.weight(.semibold))
-                            Text("by CORE").font(.subheadline).foregroundStyle(.secondary)
+                            Text("by CORE").font(.subheadline).foregroundStyle(.readableSecondary)
                         }
                     }
                     .padding(.vertical, 6)
