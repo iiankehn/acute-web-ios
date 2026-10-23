@@ -91,7 +91,12 @@ struct LibraryView: View {
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && filtered(bookmarks.items).isEmpty {
             noSearchResults
         } else if bookmarks.items.isEmpty {
-            ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Open More, then Saved Content, to bookmark the current page."))
+            ScrollView {
+                ContentUnavailableView("No Bookmarks", systemImage: "bookmark", description: Text("Open More, then Saved Content, to bookmark the current page."))
+                    .padding(.top, 24)
+            }
+            // Scrolls only when large text makes the message taller than the screen.
+            .scrollBounceBehavior(.basedOnSize)
         } else {
             List {
                 Section {
@@ -118,11 +123,15 @@ struct LibraryView: View {
         if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && filtered(history.items).isEmpty {
             noSearchResults
         } else if history.items.isEmpty {
-            ContentUnavailableView(
-                "No History",
-                systemImage: "clock.arrow.circlepath",
-                description: Text(browser.preferences.savesHistory ? "Pages you visit will appear here." : "History is off by default. You can enable it in Settings.")
-            )
+            ScrollView {
+                ContentUnavailableView(
+                    "No History",
+                    systemImage: "clock.arrow.circlepath",
+                    description: Text(browser.preferences.savesHistory ? "Pages you visit will appear here." : "History is off by default. You can enable it in Settings.")
+                )
+                .padding(.top, 24)
+            }
+            .scrollBounceBehavior(.basedOnSize)
         } else {
             List {
                 Section {

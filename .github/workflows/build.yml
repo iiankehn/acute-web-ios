@@ -3,6 +3,8 @@ name: Build
 on:
   push:
     branches: [main]
+    # A version tag such as v0.5.0 also publishes a GitHub release after every job passes.
+    tags: ['v*']
   pull_request:
 
 permissions:
@@ -19,8 +21,8 @@ jobs:
     # A cold iOS runtime can spend ~10 minutes installing/starting the test host
     # before the suite runs. iPhone and iPad use the image's iOS 27.0 runtime because the
     # iOS 27.1 simulator runtime supports only iPhone Duo. Keep assertion timeouts unchanged and allow the
-    # full unit + UI suites and artifact upload to finish on a slow runner.
-    timeout-minutes: 45
+    # full unit + UI suites (including accessibility audits) and artifact upload to finish on a slow runner.
+    timeout-minutes: 55
     steps:
       - uses: actions/checkout@v5
       - name: Select Xcode 27.1
@@ -299,3 +301,35 @@ jobs:
           path: DeviceArtifacts/*
           if-no-files-found: error
           retention-days: 14
+
+  release:
+    # Runs only for version tags, after the IPA job (and so every test job) has passed.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: device-ipa
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+      - name: Check that the tag matches the app version
+        run: |
+          version=$(sed -n 's/^ *MARKETING_VERSION: *//p' project.yml)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match MARKETING_VERSION $version in project.yml."
+            exit 1
+          fi
+      - uses: actions/download-artifact@v7
+        with:
+          name: acute-web-unsigned-ipa
+          path: release
+      - name: Publish the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            release/AcuteWeb-unsigned.ipa release/SHA256SUMS.txt release/build.json \
+            --title "Acute Web ${GITHUB_REF_NAME#v} beta" \
+            --notes-file RELEASE-NOTES.md \
+            --prerelease \
+            --verify-tag

@@ -13,8 +13,12 @@ final class AcuteWebLayoutUITests: XCTestCase {
         continueAfterFailure = false
         XCUIDevice.shared.orientation = .portrait
         app = XCUIApplication()
+    }
+
+    /// Each test launches the app itself, so none has to terminate and relaunch it to change a setting.
+    private func launch(showsTabsInSidebar: Bool = false) {
         app.launchArguments = ["-savesHistory", "NO", "-restoresTabs", "NO", "-condensesPhoneControls", "NO",
-                               "-showsTabsInSidebar", "NO"]
+                               "-showsTabsInSidebar", showsTabsInSidebar ? "YES" : "NO"]
         app.launch()
     }
 
@@ -24,6 +28,7 @@ final class AcuteWebLayoutUITests: XCTestCase {
     }
 
     func testNavigationControlsFollowTheSystemBarPlacement() {
+        launch()
         for orientation in orientations {
             rotate(to: orientation)
             let address = app.textFields["addressField"]
@@ -50,6 +55,7 @@ final class AcuteWebLayoutUITests: XCTestCase {
     }
 
     func testMoreMenuTabActionsWorkInEveryOrientation() {
+        launch()
         for (index, orientation) in orientations.enumerated() {
             rotate(to: orientation)
             app.buttons["More"].tap()
@@ -67,6 +73,7 @@ final class AcuteWebLayoutUITests: XCTestCase {
     }
 
     func testRailActionsStayUsable() throws {
+        launch()
         let rail = app.otherElements["navigationRail"]
         guard rail.waitForExistence(timeout: 10) else {
             throw XCTSkip("This pose uses horizontal bars")
@@ -80,6 +87,7 @@ final class AcuteWebLayoutUITests: XCTestCase {
     }
 
     func testWideWindowSidebarShowsTheLibraryNotTabs() throws {
+        launch()
         let sidebar = try showSidebar()
         XCTAssertTrue(sidebar.exists)
         XCTAssertTrue(app.segmentedControls["sidebarLibraryPicker"].exists)
@@ -87,11 +95,7 @@ final class AcuteWebLayoutUITests: XCTestCase {
     }
 
     func testShowTabsInSidebarAddsATabsSection() throws {
-        app.terminate()
-        if let index = app.launchArguments.firstIndex(of: "-showsTabsInSidebar") {
-            app.launchArguments[index + 1] = "YES"
-        }
-        app.launch()
+        launch(showsTabsInSidebar: true)
         _ = try showSidebar()
         XCTAssertTrue(app.staticTexts["Tabs"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.staticTexts["Library"].exists)

@@ -116,6 +116,16 @@ ignored taps in every interface run, so it is now a Tabs heading; whether real
 taps are affected needs a device check on another iOS 27 iPhone. No iPhone Duo is
 available for testing, so Duo layouts rely on simulator tests and tester feedback.
 
+## October 23 coverage batch
+
+Version tags (for example `v0.5.0`) now publish a GitHub pre-release with the unsigned
+IPA, its checksum and the release notes, once every CI job has passed and the tag matches
+the app version. An iOS 18 simulator job was tried and removed: Xcode 27.1 cannot download
+any iOS 18 runtime, and no iOS 18 device is available, so iOS 18 through 26 are untested and
+used at the tester's own risk. Interface tests now run Xcode accessibility
+audits in light and dark mode and check the primary controls at the largest accessibility
+text size. A debug-only launch argument forces dark mode for these tests.
+
 ## Blocking gates before beta distribution
 
 | Area | Gate / required evidence | Status |
@@ -124,14 +134,14 @@ available for testing, so Duo layouts rely on simulator tests and tester feedbac
 | Privacy (5.1.1) | Bundled and public policy match shipping behavior; maintainer reviews identity, contact route and retention disclosures; public URL resolves without login | Audit changes pending validation/review |
 | Privacy declarations | Verify required-reason API inventory on the final binary/SDKs; review Xcode privacy report and App Store Connect privacy answers, including browser/search/provider boundaries | Manual final review pending |
 | Native utility / identity (4.1, 4.2) | Preserve original cat-fox branding and useful browser features; no Safari impersonation or unsupported marketing claims | Source reviewed; device review pending |
-| Design / accessibility | Readable light/dark and Increase Contrast; Reduce Transparency/Motion; Dynamic Type through accessibility sizes; VoiceOver/Voice Control; keyboard focus; no hidden critical navigation or clipped controls | Physical-device audit pending |
+| Design / accessibility | Readable light/dark and Increase Contrast; Reduce Transparency/Motion; Dynamic Type through accessibility sizes; VoiceOver/Voice Control; keyboard focus; no hidden critical navigation or clipped controls | CI runs Xcode accessibility audits on the start page, Settings, tab overview and Library in light and dark mode, and checks primary controls at the largest accessibility text size; VoiceOver, Voice Control, Increase Contrast and Reduce Motion still need a device |
 | iPhone / iPad | Portrait/landscape, top/bottom phone controls, safe areas, keyboard appearance, iPad narrow windows/Split View, pointer and menu/shortcut behavior | Real iPad interactions unverified |
 | iPhone Duo | Closed and open in both orientations, half-open book and tabletop, rail edge and camera clearance, fold avoidance, Library sidebar and Show tabs in sidebar, Split View on the inner display, real taps on the More menu's first row | Simulator portrait/landscape checks in CI. No iPhone Duo is available, so there will be no device check; Duo layouts ship on simulator evidence and are revisited on tester reports |
-| Supported OS | Exercise the oldest supported iOS 18 and currently shipping iOS/iPadOS on available devices/simulators. CI covers only the iOS 27.0 (iPhone, iPad) and 27.1 (iPhone Duo) simulators; nothing runs on iOS 18 yet | Pending |
+| Supported OS | Exercise the oldest supported iOS 18 and currently shipping iOS/iPadOS on available devices/simulators. CI covers only the iOS 27.0 (iPhone, iPad) and 27.1 (iPhone Duo) simulators. Xcode 27.1 cannot download any iOS 18 simulator runtime (xcodebuild and xcodes both tried 18.0–18.6 on October 23), and no iOS 18–26 device is available; release notes say those versions are used at the tester's own risk | Untested below iOS 27 |
 | Browsing | Real HTTPS sites, redirects, history navigation, slow/offline recovery, IPv6-only network (2.5.5), login, file uploads, media and downloads | Device matrix pending |
 | Consent / isolation | Camera/mic allow/deny/revoke, cancellation, inactive-tab handling, private/regular isolation, app-switcher shield with sheets, data clearing and relaunch | Automated core coverage; device validation pending |
 | Installation / updates | Install and update final signed candidate without unintended loss of bookmarks/settings/downloads; confirm displayed version/build and icon appearances | Final candidate pending |
-| Distribution | Sideloading chosen for 0.5 (October 23): testers sign the unsigned CI IPA with a free Apple Developer account, as RELEASE-NOTES.md explains. TestFlight would need a paid Apple Developer Program membership, distribution signing and App Store Connect setup | Sideload notes written; not App Store or TestFlight |
+| Distribution | Sideloading chosen for 0.5 (October 23): testers sign the unsigned CI IPA with a free Apple Developer account, as RELEASE-NOTES.md explains. TestFlight would need a paid Apple Developer Program membership, distribution signing and App Store Connect setup | Version tags publish the unsigned IPA, checksum and release notes as a GitHub pre-release after every CI job passes; not App Store or TestFlight |
 | Listing / review | Accurate privacy/support URLs, age rating for unrestricted web access, copyright, current screenshots, review contact, export-compliance answers and review notes | Not submitted |
 
 Do not mark a pending gate passed because the UI looks good or CI is green.

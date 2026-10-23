@@ -6,6 +6,7 @@ struct StartPage: View {
     @ObservedObject var bookmarks: BookmarkStore
     @ObservedObject var favorites: FavoritesStore
     @Environment(\.colorScheme) private var colorScheme
+    @ScaledMetric(relativeTo: .title3) private var tileIconSize: CGFloat = 44
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @FocusState private var searchFocused: Bool
     @Environment(\.dynamicTypeSize) private var dynamicTypeSize
@@ -46,10 +47,10 @@ struct StartPage: View {
                         .font(.system(.largeTitle, design: .rounded, weight: .bold))
                         Text(browser.selectedTab?.isPrivate == true ? "Private browsing" : "The web, in focus.")
                         .font(.subheadline)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.readableSecondary)
                         Text("by CORE")
                         .font(.caption.weight(.medium))
-                        .foregroundStyle(.tertiary)
+                        .foregroundStyle(.readableSecondary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -138,16 +139,18 @@ struct StartPage: View {
                                             Image(systemName: symbol(for: favorite))
                                                 .font(.title3.weight(.medium))
                                                 .foregroundStyle(Color.accentColor)
-                                                .frame(width: 44, height: 44)
+                                                .frame(minWidth: min(tileIconSize, 88), minHeight: min(tileIconSize, 88))
                                                 .background(Color.accentColor.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
                                             Text(favorite.title).font(.subheadline.weight(.medium))
-                                                .lineLimit(dynamicTypeSize.isAccessibilitySize ? nil : 2)
+                                                .multilineTextAlignment(.center)
+                                                .fixedSize(horizontal: false, vertical: true)
                                         }
                                         .frame(maxWidth: .infinity, minHeight: 84)
                                         .padding(12)
                                         .background(Color(uiColor: .secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 18))
                                     }
                                     .buttonStyle(.plain)
+                                    .accessibilityIdentifier("favoriteTile")
                                     .contextMenu {
                                         Button("Remove from Favorites", systemImage: "star.slash", role: .destructive) {
                                             favorites.remove(favorite)

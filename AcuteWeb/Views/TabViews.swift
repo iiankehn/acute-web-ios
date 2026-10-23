@@ -99,6 +99,16 @@ struct TabGrid: View {
         browser.tabs.filter { browseScope.includes($0) && matchesTabSearch($0, query: query) }
     }
 
+    private var tabCount: some View {
+        Text("\(visibleTabs.count) of \(browser.tabs.count) open")
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
+    private var privateCount: some View {
+        Label("\(browser.tabs.filter { $0.isPrivate }.count) private", systemImage: "hand.raised")
+            .fixedSize(horizontal: false, vertical: true)
+    }
+
     private var scopePicker: some View {
         Picker("Tab Filter", selection: $browseScope) {
             ForEach(TabBrowseScope.allCases) { scope in Text(scope.rawValue).tag(scope) }
@@ -119,13 +129,14 @@ struct TabGrid: View {
                 } else {
                     scopePicker
                 }
-                HStack {
-                    Text("\(visibleTabs.count) of \(browser.tabs.count) open")
-                    Spacer()
-                    Label("\(browser.tabs.filter { $0.isPrivate }.count) private", systemImage: "hand.raised")
+                // One count per line, so neither is cut off as text grows.
+                VStack(alignment: .leading, spacing: 4) {
+                    tabCount
+                    privateCount
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .font(.subheadline.weight(.medium))
-                .foregroundStyle(.secondary)
+                .foregroundStyle(.readableSecondary)
                 if visibleTabs.isEmpty {
                     if !query.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         EmptyTabSearch(query: $query, searchPresented: $searchPresented)
@@ -224,7 +235,7 @@ private struct TabCard: View {
             HStack {
                 Label(tab.isPrivate ? "Private" : "Tab", systemImage: tab.isPrivate ? "hand.raised.fill" : "globe")
                     .font(.caption.weight(.medium))
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.readableSecondary)
                 Spacer(minLength: 0)
                 Button { browser.close(tab) } label: {
                     Image(systemName: "xmark")
@@ -270,7 +281,9 @@ private struct TabCard: View {
                         }
                     }
                     Text(tab.url?.host ?? (tab.isPrivate ? "Private Tab" : "New Tab"))
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        .font(.caption).foregroundStyle(.readableSecondary)
+                        .lineLimit(dynamicTypeSize > .large ? nil : 1)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)

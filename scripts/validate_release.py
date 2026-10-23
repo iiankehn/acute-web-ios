@@ -10,7 +10,7 @@ EXPECTED_REASONS = {
 }
 DEBUG_MARKERS = (
     b"acute-ui-fixture", b"-acuteUITestHistoryPage",
-    b"-acuteUITestRenderedPage", b"-acuteUITestPageError",
+    b"-acuteUITestRenderedPage", b"-acuteUITestPageError", b"-acuteUITestDarkMode",
 )
 
 

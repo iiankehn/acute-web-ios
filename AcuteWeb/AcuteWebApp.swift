@@ -49,6 +49,7 @@ private struct BrowserWindowContent: View {
         BrowserRootView()
             .environmentObject(browser)
             .focusedSceneObject(browser)
+            .modifier(UITestAppearance())
             .onAppear {
 #if DEBUG
                 if ProcessInfo.processInfo.arguments.contains(UITestNavigationFixture.launchArgument),
@@ -81,5 +82,16 @@ private struct BrowserWindowContent: View {
                     browser.saveSession()
                 }
             }
+    }
+}
+
+/// Interface tests force dark mode with -acuteUITestDarkMode. Release builds ignore it.
+private struct UITestAppearance: ViewModifier {
+    func body(content: Content) -> some View {
+#if DEBUG
+        content.preferredColorScheme(ProcessInfo.processInfo.arguments.contains("-acuteUITestDarkMode") ? .dark : nil)
+#else
+        content
+#endif
     }
 }
